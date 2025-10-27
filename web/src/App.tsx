@@ -1,10 +1,10 @@
 import { ThemeProvider } from "@/theme/ThemeProvider";
-import { OnboardingVaultScreen } from "./screens/OnboardingVaultScreen";
+import { AddProductScreen } from "./screens/AddProductScreen";
 
 function App(): JSX.Element {
   return (
     <ThemeProvider>
-      <OnboardingVaultScreen />
+      <AddProductScreen />
     </ThemeProvider>
   );
 }
