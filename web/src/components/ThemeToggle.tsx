@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { KeyboardEvent, MouseEvent } from "react";
+import { useTranslation } from "@/i18n/I18nProvider";
 import { useTheme } from "@/theme/ThemeProvider";
 import styles from "./ThemeToggle.module.css";
 
@@ -9,6 +10,7 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
   const { themeName, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -22,7 +24,8 @@ export function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
     }
   };
 
-  const label = themeName === "dark" ? "Dark" : "Light";
+  const modeLabel = themeName === "dark" ? t("theme.modeDark") : t("theme.modeLight");
+  const ariaLabel = themeName === "dark" ? t("theme.switchToLight") : t("theme.switchToDark");
 
   return (
     <button
@@ -30,10 +33,10 @@ export function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
       className={clsx(styles.toggle, className)}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      aria-label={`Switch to ${themeName === "dark" ? "light" : "dark"} theme`}
+      aria-label={ariaLabel}
     >
       <span className={styles.indicator}>{themeName === "dark" ? <MoonIcon /> : <SunIcon />}</span>
-      <span className={styles.label}>{label} mode</span>
+      <span className={styles.label}>{modeLabel}</span>
     </button>
   );
 }

@@ -97,6 +97,17 @@
   justify-content: center;
 }
 
+.helperBadge {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-icon-container);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
 .actions {
   display: flex;
   flex-direction: column;
@@ -137,6 +148,9 @@
 .topBar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
 }
 
