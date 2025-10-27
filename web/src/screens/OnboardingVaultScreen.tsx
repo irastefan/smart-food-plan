@@ -2,7 +2,9 @@ import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Checkbox } from "@/components/Checkbox";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTranslation } from "@/i18n/I18nProvider";
 import {
   clearVaultDirectoryHandle,
   loadVaultDirectoryHandle,
@@ -10,10 +12,24 @@ import {
 } from "@/utils/vaultStorage";
 import styles from "./OnboardingVaultScreen.module.css";
 
+type StatusMessageKey =
+  | "onboarding.status.restorePermission"
+  | "onboarding.status.reconnected"
+  | "onboarding.status.restoreError"
+  | "onboarding.status.unsupported"
+  | "onboarding.status.permissionDenied"
+  | "onboarding.status.connected"
+  | "onboarding.status.connectedPending"
+  | "onboarding.status.rememberFailed"
+  | "onboarding.status.accessError"
+  | "onboarding.status.createInfo"
+  | "onboarding.status.vaultInfo";
+
 type StatusState =
   | {
       type: "info" | "success" | "error";
-      message: string;
+      messageKey: StatusMessageKey;
+      messageParams?: Record<string, string>;
     }
   | null;
 
@@ -40,6 +56,7 @@ async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): Promise
 }
 
 export function OnboardingVaultScreen(): JSX.Element {
+  const { t } = useTranslation();
   const [selectedFolderName, setSelectedFolderName] = useState<string | null>(null);
   const [selectedHandle, setSelectedHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [rememberSelection, setRememberSelection] = useState<boolean>(false);
@@ -47,8 +64,8 @@ export function OnboardingVaultScreen(): JSX.Element {
   const [isBusy, setIsBusy] = useState<boolean>(false);
 
   const folderLabel = useMemo(
-    () => selectedFolderName ?? "No folder selected",
-    [selectedFolderName]
+    () => selectedFolderName ?? t("onboarding.noFolder"),
+    [selectedFolderName, t]
   );
 
   useEffect(() => {
@@ -81,7 +98,7 @@ export function OnboardingVaultScreen(): JSX.Element {
           if (!cancelled) {
             setStatus({
               type: "info",
-              message: "We need permission to access the remembered folder. Please select it again."
+              messageKey: "onboarding.status.restorePermission"
             });
           }
           return;
@@ -92,7 +109,8 @@ export function OnboardingVaultScreen(): JSX.Element {
           setSelectedFolderName(handle.name);
           setStatus({
             type: "success",
-            message: `Reconnected to “${handle.name}”. Vault files will sync here.`
+            messageKey: "onboarding.status.reconnected",
+            messageParams: { folder: handle.name }
           });
         }
       } catch (error) {
@@ -100,7 +118,7 @@ export function OnboardingVaultScreen(): JSX.Element {
         if (!cancelled) {
           setStatus({
             type: "error",
-            message: "We couldn't restore the previously selected folder. Please choose it again."
+            messageKey: "onboarding.status.restoreError"
           });
         }
       }
@@ -117,7 +135,7 @@ export function OnboardingVaultScreen(): JSX.Element {
     if (!window.showDirectoryPicker) {
       setStatus({
         type: "error",
-        message: "Your browser does not support selecting folders yet."
+        messageKey: "onboarding.status.unsupported"
       });
       return;
     }
@@ -134,7 +152,7 @@ export function OnboardingVaultScreen(): JSX.Element {
       if (!hasAccess) {
         setStatus({
           type: "error",
-          message: "We were not granted permission to use that folder."
+          messageKey: "onboarding.status.permissionDenied"
         });
         return;
       }
@@ -144,12 +162,13 @@ export function OnboardingVaultScreen(): JSX.Element {
         setSelectedFolderName(handle.name);
         setStatus({
           type: "success",
-          message: `Connected to “${handle.name}”. Vault files will sync here.`
+          messageKey: "onboarding.status.connected",
+          messageParams: { folder: handle.name }
         });
       } else {
         setStatus({
           type: "info",
-          message: "Folder connected. We will finalize setup after confirming permissions."
+          messageKey: "onboarding.status.connectedPending"
         });
       }
 
@@ -162,8 +181,7 @@ export function OnboardingVaultScreen(): JSX.Element {
             console.error("Failed to persist directory handle", error);
             setStatus({
               type: "error",
-              message:
-                "We connected but could not remember that folder. Try enabling storage access."
+              messageKey: "onboarding.status.rememberFailed"
             });
           }
         }
@@ -179,7 +197,7 @@ export function OnboardingVaultScreen(): JSX.Element {
       } else {
         setStatus({
           type: "error",
-          message: "We could not access that folder. Please try again or choose another."
+          messageKey: "onboarding.status.accessError"
         });
       }
     } finally {
@@ -190,16 +208,14 @@ export function OnboardingVaultScreen(): JSX.Element {
   const createVaultStructure = useCallback(() => {
     setStatus({
       type: "info",
-      message:
-        "A fresh /vault structure will be generated once you confirm the destination folder."
+      messageKey: "onboarding.status.createInfo"
     });
   }, []);
 
   const showVaultHelp = useCallback(() => {
     setStatus({
       type: "info",
-      message:
-        "Vault is a folder that contains recipes, products, days, shopping, and user settings in Markdown/YAML files."
+      messageKey: "onboarding.status.vaultInfo"
     });
   }, []);
 
@@ -234,7 +250,7 @@ export function OnboardingVaultScreen(): JSX.Element {
           console.error("Failed to persist directory handle", error);
           setStatus({
             type: "error",
-            message: "We connected but could not remember that folder. Try enabling storage access."
+            messageKey: "onboarding.status.rememberFailed"
           });
         }
       }
@@ -247,14 +263,15 @@ export function OnboardingVaultScreen(): JSX.Element {
       <div className={styles.glow} />
       <div className={styles.inner}>
         <div className={styles.topBar}>
+          <LanguageToggle />
           <ThemeToggle />
         </div>
         <header className={styles.hero}>
-          <h1 className={styles.title}>Welcome</h1>
-          <p className={styles.subtitle}>Select your Vault folder</p>
+          <h1 className={styles.title}>{t("onboarding.title")}</h1>
+          <p className={styles.subtitle}>{t("onboarding.subtitle")}</p>
         </header>
 
-        <Card title="Current folder" className={styles.folderCard}>
+        <Card title={t("onboarding.currentFolder")} className={styles.folderCard}>
           <div className={styles.folderHeader}>
             <div className={styles.folderNameRow}>
               <FolderIcon />
@@ -270,10 +287,7 @@ export function OnboardingVaultScreen(): JSX.Element {
             <span className={styles.infoIcon}>
               <InfoIcon />
             </span>
-            <p className={styles.folderHint}>
-              Your recipes, products, days and shopping list will be stored as Markdown/YAML files
-              inside this folder. You can sync it later via GitHub or Drive.
-            </p>
+            <p className={styles.folderHint}>{t("onboarding.folderHint")}</p>
           </div>
         </Card>
 
@@ -285,7 +299,7 @@ export function OnboardingVaultScreen(): JSX.Element {
             trailingIcon={<ArrowIcon />}
             disabled={isBusy}
           >
-            Choose existing folder
+            {t("onboarding.chooseExisting")}
           </Button>
           <Button
             onClick={createVaultStructure}
@@ -293,14 +307,14 @@ export function OnboardingVaultScreen(): JSX.Element {
             trailingIcon={<ArrowIcon />}
             disabled={isBusy}
           >
-            Create new Vault
+            {t("onboarding.createVault")}
           </Button>
         </div>
 
         <div className={styles.rememberRow}>
           <Checkbox
             id="remember-folder"
-            label="Remember this folder on this device"
+            label={t("onboarding.remember")}
             checked={rememberSelection}
             onChange={handleRememberChange}
           />
@@ -311,7 +325,7 @@ export function OnboardingVaultScreen(): JSX.Element {
             onClick={showVaultHelp}
             onKeyDown={handleHelperKeyDown}
           >
-            How Vault works
+            {t("onboarding.howVaultWorks")}
           </span>
         </div>
 
@@ -325,7 +339,7 @@ export function OnboardingVaultScreen(): JSX.Element {
                   : styles.statusInfo
             }`}
           >
-            {status.message}
+            {t(status.messageKey, status.messageParams)}
           </p>
         )}
       </div>
@@ -363,7 +377,7 @@ function FolderOpenIcon(): JSX.Element {
         fill="var(--color-icon-container-strong)"
       />
       <path
-        d="M5 9H17C18.1046 9 19 9.89543 19 11V16C19 17.1046 18.1046 18 17 18H7C5.34315 18 4 16.6569 4 15V11C4 9.89543 4.89543 9 6 9Z"
+        d="M5 9H17C18.1046 9 19 9.89543 19 11V16C19 17.1046 18.1046 18 17 18H7C5.34315 18 4 16.6569 4 15V11C4 9.89543 4.89543 9 5 9Z"
         stroke="var(--color-accent)"
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -398,12 +412,19 @@ function SparkleIcon(): JSX.Element {
   );
 }
 
-function ArrowIcon(): JSX.Element {
+function InfoIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="12" height="18" viewBox="0 0 12 18" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M4 3L8.5 7L4 11"
-        stroke="currentColor"
+        d="M6.00033 16.5V7.5"
+        stroke="var(--color-icon-container-strong)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 4.5H6.01"
+        stroke="var(--color-icon-container-strong)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -412,33 +433,50 @@ function ArrowIcon(): JSX.Element {
   );
 }
 
-function InfoIcon(): JSX.Element {
+function ArrowIcon(): JSX.Element {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="7" cy="7" r="6" stroke="var(--color-text-secondary)" strokeWidth="1.4" />
-      <rect x="6.2" y="6" width="1.4" height="4" rx="0.7" fill="var(--color-text-primary)" fillOpacity="0.75" />
-      <rect x="6.2" y="3.6" width="1.4" height="1.4" rx="0.7" fill="var(--color-text-primary)" fillOpacity="0.75" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M4 8H12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 5L12 8L9 11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function HelpBadge(): JSX.Element {
   return (
-    <span className={styles.infoIcon} title="Learn more about Vault folders.">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <span className={styles.helperBadge}>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
-          d="M8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2Z"
-          stroke="var(--color-text-secondary)"
-          strokeWidth="1.4"
+          d="M9 16.5C12.5899 16.5 15.5 13.5899 15.5 10C15.5 6.41015 12.5899 3.5 9 3.5C5.41015 3.5 2.5 6.41015 2.5 10C2.5 13.5899 5.41015 16.5 9 16.5Z"
+          stroke="var(--color-accent)"
+          strokeWidth="1.3"
         />
         <path
-          d="M8 11V7.75C8 7.33579 8.33579 7 8.75 7V7C9.16421 7 9.5 6.66421 9.5 6.25V6.25C9.5 5.55964 8.94036 5 8.25 5H7.75C7.05964 5 6.5 5.55964 6.5 6.25"
-          stroke="var(--color-text-secondary)"
+          d="M9 7.5C9.53111 7.5 10 7.96889 10 8.5C10 8.91421 9.5 9.5 9.5 9.5"
+          stroke="var(--color-accent)"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9 12H9.01"
+          stroke="var(--color-accent)"
           strokeWidth="1.4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <rect x="7.2" y="11.1997" width="1.6" height="1.6" rx="0.8" fill="var(--color-text-primary)" fillOpacity="0.8" />
       </svg>
     </span>
   );
