@@ -1,0 +1,141 @@
+.root {
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 56px) clamp(20px, 6vw, 84px) 64px;
+  background: var(--background-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 620px;
+}
+
+.badge {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  background: var(--info-chip-background);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.9rem, 2.4vw, 2.6rem);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.content {
+  display: grid;
+  gap: clamp(24px, 4vw, 40px);
+}
+
+@media (min-width: 960px) {
+  .content {
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: start;
+  }
+}
+
+.formCard {
+  padding: clamp(24px, 3vw, 36px);
+}
+
+.preview {
+  background: var(--color-surface-translucent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: clamp(20px, 2.6vw, 32px);
+  box-shadow: var(--shadow-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.previewTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.previewDescription {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.previewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.previewList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.previewList li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.previewLabel {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.previewValue {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.tip {
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  background: linear-gradient(140deg, rgba(53, 194, 161, 0.18), rgba(31, 162, 147, 0.12));
+  border: 1px dashed rgba(53, 194, 161, 0.32);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tipTitle {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.tip p {
+  margin: 0;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
