@@ -1,0 +1,30 @@
+.root {
+  padding: clamp(24px, 5vw, 48px) clamp(20px, 6vw, 64px) clamp(40px, 8vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 4vw, 32px);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

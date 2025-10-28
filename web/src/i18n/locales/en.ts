@@ -109,6 +109,12 @@ export const en = {
   "productList.macros": "Per portion",
   "productList.notes": "Notes",
   "productList.addToMealPlan": "Add to meal plan",
+  "nav.brand": "SmartFoodPlan",
+  "nav.addProduct": "Add product",
+  "nav.mealPlan": "Meal plan",
+  "nav.setup": "Vault setup",
+  "mealPlan.description":
+    "Review daily intake, adjust portions, and track macros for each meal section.",
   "mealPlan.title": "Meal plan",
   "mealPlan.selectDate": "Select date",
   "mealPlan.totals.calories": "Calories",

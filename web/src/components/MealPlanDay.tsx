@@ -107,7 +107,7 @@ export function MealPlanDayCard({
       >
         {isLoading && <span>{t("mealPlan.state.loading")}</span>}
         {!isLoading && isUpdating && <span>{t("mealPlan.state.updating")}</span>}
-        {!isLoading && !isUpdating && error && <span>{t("mealPlan.state.error")}</span>}
+        {!isLoading && !isUpdating && error && <span>{t(error as TranslationKey)}</span>}
       </div>
 
       <div className={styles.sections}>

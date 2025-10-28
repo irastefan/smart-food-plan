@@ -111,6 +111,12 @@ export const ru = {
   "productList.macros": "На порцию",
   "productList.notes": "Комментарий",
   "productList.addToMealPlan": "Добавить в план питания",
+  "nav.brand": "SmartFoodPlan",
+  "nav.addProduct": "Продукты",
+  "nav.mealPlan": "План дня",
+  "nav.setup": "Настройка Vault",
+  "mealPlan.description":
+    "Посмотрите дневной рацион, корректируйте порции и следите за КБЖУ по каждому приёму пищи.",
   "mealPlan.title": "Дневной план",
   "mealPlan.selectDate": "Выберите дату",
   "mealPlan.totals.calories": "Калории",
