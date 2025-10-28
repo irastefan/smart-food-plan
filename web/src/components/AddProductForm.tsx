@@ -1,9 +1,11 @@
 import { FormEvent, useMemo } from "react";
 import { Button } from "@/components/Button";
+import { useTranslation } from "@/i18n/I18nProvider";
 import styles from "./AddProductForm.module.css";
 
 type AddProductFormProps = {
   onSubmit?: (data: Record<string, string>) => void;
+  isSubmitting?: boolean;
 };
 
 type NutrientField = {
@@ -115,39 +117,61 @@ function SaveIcon(): JSX.Element {
   );
 }
 
-export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
+export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFormProps): JSX.Element {
+  const { t } = useTranslation();
+
+  const modelOptions = useMemo(
+    () => [
+      { value: "balanced", label: t("dietModel.balanced") },
+      { value: "vegan", label: t("dietModel.vegan") },
+      { value: "fitness", label: t("dietModel.fitness") },
+      { value: "keto", label: t("dietModel.keto") }
+    ],
+    [t]
+  );
+
+  const mealTimeOptions = useMemo(
+    () => [
+      { value: "breakfast", label: t("mealTime.breakfast") },
+      { value: "lunch", label: t("mealTime.lunch") },
+      { value: "snack", label: t("mealTime.snack") },
+      { value: "dinner", label: t("mealTime.dinner") }
+    ],
+    [t]
+  );
+
   const nutrientFields = useMemo<NutrientField[]>(
     () => [
       {
         id: "calories",
-        label: "Калории",
-        unit: "ккал",
+        label: t("addProduct.form.nutrients.calories"),
+        unit: t("addProduct.form.nutrients.caloriesUnit"),
         placeholder: "132",
         Icon: CaloriesIcon
       },
       {
         id: "protein",
-        label: "Белки",
-        unit: "г",
+        label: t("addProduct.form.nutrients.protein"),
+        unit: t("addProduct.form.nutrients.macrosUnit"),
         placeholder: "18",
         Icon: ProteinIcon
       },
       {
         id: "fat",
-        label: "Жиры",
-        unit: "г",
+        label: t("addProduct.form.nutrients.fat"),
+        unit: t("addProduct.form.nutrients.macrosUnit"),
         placeholder: "7",
         Icon: FatIcon
       },
       {
         id: "carbs",
-        label: "Углеводы",
-        unit: "г",
+        label: t("addProduct.form.nutrients.carbs"),
+        unit: t("addProduct.form.nutrients.macrosUnit"),
         placeholder: "12",
         Icon: CarbsIcon
       }
     ],
-    []
+    [t]
   );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -159,31 +183,32 @@ export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={styles.form} onSubmit={handleSubmit} aria-busy={isSubmitting}>
       <div className={styles.group}>
         <label className={styles.label} htmlFor="model">
-          Модель рациона
+          {t("addProduct.form.modelLabel")}
         </label>
         <div className={styles.selectWrapper}>
           <select className={styles.select} id="model" name="model" defaultValue="balanced">
-            <option value="balanced">Сбалансированная классика</option>
-            <option value="vegan">Растительный рацион</option>
-            <option value="fitness">Фитнес с повышенным белком</option>
-            <option value="keto">Кето акцент</option>
+            {modelOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       <div className={styles.group}>
         <label className={styles.label} htmlFor="productName">
-          Название продукта
+          {t("addProduct.form.productNameLabel")}
         </label>
         <div className={styles.inputWrapper}>
           <input
             className={styles.input}
             id="productName"
             name="productName"
-            placeholder="Например, куриная грудка"
+            placeholder={t("addProduct.form.productNamePlaceholder")}
             required
           />
         </div>
@@ -192,7 +217,7 @@ export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
       <div className={styles.inlineGroup}>
         <div className={styles.group}>
           <label className={styles.label} htmlFor="portion">
-            Порция
+            {t("addProduct.form.portionLabel")}
           </label>
           <div className={styles.inputWrapper}>
             <input
@@ -202,22 +227,23 @@ export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
               type="number"
               min="0"
               step="1"
-              placeholder="150"
+              placeholder={t("addProduct.form.portionPlaceholder")}
             />
-            <span className={styles.unit}>грамм</span>
+            <span className={styles.unit}>{t("addProduct.form.portionUnit")}</span>
           </div>
         </div>
 
         <div className={styles.group}>
           <label className={styles.label} htmlFor="mealTime">
-            Приём пищи
+            {t("addProduct.form.mealTimeLabel")}
           </label>
           <div className={styles.selectWrapper}>
             <select className={styles.select} id="mealTime" name="mealTime" defaultValue="lunch">
-              <option value="breakfast">Завтрак</option>
-              <option value="lunch">Обед</option>
-              <option value="snack">Перекус</option>
-              <option value="dinner">Ужин</option>
+              {mealTimeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -249,7 +275,7 @@ export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
 
       <div className={styles.group}>
         <label className={styles.label} htmlFor="notes">
-          Комментарий для повара
+          {t("addProduct.form.notesLabel")}
         </label>
         <div className={styles.inputWrapper}>
           <textarea
@@ -257,22 +283,24 @@ export function AddProductForm({ onSubmit }: AddProductFormProps): JSX.Element {
             id="notes"
             name="notes"
             rows={4}
-            placeholder="Например: обжарить на гриле без масла и добавить свежую зелень."
+            placeholder={t("addProduct.form.notesPlaceholder")}
           />
         </div>
       </div>
 
       <div className={styles.footer}>
-        <Button type="submit" leadingIcon={<SaveIcon />}>
-          Добавить продукт
+        <Button type="submit" leadingIcon={<SaveIcon />} disabled={isSubmitting}>
+          {isSubmitting ? t("addProduct.form.submitSaving") : t("addProduct.form.submit")}
         </Button>
         <Button
           type="button"
           variant="outlined"
           className={styles.aiButton}
+          title={t("addProduct.form.aiFill")}
+          disabled={isSubmitting}
           leadingIcon={<SparklesIcon />}
         >
-          Автозаполнение ИИ
+          {t("addProduct.form.aiFill")}
         </Button>
       </div>
     </form>

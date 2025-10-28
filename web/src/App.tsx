@@ -6,7 +6,7 @@ function App(): JSX.Element {
   return (
     <I18nProvider>
       <ThemeProvider>
-        <OnboardingVaultScreen />
+        <AddProductScreen />
       </ThemeProvider>
     </I18nProvider>
   );

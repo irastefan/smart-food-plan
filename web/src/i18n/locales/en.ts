@@ -37,7 +37,96 @@ export const en = {
   "onboarding.status.createInfo":
     "A fresh /vault structure will be generated once you confirm the destination folder.",
   "onboarding.status.vaultInfo":
-    "Vault is a folder that contains recipes, products, days, shopping, and user settings in Markdown/YAML files."
+    "Vault is a folder that contains recipes, products, days, shopping, and user settings in Markdown/YAML files.",
+  "dietModel.balanced": "Balanced classics",
+  "dietModel.vegan": "Plant-based",
+  "dietModel.fitness": "High-protein fitness",
+  "dietModel.keto": "Keto focus",
+  "mealTime.breakfast": "Breakfast",
+  "mealTime.lunch": "Lunch",
+  "mealTime.snack": "Snack",
+  "mealTime.dinner": "Dinner",
+  "addProduct.badge": "New product",
+  "addProduct.title": "Add a product using the template",
+  "addProduct.subtitle":
+    "Pick a nutrition model, portion size, and macro split. We store the entry so the team can plan cooking and purchasing with ease.",
+  "addProduct.vault.label": "Vault folder: {{folder}}",
+  "addProduct.vault.label.unselected": "Vault folder is not selected",
+  "addProduct.vault.hint.selected":
+    "We will generate a Markdown file inside the “products” subfolder of this Vault.",
+  "addProduct.vault.hint.missing":
+    "Choose a Vault folder to save products in Markdown format.",
+  "addProduct.vault.button.choose": "Choose folder",
+  "addProduct.vault.button.change": "Change folder",
+  "addProduct.status.saving": "Saving product as Markdown…",
+  "addProduct.status.saved": "File “{{file}}” saved to /products.",
+  "addProduct.status.noVault": "Select a Vault folder first to save the product.",
+  "addProduct.status.connected":
+    "Connected to “{{folder}}”. Files will be written to /products.",
+  "addProduct.status.permissionRevoked":
+    "Access to the Vault folder was revoked. Pick the folder again and retry.",
+  "addProduct.status.permissionError":
+    "We could not access the selected folder. Allow access and try again.",
+  "addProduct.status.restoreError": "We could not restore access to the remembered folder.",
+  "addProduct.status.browserUnsupported":
+    "Your browser does not support picking folders via the File System Access API.",
+  "addProduct.status.genericError": "We could not create a Markdown file for this product.",
+  "addProduct.form.modelLabel": "Diet model",
+  "addProduct.form.productNameLabel": "Product name",
+  "addProduct.form.productNamePlaceholder": "E.g. grilled chicken breast",
+  "addProduct.form.portionLabel": "Portion",
+  "addProduct.form.portionPlaceholder": "150",
+  "addProduct.form.portionUnit": "grams",
+  "addProduct.form.mealTimeLabel": "Meal",
+  "addProduct.form.notesLabel": "Notes for the chef",
+  "addProduct.form.notesPlaceholder":
+    "For example: grill without oil and add fresh herbs before serving.",
+  "addProduct.form.submit": "Add product",
+  "addProduct.form.submitSaving": "Saving…",
+  "addProduct.form.aiFill": "AI autofill",
+  "addProduct.form.nutrients.calories": "Calories",
+  "addProduct.form.nutrients.protein": "Protein",
+  "addProduct.form.nutrients.fat": "Fat",
+  "addProduct.form.nutrients.carbs": "Carbs",
+  "addProduct.form.nutrients.caloriesUnit": "kcal",
+  "addProduct.form.nutrients.macrosUnit": "g",
+  "addProduct.preview.title": "Card preview",
+  "addProduct.preview.description":
+    "Updates automatically as you fill the form. A serving recommendation will appear once you save the dish.",
+  "addProduct.preview.model": "Model",
+  "addProduct.preview.portion": "Portion",
+  "addProduct.preview.nutrition": "Macros",
+  "addProduct.tip.title": "Tip",
+  "addProduct.tip.body":
+    "Tap “AI autofill” to get macro suggestions from the description and your base models. The feature arrives in the next release.",
+  "productList.title": "Products",
+  "productList.refresh": "Refresh list",
+  "productList.loading": "Loading products…",
+  "productList.empty": "No products found yet. Create the first one to populate the Vault.",
+  "productList.error": "We couldn't load the products from the Vault folder.",
+  "productList.portion": "Portion",
+  "productList.meal": "Meal",
+  "productList.macros": "Per portion",
+  "productList.notes": "Notes",
+  "productList.addToMealPlan": "Add to meal plan",
+  "mealPlan.title": "Meal plan",
+  "mealPlan.selectDate": "Select date",
+  "mealPlan.totals.calories": "Calories",
+  "mealPlan.totals.protein": "Protein",
+  "mealPlan.totals.fat": "Fat",
+  "mealPlan.totals.carbs": "Carbs",
+  "mealPlan.units.kcal": "kcal",
+  "mealPlan.units.grams": "g",
+  "mealPlan.state.loading": "Loading day plan…",
+  "mealPlan.state.updating": "Updating meal plan…",
+  "mealPlan.state.error": "Failed to load this day.",
+  "mealPlan.empty": "No meals yet. Add products to build the plan.",
+  "mealPlan.sectionTotal": "Total: {{value}} {{unit}}",
+  "mealPlan.totalSummary":
+    "Total: {{kcal}} kcal • Protein {{protein}} g • Fat {{fat}} g • Carbs {{carbs}} g",
+  "mealPlan.status.added": "Added “{{title}}” to {{section}}.",
+  "mealPlan.status.error": "Unable to update the meal plan.",
+  "mealPlan.locale": "en-US"
 } as const;
 
 export type TranslationKey = keyof typeof en;

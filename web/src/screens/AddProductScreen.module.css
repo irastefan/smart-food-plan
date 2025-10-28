@@ -62,6 +62,82 @@
   padding: clamp(24px, 3vw, 36px);
 }
 
+.listSection {
+  margin-top: clamp(32px, 6vw, 48px);
+}
+
+.listCard {
+  padding: clamp(24px, 3vw, 32px);
+}
+
+.daySection {
+  margin-top: clamp(24px, 4vw, 40px);
+}
+
+.vaultControls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 720px) {
+  .vaultControls {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+}
+
+.vaultInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.vaultLabel {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.vaultHint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.statusPlaceholder {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+.statusMessage {
+  padding: 12px 16px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-translucent);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.statusMessageSuccess {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.statusMessageError {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.statusMessageInfo {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
 .preview {
   background: var(--color-surface-translucent);
   border: 1px solid var(--color-border);
