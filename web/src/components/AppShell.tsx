@@ -12,8 +12,9 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const NAV_ITEMS: { route: AppRoute; translationKey: "nav.addProduct" | "nav.mealPlan" | "nav.setup" }[] =
+const NAV_ITEMS: { route: AppRoute; translationKey: "nav.products" | "nav.addProduct" | "nav.mealPlan" | "nav.setup" }[] =
   [
+    { route: "products", translationKey: "nav.products" },
     { route: "add-product", translationKey: "nav.addProduct" },
     { route: "meal-plan", translationKey: "nav.mealPlan" },
     { route: "onboarding", translationKey: "nav.setup" }

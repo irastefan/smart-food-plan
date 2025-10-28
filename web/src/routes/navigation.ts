@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export type AppRoute = "add-product" | "meal-plan" | "onboarding";
+export type AppRoute = "products" | "add-product" | "meal-plan" | "onboarding";
 
-const DEFAULT_ROUTE: AppRoute = "add-product";
+const DEFAULT_ROUTE: AppRoute = "products";
 
 function routeToHash(route: AppRoute): string {
   return `#/${route}`;
@@ -11,6 +11,8 @@ function routeToHash(route: AppRoute): string {
 function hashToRoute(hash: string): AppRoute {
   const normalized = hash.startsWith("#/") ? hash.slice(2) : hash.replace(/^#/, "");
   switch (normalized) {
+    case "products":
+      return "products";
     case "meal-plan":
       return "meal-plan";
     case "onboarding":
@@ -62,6 +64,7 @@ export function useHashNavigation(): { route: AppRoute; navigate: (route: AppRou
 }
 
 export const appRoutes: { route: AppRoute; hash: string }[] = [
+  { route: "products", hash: routeToHash("products") },
   { route: "add-product", hash: routeToHash("add-product") },
   { route: "meal-plan", hash: routeToHash("meal-plan") },
   { route: "onboarding", hash: routeToHash("onboarding") }

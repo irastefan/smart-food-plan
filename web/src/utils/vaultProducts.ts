@@ -23,12 +23,24 @@ export type ProductSummary = {
   notes?: string;
 };
 
+export type ProductDetail = ProductSummary & {
+  formData: ProductFormData;
+};
+
 type ParsedFrontMatter = {
   data: Record<string, unknown>;
   body: string;
 };
 
 const YAML_DIVIDER = "---";
+
+async function ensureProductsDirectory(
+  vaultHandle: FileSystemDirectoryHandle
+): Promise<FileSystemDirectoryHandle> {
+  return vaultHandle.getDirectoryHandle(PRODUCTS_DIRECTORY_NAME, {
+    create: true
+  });
+}
 
 export async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): Promise<boolean> {
   if (!handle.queryPermission || !handle.requestPermission) {
@@ -52,6 +64,36 @@ export async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): 
 
 function escapeYamlString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function toOptionalNumber(value: unknown): number | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number.parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function toStringValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return "";
 }
 
 function normalizeNumberLiteral(value: string | undefined): string {
@@ -116,7 +158,7 @@ export function buildProductMarkdown(data: ProductFormData, slug: string): strin
   const productName = data.productName?.trim() || "New product";
   const modelValue = data.model ?? "";
   const mealTimeValue = data.mealTime ?? "";
-  const now = new Date().toISOString();
+  const createdAt = data.createdAt && data.createdAt.length > 0 ? data.createdAt : new Date().toISOString();
 
   const frontMatter: string[] = [
     YAML_DIVIDER,
@@ -141,7 +183,7 @@ export function buildProductMarkdown(data: ProductFormData, slug: string): strin
   frontMatter.push(`  protein_g: ${normalizeNumberLiteral(data.protein)}`);
   frontMatter.push(`  fat_g: ${normalizeNumberLiteral(data.fat)}`);
   frontMatter.push(`  carbs_g: ${normalizeNumberLiteral(data.carbs)}`);
-  frontMatter.push(`created_at: "${now}"`);
+  frontMatter.push(`created_at: "${createdAt}"`);
   frontMatter.push(YAML_DIVIDER);
 
   const notes = data.notes?.trim();
@@ -158,9 +200,7 @@ export async function persistProductMarkdown(
   const slug = createSlug(productName) || `product-${Date.now()}`;
   const baseFileName = slug;
 
-  const productsDir = await vaultHandle.getDirectoryHandle(PRODUCTS_DIRECTORY_NAME, {
-    create: true
-  });
+  const productsDir = await ensureProductsDirectory(vaultHandle);
 
   const { handle, fileName } = await createUniqueFile(productsDir, baseFileName);
   const content = buildProductMarkdown(data, slug);
@@ -240,6 +280,65 @@ function parseFrontMatter(content: string): ParsedFrontMatter {
   return { data, body };
 }
 
+function parseProductFile(fileName: string, text: string): ProductDetail {
+  const { data, body } = parseFrontMatter(text);
+  const slugFromId = typeof data.id === "string" ? data.id.replace(/^product:/, "") : null;
+  const slug = slugFromId ?? fileName.replace(/\.md$/i, "");
+  const title = typeof data.title === "string" ? data.title : slug;
+  const model = typeof data.model === "string" ? data.model : undefined;
+  const modelLabel = typeof data.model_label === "string" ? data.model_label : undefined;
+  const mealTime = typeof data.meal_time === "string" ? data.meal_time : undefined;
+  const mealTimeLabel = typeof data.meal_time_label === "string" ? data.meal_time_label : undefined;
+  const portionValue = toOptionalNumber(data.portion_grams);
+  const nutritionData = (data.nutrition_per_portion ?? {}) as Record<string, unknown>;
+  const calories = toOptionalNumber(nutritionData.calories_kcal);
+  const protein = toOptionalNumber(nutritionData.protein_g);
+  const fat = toOptionalNumber(nutritionData.fat_g);
+  const carbs = toOptionalNumber(nutritionData.carbs_g);
+  const createdAt = typeof data.created_at === "string" ? data.created_at : undefined;
+  const notesRaw = body ?? "";
+  const notes = notesRaw === "_Комментариев нет_" ? "" : notesRaw;
+
+  const summary: ProductSummary = {
+    fileName,
+    slug,
+    title,
+    model,
+    modelLabel,
+    portionGrams: portionValue,
+    mealTime,
+    mealTimeLabel,
+    nutritionPerPortion: {
+      caloriesKcal: calories,
+      proteinG: protein,
+      fatG: fat,
+      carbsG: carbs
+    },
+    createdAt,
+    notes
+  };
+
+  const formData: ProductFormData = {
+    model: model ?? "",
+    modelLabel: modelLabel ?? "",
+    productName: title ?? "",
+    portion: toStringValue(data.portion_grams),
+    mealTime: mealTime ?? "",
+    mealTimeLabel: mealTimeLabel ?? "",
+    calories: toStringValue(nutritionData.calories_kcal ?? nutritionData.caloriesKcal),
+    protein: toStringValue(nutritionData.protein_g ?? nutritionData.proteinG),
+    fat: toStringValue(nutritionData.fat_g ?? nutritionData.fatG),
+    carbs: toStringValue(nutritionData.carbs_g ?? nutritionData.carbsG),
+    notes,
+    createdAt: createdAt ?? ""
+  };
+
+  return {
+    ...summary,
+    formData
+  };
+}
+
 function parseScalarValue(raw: string): string | number | null {
   if (!raw) {
     return null;
@@ -283,44 +382,9 @@ export async function loadProductSummaries(
     const fileHandle = entryHandle as FileSystemFileHandle;
     const file = await fileHandle.getFile();
     const text = await file.text();
-    const { data, body } = parseFrontMatter(text);
-    const slug = typeof data.id === "string" ? data.id.replace(/^product:/, "") : entryName;
-
-    const nutritionData = (data.nutrition_per_portion ?? {}) as Record<string, unknown>;
-
-    summaries.push({
-      fileName: entryName,
-      slug,
-      title: typeof data.title === "string" ? data.title : slug,
-      model: typeof data.model === "string" ? data.model : undefined,
-      modelLabel: typeof data.model_label === "string" ? data.model_label : undefined,
-      mealTime: typeof data.meal_time === "string" ? data.meal_time : undefined,
-      mealTimeLabel: typeof data.meal_time_label === "string" ? data.meal_time_label : undefined,
-      portionGrams:
-        typeof data.portion_grams === "number" || data.portion_grams === null
-          ? (data.portion_grams as number | null)
-          : undefined,
-      nutritionPerPortion: {
-        caloriesKcal:
-          typeof nutritionData.calories_kcal === "number" || nutritionData.calories_kcal === null
-            ? (nutritionData.calories_kcal as number | null)
-            : undefined,
-        proteinG:
-          typeof nutritionData.protein_g === "number" || nutritionData.protein_g === null
-            ? (nutritionData.protein_g as number | null)
-            : undefined,
-        fatG:
-          typeof nutritionData.fat_g === "number" || nutritionData.fat_g === null
-            ? (nutritionData.fat_g as number | null)
-            : undefined,
-        carbsG:
-          typeof nutritionData.carbs_g === "number" || nutritionData.carbs_g === null
-            ? (nutritionData.carbs_g as number | null)
-            : undefined
-      },
-      createdAt: typeof data.created_at === "string" ? data.created_at : undefined,
-      notes: body ?? undefined
-    });
+    const detail = parseProductFile(entryName, text);
+    const { formData: _unused, ...summary } = detail;
+    summaries.push(summary);
   }
 
   summaries.sort((a, b) => a.title.localeCompare(b.title, "ru"));
@@ -336,3 +400,48 @@ export function isPermissionError(error: unknown): boolean {
   return domException?.name === "NotAllowedError" || domException?.name === "SecurityError";
 }
 
+export async function loadProductDetail(
+  vaultHandle: FileSystemDirectoryHandle,
+  fileName: string
+): Promise<ProductDetail> {
+  const productsDir = await ensureProductsDirectory(vaultHandle);
+  const handle = await productsDir.getFileHandle(fileName, { create: false });
+  const file = await handle.getFile();
+  const text = await file.text();
+  return parseProductFile(fileName, text);
+}
+
+export async function updateProductMarkdown(
+  vaultHandle: FileSystemDirectoryHandle,
+  fileName: string,
+  slug: string,
+  data: ProductFormData
+): Promise<void> {
+  const productsDir = await ensureProductsDirectory(vaultHandle);
+  const handle = await productsDir.getFileHandle(fileName, { create: false });
+  const content = buildProductMarkdown(data, slug);
+  const writable = await handle.createWritable({ keepExistingData: false });
+  try {
+    await writable.write(`${content.trim()}\n`);
+  } finally {
+    await writable.close();
+  }
+}
+
+export async function deleteProduct(
+  vaultHandle: FileSystemDirectoryHandle,
+  fileName: string
+): Promise<void> {
+  const productsDir = await ensureProductsDirectory(vaultHandle);
+  if (typeof productsDir.removeEntry !== "function") {
+    throw new Error("Current browser does not support deleting files via File System Access API");
+  }
+  try {
+    await productsDir.removeEntry(fileName);
+  } catch (error) {
+    if ((error as DOMException)?.name === "NotFoundError") {
+      return;
+    }
+    throw error;
+  }
+}

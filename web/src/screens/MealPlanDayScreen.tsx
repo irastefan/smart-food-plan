@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { MealPlanDayCard } from "@/components/MealPlanDay";
+import { SELECT_PRODUCT_FOR_PLAN_KEY } from "@/constants/storage";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { loadMealPlanDay, type MealPlanDay } from "@/utils/vaultDays";
 import { clearVaultDirectoryHandle, loadVaultDirectoryHandle } from "@/utils/vaultStorage";
@@ -8,10 +9,10 @@ import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import styles from "./MealPlanDayScreen.module.css";
 
 type MealPlanDayScreenProps = {
-  onNavigateAddProduct?: () => void;
+  onNavigateToProducts?: () => void;
 };
 
-export function MealPlanDayScreen({ onNavigateAddProduct }: MealPlanDayScreenProps): JSX.Element {
+export function MealPlanDayScreen({ onNavigateToProducts }: MealPlanDayScreenProps): JSX.Element {
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -86,8 +87,18 @@ export function MealPlanDayScreen({ onNavigateAddProduct }: MealPlanDayScreenPro
   }, []);
 
   const handleNavigate = useCallback(() => {
-    onNavigateAddProduct?.();
-  }, [onNavigateAddProduct]);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        SELECT_PRODUCT_FOR_PLAN_KEY,
+        JSON.stringify({ date: selectedDate })
+      );
+    }
+    if (onNavigateToProducts) {
+      onNavigateToProducts();
+    } else if (typeof window !== "undefined") {
+      window.location.hash = "#/products";
+    }
+  }, [selectedDate, onNavigateToProducts]);
 
   return (
     <div className={styles.root}>
@@ -98,7 +109,7 @@ export function MealPlanDayScreen({ onNavigateAddProduct }: MealPlanDayScreenPro
         </div>
         <div className={styles.headerActions}>
           <Button variant="outlined" onClick={handleNavigate}>
-            {vaultHandle ? t("productList.addToMealPlan") : t("addProduct.vault.button.choose")}
+            {t("productList.addToMealPlan")}
           </Button>
         </div>
       </header>

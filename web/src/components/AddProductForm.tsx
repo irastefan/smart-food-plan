@@ -1,11 +1,27 @@
-import { FormEvent, useMemo } from "react";
+import { FormEvent, ReactNode, useMemo } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import styles from "./AddProductForm.module.css";
 
+export type ProductFormValues = {
+  model?: string;
+  productName?: string;
+  portion?: string;
+  mealTime?: string;
+  calories?: string;
+  protein?: string;
+  fat?: string;
+  carbs?: string;
+  notes?: string;
+};
+
 type AddProductFormProps = {
   onSubmit?: (data: Record<string, string>) => void;
   isSubmitting?: boolean;
+  defaultValues?: ProductFormValues | null;
+  submitLabel?: string;
+  formKey?: string;
+  footerSlot?: ReactNode;
 };
 
 type NutrientField = {
@@ -117,8 +133,16 @@ function SaveIcon(): JSX.Element {
   );
 }
 
-export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFormProps): JSX.Element {
+export function AddProductForm({
+  onSubmit,
+  isSubmitting = false,
+  defaultValues = null,
+  submitLabel,
+  formKey,
+  footerSlot
+}: AddProductFormProps): JSX.Element {
   const { t } = useTranslation();
+  const values = defaultValues ?? {};
 
   const modelOptions = useMemo(
     () => [
@@ -183,13 +207,18 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} aria-busy={isSubmitting}>
+    <form key={formKey ?? values.productName ?? "new"} className={styles.form} onSubmit={handleSubmit} aria-busy={isSubmitting}>
       <div className={styles.group}>
         <label className={styles.label} htmlFor="model">
           {t("addProduct.form.modelLabel")}
         </label>
         <div className={styles.selectWrapper}>
-          <select className={styles.select} id="model" name="model" defaultValue="balanced">
+          <select
+            className={styles.select}
+            id="model"
+            name="model"
+            defaultValue={values.model ?? "balanced"}
+          >
             {modelOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -208,6 +237,7 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
             className={styles.input}
             id="productName"
             name="productName"
+            defaultValue={values.productName ?? ""}
             placeholder={t("addProduct.form.productNamePlaceholder")}
             required
           />
@@ -225,6 +255,7 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
               id="portion"
               name="portion"
               type="number"
+              defaultValue={values.portion ?? ""}
               min="0"
               step="1"
               placeholder={t("addProduct.form.portionPlaceholder")}
@@ -238,7 +269,12 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
             {t("addProduct.form.mealTimeLabel")}
           </label>
           <div className={styles.selectWrapper}>
-            <select className={styles.select} id="mealTime" name="mealTime" defaultValue="lunch">
+            <select
+              className={styles.select}
+              id="mealTime"
+              name="mealTime"
+              defaultValue={values.mealTime ?? "lunch"}
+            >
               {mealTimeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -262,6 +298,7 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
                 id={id}
                 name={id}
                 inputMode="decimal"
+                defaultValue={values[id as keyof ProductFormValues] ?? ""}
                 placeholder={placeholder}
                 type="number"
                 min="0"
@@ -282,6 +319,7 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
             className={styles.textarea}
             id="notes"
             name="notes"
+            defaultValue={values.notes ?? ""}
             rows={4}
             placeholder={t("addProduct.form.notesPlaceholder")}
           />
@@ -290,7 +328,9 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
 
       <div className={styles.footer}>
         <Button type="submit" leadingIcon={<SaveIcon />} disabled={isSubmitting}>
-          {isSubmitting ? t("addProduct.form.submitSaving") : t("addProduct.form.submit")}
+          {isSubmitting
+            ? t("addProduct.form.submitSaving")
+            : submitLabel ?? t("addProduct.form.submit")}
         </Button>
         <Button
           type="button"
@@ -302,6 +342,7 @@ export function AddProductForm({ onSubmit, isSubmitting = false }: AddProductFor
         >
           {t("addProduct.form.aiFill")}
         </Button>
+        {footerSlot}
       </div>
     </form>
   );

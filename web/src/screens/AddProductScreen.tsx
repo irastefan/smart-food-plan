@@ -2,20 +2,17 @@ import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { AddProductForm } from "@/components/AddProductForm";
-import { ProductList } from "@/components/ProductList";
-import { MealPlanDayCard } from "@/components/MealPlanDay";
+import { AddProductForm, type ProductFormValues } from "@/components/AddProductForm";
 import { useTranslation } from "@/i18n/I18nProvider";
-import type { TranslationKey } from "@/i18n/messages";
-import type { ProductFormData, ProductSummary } from "@/utils/vaultProducts";
+import { EDIT_PRODUCT_STORAGE_KEY } from "@/constants/storage";
 import {
   ensureDirectoryAccess,
   isPermissionError,
-  loadProductSummaries,
-  persistProductMarkdown
+  persistProductMarkdown,
+  loadProductDetail,
+  updateProductMarkdown,
+  type ProductFormData
 } from "@/utils/vaultProducts";
-import { addProductToMealPlan, loadMealPlanDay, type MealPlanDay } from "@/utils/vaultDays";
 import {
   clearVaultDirectoryHandle,
   loadVaultDirectoryHandle,
@@ -26,10 +23,35 @@ import styles from "./AddProductScreen.module.css";
 type StatusState =
   | {
       type: "info" | "success" | "error";
-      key: TranslationKey;
-      params?: Record<string, string>;
+      message: string;
     }
   | null;
+
+type EditingState = {
+  fileName: string;
+  slug: string;
+  title: string;
+  modelLabel?: string;
+  mealTimeLabel?: string;
+  createdAt?: string;
+};
+
+function toFormValues(data: ProductFormData | null): ProductFormValues | null {
+  if (!data) {
+    return null;
+  }
+  return {
+    model: data.model ?? "",
+    productName: data.productName ?? "",
+    portion: data.portion ?? "",
+    mealTime: data.mealTime ?? "",
+    calories: data.calories ?? "",
+    protein: data.protein ?? "",
+    fat: data.fat ?? "",
+    carbs: data.carbs ?? "",
+    notes: data.notes ?? ""
+  };
+}
 
 export function AddProductScreen(): JSX.Element {
   const { t } = useTranslation();
@@ -37,14 +59,9 @@ export function AddProductScreen(): JSX.Element {
   const [status, setStatus] = useState<StatusState>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isSelectingVault, setIsSelectingVault] = useState<boolean>(false);
-  const [products, setProducts] = useState<ProductSummary[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(false);
-  const [productLoadFailed, setProductLoadFailed] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [dayPlan, setDayPlan] = useState<MealPlanDay | null>(null);
-  const [isLoadingDay, setIsLoadingDay] = useState<boolean>(false);
-  const [isUpdatingDay, setIsUpdatingDay] = useState<boolean>(false);
-  const [dayError, setDayError] = useState<string | null>(null);
+  const [defaultValues, setDefaultValues] = useState<ProductFormValues | null>(null);
+  const [formKey, setFormKey] = useState<string>("new");
+  const [editing, setEditing] = useState<EditingState | null>(null);
 
   const modelLabels = useMemo(
     () => ({
@@ -66,35 +83,37 @@ export function AddProductScreen(): JSX.Element {
     [t]
   );
 
-  const vaultFolderLabel = useMemo(() => {
-    if (vaultHandle?.name) {
-      return t("addProduct.vault.label", { folder: vaultHandle.name });
-    }
-    return t("addProduct.vault.label.unselected");
-  }, [t, vaultHandle]);
+  const vaultLabel = vaultHandle?.name
+    ? t("addProduct.vault.label", { folder: vaultHandle.name })
+    : t("addProduct.vault.label.unselected");
 
   const vaultHint = vaultHandle
     ? t("addProduct.vault.hint.selected")
     : t("addProduct.vault.hint.missing");
 
-  const refreshProducts = useCallback(async (handle: FileSystemDirectoryHandle | null) => {
-    if (!handle) {
-      setProducts([]);
-      return;
+  const clearEditing = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(EDIT_PRODUCT_STORAGE_KEY);
     }
-
-    try {
-      setIsLoadingProducts(true);
-      setProductLoadFailed(false);
-      const items = await loadProductSummaries(handle);
-      setProducts(items);
-    } catch (error) {
-      console.error("Failed to load products", error);
-      setProductLoadFailed(true);
-    } finally {
-      setIsLoadingProducts(false);
-    }
+    setEditing(null);
+    setDefaultValues(null);
+    setFormKey(`new-${Date.now()}`);
   }, []);
+
+  useEffect(() => {
+    if (status?.type === "info" || status?.type === "success") {
+      if (typeof window === "undefined") {
+        return;
+      }
+      const timeout = window.setTimeout(() => {
+        setStatus((current) => (current?.type === status.type ? null : current));
+      }, 4000);
+      return () => {
+        window.clearTimeout(timeout);
+      };
+    }
+    return undefined;
+  }, [status]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("indexedDB" in window)) {
@@ -114,12 +133,7 @@ export function AddProductScreen(): JSX.Element {
         if (!hasAccess) {
           await clearVaultDirectoryHandle();
           if (!cancelled) {
-            setStatus({
-              type: "error",
-              key: "addProduct.status.permissionRevoked"
-            });
-            setVaultHandle(null);
-            setProducts([]);
+            setStatus({ type: "error", message: t("addProduct.status.permissionRevoked") });
           }
           return;
         }
@@ -128,17 +142,13 @@ export function AddProductScreen(): JSX.Element {
           setVaultHandle(handle);
           setStatus({
             type: "success",
-            key: "addProduct.status.connected",
-            params: { folder: handle.name }
+            message: t("addProduct.status.connected", { folder: handle.name })
           });
         }
       } catch (error) {
-        console.error("Failed to restore vault directory handle", error);
+        console.error("Failed to restore vault handle", error);
         if (!cancelled) {
-          setStatus({
-            type: "error",
-            key: "addProduct.status.restoreError"
-          });
+          setStatus({ type: "error", message: t("addProduct.status.restoreError") });
         }
       }
     };
@@ -148,84 +158,69 @@ export function AddProductScreen(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
-    if (status?.type === "info" || status?.type === "success") {
-      if (typeof window === "undefined") {
-        return;
-      }
-      const timeout = window.setTimeout(() => {
-        setStatus((current) => (current?.type === status.type ? null : current));
-      }, 5000);
-      return () => {
-        window.clearTimeout(timeout);
-      };
+    if (!vaultHandle || typeof window === "undefined") {
+      return;
     }
-    return undefined;
-  }, [status]);
 
-  useEffect(() => {
-    void refreshProducts(vaultHandle);
-  }, [vaultHandle, refreshProducts]);
-
-  useEffect(() => {
-    if (!vaultHandle) {
-      setDayPlan(null);
-      setDayError(null);
+    const stored = window.sessionStorage.getItem(EDIT_PRODUCT_STORAGE_KEY);
+    if (!stored) {
+      setEditing(null);
+      setDefaultValues(null);
+      setFormKey("new");
       return;
     }
 
     let cancelled = false;
-    setIsLoadingDay(true);
-    setDayError(null);
 
-    const loadDay = async () => {
+    const loadDetail = async () => {
       try {
-        const day = await loadMealPlanDay(vaultHandle, selectedDate);
-        if (!cancelled) {
-          setDayPlan(day);
+        const payload = JSON.parse(stored) as { fileName: string; slug?: string };
+        if (!payload?.fileName) {
+          throw new Error("Invalid edit payload");
         }
+        const detail = await loadProductDetail(vaultHandle, payload.fileName);
+        if (cancelled) {
+          return;
+        }
+        setEditing({
+          fileName: detail.fileName,
+          slug: detail.slug,
+          title: detail.title,
+          modelLabel: detail.modelLabel,
+          mealTimeLabel: detail.mealTimeLabel,
+          createdAt: detail.createdAt
+        });
+        setDefaultValues(toFormValues(detail.formData));
+        setFormKey(detail.slug ?? detail.fileName);
+        setStatus({ type: "info", message: t("addProduct.status.editing", { title: detail.title }) });
       } catch (error) {
-        console.error("Failed to load meal plan day", error);
-        if (!cancelled) {
-          setDayError("loadFailed");
-          setDayPlan(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingDay(false);
-        }
+        console.error("Failed to load product detail for editing", error);
+        window.sessionStorage.removeItem(EDIT_PRODUCT_STORAGE_KEY);
+        setStatus({ type: "error", message: t("addProduct.status.genericError") });
+        setEditing(null);
+        setDefaultValues(null);
+        setFormKey("new");
       }
     };
 
-    void loadDay();
+    void loadDetail();
 
     return () => {
       cancelled = true;
     };
-  }, [vaultHandle, selectedDate]);
-
-  useEffect(() => {
-    if (!vaultHandle) {
-      setProducts([]);
-      return;
-    }
-    void refreshProducts(vaultHandle);
-  }, [vaultHandle, refreshProducts]);
+  }, [vaultHandle, t]);
 
   const handleSelectVault = useCallback(async () => {
     if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({
-        type: "error",
-        key: "addProduct.status.browserUnsupported"
-      });
+      setStatus({ type: "error", message: t("addProduct.status.browserUnsupported") });
       return;
     }
 
     try {
       setIsSelectingVault(true);
-      setStatus(null);
       const handle = await window.showDirectoryPicker();
       if (!handle) {
         return;
@@ -233,19 +228,12 @@ export function AddProductScreen(): JSX.Element {
 
       const hasAccess = await ensureDirectoryAccess(handle);
       if (!hasAccess) {
-        setStatus({
-          type: "error",
-          key: "addProduct.status.permissionError"
-        });
+        setStatus({ type: "error", message: t("addProduct.status.permissionError") });
         return;
       }
 
       setVaultHandle(handle);
-      setStatus({
-        type: "success",
-        key: "addProduct.status.connected",
-        params: { folder: handle.name }
-      });
+      setStatus({ type: "success", message: t("addProduct.status.connected", { folder: handle.name }) });
 
       if ("indexedDB" in window) {
         await saveVaultDirectoryHandle(handle);
@@ -254,224 +242,114 @@ export function AddProductScreen(): JSX.Element {
       if ((error as DOMException)?.name === "AbortError") {
         return;
       }
-
-      console.error("Failed to select vault directory", error);
-      setStatus({
-        type: "error",
-        key: "addProduct.status.genericError"
-      });
+      console.error("Failed to select vault", error);
+      setStatus({ type: "error", message: t("addProduct.status.genericError") });
     } finally {
       setIsSelectingVault(false);
     }
-  }, [refreshProducts]);
+  }, [t]);
 
-  const handleFormSubmit = useCallback(
-    async (data: ProductFormData) => {
+  const handleSubmit = useCallback(
+    async (data: Record<string, string>) => {
       if (!vaultHandle) {
-        setStatus({
-          type: "error",
-          key: "addProduct.status.noVault"
-        });
+        setStatus({ type: "error", message: t("addProduct.status.noVault") });
         return;
       }
 
+      const modelValue = data.model ?? "";
+      const mealTimeValue = data.mealTime ?? "";
+      const payload: ProductFormData = {
+        ...data,
+        modelLabel: modelLabels[modelValue as keyof typeof modelLabels] ?? editing?.modelLabel ?? "",
+        mealTimeLabel:
+          mealTimeLabels[mealTimeValue as keyof typeof mealTimeLabels] ?? editing?.mealTimeLabel ?? "",
+        createdAt: editing?.createdAt ?? ""
+      };
+
       try {
         setIsSaving(true);
-        setStatus({
-          type: "info",
-          key: "addProduct.status.saving"
-        });
-        const modelValue = data["model"] ?? "";
-        const mealTimeValue = data["mealTime"] ?? "";
-        const modelLabel =
-          modelLabels[modelValue as keyof typeof modelLabels] ?? modelValue;
-        const mealTimeLabel =
-          mealTimeLabels[mealTimeValue as keyof typeof mealTimeLabels] ?? mealTimeValue;
-        const payload: ProductFormData = {
-          ...data,
-          modelLabel,
-          mealTimeLabel
-        };
-        const { fileName } = await persistProductMarkdown(vaultHandle, payload);
-        setStatus({
-          type: "success",
-          key: "addProduct.status.saved",
-          params: { file: fileName }
-        });
-        await refreshProducts(vaultHandle);
+        if (editing) {
+          await updateProductMarkdown(vaultHandle, editing.fileName, editing.slug, payload);
+          setStatus({ type: "success", message: t("addProduct.status.updated") });
+          clearEditing();
+          window.location.hash = "#/products";
+        } else {
+          await persistProductMarkdown(vaultHandle, payload);
+          setStatus({ type: "success", message: t("addProduct.status.created") });
+          setDefaultValues(null);
+          setFormKey(`new-${Date.now()}`);
+        }
       } catch (error) {
-        console.error("Failed to save product markdown", error);
-
+        console.error("Failed to save product", error);
         if (isPermissionError(error)) {
           setVaultHandle(null);
-          setProducts([]);
-          if (typeof window !== "undefined" && "indexedDB" in window) {
-            await clearVaultDirectoryHandle();
-          }
-          setStatus({
-            type: "error",
-            key: "addProduct.status.permissionRevoked"
-          });
-          return;
+          await clearVaultDirectoryHandle();
+          setStatus({ type: "error", message: t("addProduct.status.permissionRevoked") });
+        } else {
+          setStatus({ type: "error", message: t("addProduct.status.genericError") });
         }
-
-        setStatus({
-          type: "error",
-          key: "addProduct.status.genericError"
-        });
       } finally {
         setIsSaving(false);
       }
     },
-    [vaultHandle, modelLabels, mealTimeLabels, refreshProducts]
+    [vaultHandle, t, modelLabels, mealTimeLabels, editing, clearEditing]
   );
 
-  const handleDateChange = useCallback((date: string) => {
-    setSelectedDate(date);
+  const handleCancelEdit = useCallback(() => {
+    clearEditing();
+    setStatus({ type: "info", message: t("addProduct.status.loaded") });
+  }, [clearEditing, t]);
+
+  const handleBackToList = useCallback(() => {
+    window.location.hash = "#/products";
   }, []);
-
-  const handleAddProductToDay = useCallback(
-    async (product: ProductSummary) => {
-      if (!vaultHandle) {
-        setStatus({
-          type: "error",
-          key: "addProduct.status.noVault"
-        });
-        return;
-      }
-
-      try {
-        setIsUpdatingDay(true);
-        const sectionId = product.mealTime ?? "flex";
-        const sectionLabel =
-          product.mealTimeLabel ??
-          mealTimeLabels[sectionId as keyof typeof mealTimeLabels] ??
-          sectionId;
-        const { day } = await addProductToMealPlan(vaultHandle, selectedDate, product, {
-          sectionId,
-          sectionName: sectionLabel
-        });
-        setDayPlan(day);
-        setStatus({
-          type: "success",
-          key: "mealPlan.status.added",
-          params: {
-            title: product.title,
-            section: sectionLabel
-          }
-        });
-      } catch (error) {
-        console.error("Failed to add product to meal plan", error);
-        setStatus({
-          type: "error",
-          key: "mealPlan.status.error"
-        });
-      } finally {
-        setIsUpdatingDay(false);
-      }
-    },
-    [vaultHandle, selectedDate, mealTimeLabels]
-  );
 
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <div className={styles.headerText}>
-          <span className={styles.badge}>{t("addProduct.badge")}</span>
-          <h1 className={styles.title}>{t("addProduct.title")}</h1>
+        <div>
+          <h1 className={styles.title}>{t("nav.addProduct")}</h1>
           <p className={styles.subtitle}>{t("addProduct.subtitle")}</p>
         </div>
-        <ThemeToggle />
+        <div className={styles.headerActions}>
+          <Button variant="outlined" onClick={handleBackToList}>
+            {t("addProduct.goToList")}
+          </Button>
+        </div>
       </header>
 
-      <main className={styles.content}>
-        <Card className={styles.formCard}>
-          <div className={styles.vaultControls}>
-            <div className={styles.vaultInfo}>
-              <span className={styles.vaultLabel}>{vaultFolderLabel}</span>
-              <p className={styles.vaultHint}>{vaultHint}</p>
-              <div className={styles.statusPlaceholder} aria-live="polite">
-                {status && (
-                  <div
-                    className={clsx(styles.statusMessage, {
-                      [styles.statusMessageSuccess]: status.type === "success",
-                      [styles.statusMessageError]: status.type === "error",
-                      [styles.statusMessageInfo]: status.type === "info"
-                    })}
-                  >
-                    {t(status.key, status.params)}
-                  </div>
-                )}
-              </div>
-            </div>
-            {typeof window !== "undefined" && (
-              <Button
-                variant="outlined"
-                onClick={handleSelectVault}
-                disabled={isSelectingVault || isSaving}
-              >
-                {vaultHandle
-                  ? t("addProduct.vault.button.change")
-                  : t("addProduct.vault.button.choose")}
-              </Button>
-            )}
+      <Card className={styles.card}>
+        <div className={styles.vaultControls}>
+          <div>
+            <span className={styles.vaultLabel}>{vaultLabel}</span>
+            <p className={styles.vaultHint}>{vaultHint}</p>
           </div>
+          <Button variant="outlined" onClick={handleSelectVault} disabled={isSelectingVault || isSaving}>
+            {vaultHandle ? t("addProduct.vault.button.change") : t("addProduct.vault.button.choose")}
+          </Button>
+        </div>
 
-          <AddProductForm onSubmit={handleFormSubmit} isSubmitting={isSaving} />
-        </Card>
+        {status && <div className={clsx(styles.status, styles[`status-${status.type}`])}>{status.message}</div>}
 
-        <aside className={styles.preview}>
-          <h2 className={styles.previewTitle}>{t("addProduct.preview.title")}</h2>
-          <p className={styles.previewDescription}>{t("addProduct.preview.description")}</p>
-          <ul className={styles.previewList}>
-            <li>
-              <span className={styles.previewLabel}>{t("addProduct.preview.model")}</span>
-              <span className={styles.previewValue}>{t("dietModel.balanced")}</span>
-            </li>
-            <li>
-              <span className={styles.previewLabel}>{t("addProduct.preview.portion")}</span>
-              <span className={styles.previewValue}>
-                {t("addProduct.form.portionPlaceholder")} {t("addProduct.form.portionUnit")}
-              </span>
-            </li>
-            <li>
-              <span className={styles.previewLabel}>{t("addProduct.preview.nutrition")}</span>
-              <span className={styles.previewValue}>132 / 18 / 7 / 12</span>
-            </li>
-          </ul>
-
-          <div className={styles.tip}>
-            <span className={styles.tipTitle}>{t("addProduct.tip.title")}</span>
-            <p>{t("addProduct.tip.body")}</p>
-          </div>
-        </aside>
-      </main>
-
-      <section className={styles.listSection}>
-        <Card className={styles.listCard}>
-          <ProductList
-            products={products}
-            isLoading={isLoadingProducts}
-            hasError={productLoadFailed}
-            onRefresh={() => {
-              void refreshProducts(vaultHandle);
-            }}
-            onAddToMealPlan={handleAddProductToDay}
-            disableAddActions={isUpdatingDay || !vaultHandle}
+        {vaultHandle ? (
+          <AddProductForm
+            onSubmit={handleSubmit}
+            isSubmitting={isSaving}
+            defaultValues={defaultValues}
+            submitLabel={editing ? t("addProduct.form.submitEdit") : undefined}
+            formKey={formKey}
+            footerSlot={
+              editing ? (
+                <Button type="button" variant="ghost" onClick={handleCancelEdit} disabled={isSaving}>
+                  {t("addProduct.cancelEdit")}
+                </Button>
+              ) : null
+            }
           />
-        </Card>
-      </section>
-
-      <section className={styles.daySection}>
-        <MealPlanDayCard
-          day={dayPlan}
-          isLoading={isLoadingDay}
-          isUpdating={isUpdatingDay}
-          error={dayError ? t("mealPlan.state.error") : null}
-          selectedDate={selectedDate}
-          onDateChange={handleDateChange}
-        />
-      </section>
+        ) : (
+          <div className={styles.placeholder}>{t("addProduct.status.noVault")}</div>
+        )}
+      </Card>
     </div>
   );
 }

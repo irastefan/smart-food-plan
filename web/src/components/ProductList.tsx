@@ -11,6 +11,9 @@ type ProductListProps = {
   onRefresh: () => void;
   onAddToMealPlan?: (product: ProductSummary) => void;
   disableAddActions?: boolean;
+  onEditProduct?: (product: ProductSummary) => void;
+  onDeleteProduct?: (product: ProductSummary) => void;
+  disableManageActions?: boolean;
 };
 
 function formatNumber(value: number | null | undefined): string {
@@ -33,7 +36,10 @@ export function ProductList({
   hasError,
   onRefresh,
   onAddToMealPlan,
-  disableAddActions = false
+  disableAddActions = false,
+  onEditProduct,
+  onDeleteProduct,
+  disableManageActions = false
 }: ProductListProps): JSX.Element {
   const { t } = useTranslation();
 
@@ -106,13 +112,46 @@ export function ProductList({
                     {t("productList.addToMealPlan")}
                   </Button>
                 )}
+                {(onEditProduct || onDeleteProduct) && (
+                  <div className={styles.manageGroup}>
+                    {onEditProduct && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => onEditProduct(product)}
+                        disabled={disableManageActions}
+                      >
+                        {t("productList.edit")}
+                      </Button>
+                    )}
+                    {onDeleteProduct && (
+                      <Button
+                        variant="ghost"
+                        className={styles.deleteButton}
+                        onClick={() => onDeleteProduct(product)}
+                        disabled={disableManageActions}
+                      >
+                        {t("productList.delete")}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </li>
           );
         })}
       </ul>
     );
-  }, [hasError, isLoading, products, t, onAddToMealPlan]);
+  }, [
+    hasError,
+    isLoading,
+    products,
+    t,
+    onAddToMealPlan,
+    disableAddActions,
+    onEditProduct,
+    onDeleteProduct,
+    disableManageActions
+  ]);
 
   return (
     <div className={styles.root}>

@@ -4,6 +4,7 @@ import { useHashNavigation } from "@/routes/navigation";
 import { AddProductScreen } from "@/screens/AddProductScreen";
 import { MealPlanDayScreen } from "@/screens/MealPlanDayScreen";
 import { OnboardingVaultScreen } from "@/screens/OnboardingVaultScreen";
+import { ProductLibraryScreen } from "@/screens/ProductLibraryScreen";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 function App(): JSX.Element {
@@ -11,8 +12,10 @@ function App(): JSX.Element {
 
   const content = (() => {
     switch (route) {
+      case "products":
+        return <ProductLibraryScreen onNavigateAddProduct={() => navigate("add-product")} />;
       case "meal-plan":
-        return <MealPlanDayScreen onNavigateAddProduct={() => navigate("add-product")} />;
+        return <MealPlanDayScreen onNavigateToProducts={() => navigate("products")} />;
       case "onboarding":
         return <OnboardingVaultScreen />;
       case "add-product":
