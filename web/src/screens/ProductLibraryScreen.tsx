@@ -165,8 +165,12 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
   }, [refreshProducts, t]);
 
   const handleAddProduct = useCallback(() => {
+    if (pendingPlanDate && typeof window !== "undefined") {
+      window.sessionStorage.removeItem(SELECT_PRODUCT_FOR_PLAN_KEY);
+      setPendingPlanDate(null);
+    }
     onNavigateAddProduct?.();
-  }, [onNavigateAddProduct]);
+  }, [onNavigateAddProduct, pendingPlanDate]);
 
   const handleAddToMealPlan = useCallback(
     async (product: ProductSummary) => {
