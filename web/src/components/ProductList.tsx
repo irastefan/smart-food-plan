@@ -11,6 +11,7 @@ type ProductListProps = {
   onRefresh: () => void;
   onAddToMealPlan?: (product: ProductSummary) => void;
   disableAddActions?: boolean;
+  onViewProduct?: (product: ProductSummary) => void;
   onEditProduct?: (product: ProductSummary) => void;
   onDeleteProduct?: (product: ProductSummary) => void;
   disableManageActions?: boolean;
@@ -37,6 +38,7 @@ export function ProductList({
   onRefresh,
   onAddToMealPlan,
   disableAddActions = false,
+  onViewProduct,
   onEditProduct,
   onDeleteProduct,
   disableManageActions = false
@@ -110,6 +112,11 @@ export function ProductList({
                     disabled={disableAddActions}
                   >
                     {t("productList.addToMealPlan")}
+                  </Button>
+                )}
+                {onViewProduct && (
+                  <Button variant="ghost" onClick={() => onViewProduct(product)}>
+                    {t("productList.view")}
                   </Button>
                 )}
                 {(onEditProduct || onDeleteProduct) && (

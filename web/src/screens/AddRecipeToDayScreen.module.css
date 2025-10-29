@@ -1,0 +1,135 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 12px;
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.tabButton {
+  border: none;
+  background: transparent;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.tabActive {
+  background: var(--color-accent);
+  color: var(--color-button-contained-text);
+}
+
+.searchBar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  padding: 12px 16px;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card-background);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.cardMeta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.selectionPanel {
+  background: var(--card-background);
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.selectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selectionItem {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.selectionTitle {
+  font-weight: 600;
+}
+
+.statusMessage {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--info-chip-background);
+  color: var(--color-text-primary);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .actions {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,84 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.card {
+  background: var(--card-background);
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.macroGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.macroItem {
+  background: var(--color-surface);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.macroLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.macroValue {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.notes {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+.statusMessage {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--info-chip-background);
+  color: var(--color-text-primary);
+}
