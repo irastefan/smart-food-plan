@@ -12,13 +12,24 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const NAV_ITEMS: { route: AppRoute; translationKey: "nav.products" | "nav.addProduct" | "nav.mealPlan" | "nav.setup" }[] =
-  [
-    { route: "products", translationKey: "nav.products" },
-    { route: "add-product", translationKey: "nav.addProduct" },
-    { route: "meal-plan", translationKey: "nav.mealPlan" },
-    { route: "onboarding", translationKey: "nav.setup" }
-  ];
+const NAV_SECTIONS: { route: AppRoute; translationKey: "nav.mealPlan" | "nav.recipes" | "nav.products" | "nav.setup" }[] = [
+  { route: "meal-plan", translationKey: "nav.mealPlan" },
+  { route: "recipes", translationKey: "nav.recipes" },
+  { route: "products", translationKey: "nav.products" },
+  { route: "onboarding", translationKey: "nav.setup" }
+];
+
+const ROUTE_TO_SECTION: Record<AppRoute, AppRoute> = {
+  "meal-plan": "meal-plan",
+  "add-recipe-to-day": "meal-plan",
+  "recipes": "recipes",
+  "add-recipe": "recipes",
+  "recipe": "recipes",
+  "products": "products",
+  "add-product": "products",
+  "product": "products",
+  "onboarding": "onboarding"
+};
 
 export function AppShell({ currentRoute, onNavigate, children }: AppShellProps): JSX.Element {
   const { t } = useTranslation();
@@ -30,11 +41,14 @@ export function AppShell({ currentRoute, onNavigate, children }: AppShellProps):
           {t("nav.brand")}
         </div>
         <nav className={styles.nav} aria-label="Main navigation">
-          {NAV_ITEMS.map((item) => (
+          {NAV_SECTIONS.map((item) => (
             <button
               key={item.route}
               type="button"
-              className={clsx(styles.navLink, currentRoute === item.route && styles.navLinkActive)}
+              className={clsx(
+                styles.navLink,
+                ROUTE_TO_SECTION[currentRoute] === item.route && styles.navLinkActive
+              )}
               onClick={() => onNavigate(item.route)}
             >
               {t(item.translationKey)}

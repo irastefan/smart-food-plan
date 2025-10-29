@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { ProductList } from "@/components/ProductList";
+import { AddToMealPlanDialog } from "@/components/AddToMealPlanDialog";
 import { useTranslation } from "@/i18n/I18nProvider";
-import { EDIT_PRODUCT_STORAGE_KEY } from "@/constants/storage";
-import { SELECT_PRODUCT_FOR_PLAN_KEY } from "@/constants/storage";
+import { EDIT_PRODUCT_STORAGE_KEY, SELECT_PRODUCT_FOR_PLAN_KEY, VIEW_PRODUCT_STORAGE_KEY } from "@/constants/storage";
 import {
   deleteProduct,
   ensureDirectoryAccess,
@@ -28,9 +28,13 @@ type StatusState =
 
 type ProductLibraryScreenProps = {
   onNavigateAddProduct?: () => void;
+  onNavigateViewProduct?: () => void;
 };
 
-export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScreenProps): JSX.Element {
+export function ProductLibraryScreen({
+  onNavigateAddProduct,
+  onNavigateViewProduct
+}: ProductLibraryScreenProps): JSX.Element {
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -38,6 +42,7 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
   const [status, setStatus] = useState<StatusState>(null);
   const [hasError, setHasError] = useState<boolean>(false);
   const [pendingPlanDate, setPendingPlanDate] = useState<string | null>(null);
+  const [planProduct, setPlanProduct] = useState<ProductSummary | null>(null);
 
   const vaultFolderLabel = vaultHandle?.name
     ? t("addProduct.vault.label", { folder: vaultHandle.name })
@@ -173,29 +178,53 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
   }, [onNavigateAddProduct, pendingPlanDate]);
 
   const handleAddToMealPlan = useCallback(
-    async (product: ProductSummary) => {
+    (product: ProductSummary) => {
       if (!vaultHandle) {
+        setStatus({ type: "error", message: t("addProduct.status.noVault") });
+        return;
+      }
+      setPlanProduct(product);
+    },
+    [t, vaultHandle]
+  );
+
+  const handleConfirmAdd = useCallback(
+    async ({
+      sectionId,
+      sectionName,
+      quantity,
+      unit
+    }: {
+      sectionId: string;
+      sectionName: string;
+      quantity: number;
+      unit: string;
+    }) => {
+      if (!vaultHandle || !planProduct) {
         setStatus({ type: "error", message: t("addProduct.status.noVault") });
         return;
       }
 
       const targetDate = pendingPlanDate ?? new Date().toISOString().slice(0, 10);
       try {
-        await addProductToMealPlan(vaultHandle, targetDate, product, {
-          sectionId: product.mealTime ?? undefined,
-          sectionName: product.mealTimeLabel ?? undefined
+        await addProductToMealPlan(vaultHandle, targetDate, planProduct, {
+          sectionId,
+          sectionName,
+          quantity,
+          unit
         });
         setStatus({
           type: "success",
           message: t("mealPlan.status.added", {
-            title: product.title,
-            section: product.mealTimeLabel ?? product.mealTime ?? targetDate
+            title: planProduct.title,
+            section: sectionName ?? sectionId
           })
         });
         if (typeof window !== "undefined") {
           window.sessionStorage.removeItem(SELECT_PRODUCT_FOR_PLAN_KEY);
         }
         setPendingPlanDate(null);
+        setPlanProduct(null);
         if (pendingPlanDate && typeof window !== "undefined") {
           window.location.hash = "#/meal-plan";
         }
@@ -204,7 +233,7 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
         setStatus({ type: "error", message: t("mealPlan.status.error") });
       }
     },
-    [vaultHandle, t, pendingPlanDate]
+    [pendingPlanDate, planProduct, t, vaultHandle]
   );
 
   const handleEditProduct = useCallback(
@@ -224,6 +253,19 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
       onNavigateAddProduct?.();
     },
     [onNavigateAddProduct, t, vaultHandle]
+  );
+
+  const handleViewProduct = useCallback(
+    (product: ProductSummary) => {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          VIEW_PRODUCT_STORAGE_KEY,
+          JSON.stringify({ fileName: product.fileName, slug: product.slug })
+        );
+      }
+      onNavigateViewProduct?.();
+    },
+    [onNavigateViewProduct]
   );
 
   const handleDeleteProduct = useCallback(
@@ -279,6 +321,7 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
           onRefresh={() => {
             void refreshProducts(vaultHandle);
           }}
+          onViewProduct={handleViewProduct}
           onEditProduct={handleEditProduct}
           onAddToMealPlan={handleAddToMealPlan}
           onDeleteProduct={handleDeleteProduct}
@@ -286,6 +329,13 @@ export function ProductLibraryScreen({ onNavigateAddProduct }: ProductLibraryScr
           disableAddActions={!vaultHandle}
         />
       </Card>
+      {planProduct && (
+        <AddToMealPlanDialog
+          product={planProduct}
+          onCancel={() => setPlanProduct(null)}
+          onConfirm={handleConfirmAdd}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { ProductSummary } from "@/utils/vaultProducts";
+import type { RecipeSummary } from "@/utils/vaultRecipes";
 
 export type NutritionTotals = {
   caloriesKcal: number;
@@ -12,7 +13,15 @@ export type MealPlanItem = {
   ref: string;
   title: string;
   portionGrams?: number | null;
+  quantity?: number | null;
+  quantityUnit?: string | null;
+  servings?: number | null;
   nutrition: NutritionTotals;
+  source?: {
+    kind: "product" | "recipe";
+    slug?: string;
+    fileName?: string;
+  };
 };
 
 export type MealPlanSection = {
@@ -216,7 +225,11 @@ async function readDayFile(fileHandle: FileSystemFileHandle, date: string): Prom
         ref: item.ref ?? "",
         title: item.title ?? "",
         portionGrams: item.portionGrams ?? null,
-        nutrition: cloneTotals(item.nutrition as NutritionTotals | undefined)
+        quantity: item.quantity ?? null,
+        quantityUnit: item.quantityUnit ?? null,
+        servings: item.servings ?? null,
+        nutrition: cloneTotals(item.nutrition as NutritionTotals | undefined),
+        source: item.source
       })),
       totals: cloneTotals(section.totals)
     })),
@@ -268,7 +281,54 @@ function productSummaryToItem(product: ProductSummary): MealPlanItem {
       proteinG: normalizeNumber(nutrition.proteinG),
       fatG: normalizeNumber(nutrition.fatG),
       carbsG: normalizeNumber(nutrition.carbsG)
-    }
+    },
+    quantity: product.portionGrams ?? null,
+    quantityUnit: product.portionGrams ? "g" : null,
+    source: { kind: "product", slug: product.slug, fileName: product.fileName }
+  };
+}
+
+export function scaleNutritionTotals(nutrition: NutritionTotals, factor: number): NutritionTotals {
+  return {
+    caloriesKcal: Number.parseFloat((nutrition.caloriesKcal * factor).toFixed(2)),
+    proteinG: Number.parseFloat((nutrition.proteinG * factor).toFixed(2)),
+    fatG: Number.parseFloat((nutrition.fatG * factor).toFixed(2)),
+    carbsG: Number.parseFloat((nutrition.carbsG * factor).toFixed(2))
+  };
+}
+
+function withScaledProductItem(
+  product: ProductSummary,
+  quantity?: number,
+  unit?: string
+): MealPlanItem {
+  const base = productSummaryToItem(product);
+  if (!quantity || quantity <= 0) {
+    return base;
+  }
+
+  const portion = product.portionGrams ?? null;
+  const factor = portion && portion > 0 ? quantity / portion : quantity;
+  return {
+    ...base,
+    quantity,
+    quantityUnit: unit ?? (portion ? "g" : "portion"),
+    nutrition: scaleNutritionTotals(base.nutrition, factor)
+  };
+}
+
+function recipeSummaryToItem(recipe: RecipeSummary, servingsCount?: number): MealPlanItem {
+  const servings = servingsCount && servingsCount > 0 ? servingsCount : 1;
+  const totals = scaleNutritionTotals(recipe.nutritionPerServing, servings);
+
+  return {
+    type: "recipe",
+    ref: `recipe:${recipe.slug}`,
+    title: recipe.title,
+    portionGrams: null,
+    servings,
+    nutrition: totals,
+    source: { kind: "recipe", slug: recipe.slug, fileName: recipe.fileName }
   };
 }
 
@@ -300,7 +360,7 @@ export async function addProductToMealPlan(
   vaultHandle: FileSystemDirectoryHandle,
   date: string,
   product: ProductSummary,
-  options?: { sectionId?: string; sectionName?: string }
+  options?: { sectionId?: string; sectionName?: string; quantity?: number; unit?: string }
 ): Promise<MealPlanUpdateResult> {
   const isoDate = ensureIsoDate(date);
   const daysDir = await ensureDaysDirectory(vaultHandle);
@@ -319,7 +379,36 @@ export async function addProductToMealPlan(
   const sectionName = options?.sectionName ?? product.mealTimeLabel ?? undefined;
 
   const section = findOrCreateSection(day, sectionId, sectionName);
-  section.items.push(productSummaryToItem(product));
+  section.items.push(withScaledProductItem(product, options?.quantity, options?.unit));
+
+  recalculateDayTotals(day);
+  await writeDayFile(fileHandle, day);
+  return { day };
+}
+
+export async function addRecipeToMealPlan(
+  vaultHandle: FileSystemDirectoryHandle,
+  date: string,
+  recipe: RecipeSummary,
+  options?: { sectionId?: string; sectionName?: string; servings?: number }
+): Promise<MealPlanUpdateResult> {
+  const isoDate = ensureIsoDate(date);
+  const daysDir = await ensureDaysDirectory(vaultHandle);
+  const fileName = formatDateToFileName(isoDate);
+  const fileHandle = await daysDir.getFileHandle(fileName, { create: true });
+
+  let day: MealPlanDay;
+  try {
+    day = await readDayFile(fileHandle, isoDate);
+  } catch (error) {
+    console.error("Failed to read meal plan day, recreating", error);
+    day = createEmptyDay(isoDate);
+  }
+
+  const sectionId = options?.sectionId ?? "flex";
+  const sectionName = options?.sectionName;
+  const section = findOrCreateSection(day, sectionId, sectionName);
+  section.items.push(recipeSummaryToItem(recipe, options?.servings));
 
   recalculateDayTotals(day);
   await writeDayFile(fileHandle, day);

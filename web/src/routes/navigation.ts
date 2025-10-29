@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export type AppRoute = "products" | "add-product" | "meal-plan" | "onboarding";
+export type AppRoute =
+  | "meal-plan"
+  | "add-recipe-to-day"
+  | "recipes"
+  | "add-recipe"
+  | "recipe"
+  | "products"
+  | "add-product"
+  | "product"
+  | "onboarding";
 
-const DEFAULT_ROUTE: AppRoute = "products";
+const DEFAULT_ROUTE: AppRoute = "meal-plan";
 
 function routeToHash(route: AppRoute): string {
   return `#/${route}`;
@@ -15,6 +24,16 @@ function hashToRoute(hash: string): AppRoute {
       return "products";
     case "meal-plan":
       return "meal-plan";
+    case "recipes":
+      return "recipes";
+    case "add-recipe":
+      return "add-recipe";
+    case "recipe":
+      return "recipe";
+    case "add-recipe-to-day":
+      return "add-recipe-to-day";
+    case "product":
+      return "product";
     case "onboarding":
       return "onboarding";
     case "add-product":
@@ -64,9 +83,14 @@ export function useHashNavigation(): { route: AppRoute; navigate: (route: AppRou
 }
 
 export const appRoutes: { route: AppRoute; hash: string }[] = [
+  { route: "meal-plan", hash: routeToHash("meal-plan") },
+  { route: "recipes", hash: routeToHash("recipes") },
+  { route: "add-recipe", hash: routeToHash("add-recipe") },
+  { route: "recipe", hash: routeToHash("recipe") },
+  { route: "add-recipe-to-day", hash: routeToHash("add-recipe-to-day") },
   { route: "products", hash: routeToHash("products") },
   { route: "add-product", hash: routeToHash("add-product") },
-  { route: "meal-plan", hash: routeToHash("meal-plan") },
+  { route: "product", hash: routeToHash("product") },
   { route: "onboarding", hash: routeToHash("onboarding") }
 ];
 

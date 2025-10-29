@@ -1,0 +1,125 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 960px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  font-size: 34px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.heroImage {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 26px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+}
+
+.summaryCard {
+  background: var(--card-background);
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.macrosRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.macroItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.macroLabel {
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.macroValue {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.ingredientsCard,
+.stepsCard {
+  background: var(--card-background);
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.ingredientList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ingredientItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.ingredientMeta {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.stepsContent {
+  white-space: pre-wrap;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.statusMessage {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--info-chip-background);
+  color: var(--color-text-primary);
+}
