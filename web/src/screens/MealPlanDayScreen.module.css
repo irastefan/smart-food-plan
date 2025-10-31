@@ -164,6 +164,9 @@
 .itemActions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .itemButton {
@@ -193,6 +196,38 @@
 .emptyState {
   color: var(--color-text-secondary);
   font-size: 14px;
+}
+
+.itemRowEditing {
+  align-items: flex-start;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.editInput {
+  max-width: 140px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 15px;
+}
+
+.editInput:disabled {
+  opacity: 0.6;
 }
 
 .summaryPanel {

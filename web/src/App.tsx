@@ -10,6 +10,7 @@ import { ProductLibraryScreen } from "@/screens/ProductLibraryScreen";
 import { ProductScreen } from "@/screens/ProductScreen";
 import { RecipeScreen } from "@/screens/RecipeScreen";
 import { RecipesListScreen } from "@/screens/RecipesListScreen";
+import { ShoppingListScreen } from "@/screens/ShoppingListScreen";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 function App(): JSX.Element {
@@ -58,6 +59,8 @@ function App(): JSX.Element {
             onNavigateViewProduct={() => navigate("product")}
           />
         );
+      case "shopping":
+        return <ShoppingListScreen />;
       case "product":
         return (
           <ProductScreen

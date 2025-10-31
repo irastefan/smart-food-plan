@@ -171,15 +171,18 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
     return products.filter((product) => product.title.toLowerCase().includes(term));
   }, [products, search]);
 
-  const handleSelectRecipe = useCallback(
+  const handleSelectRecipe = useCallback((recipe: RecipeSummary) => {
+    setSelectedItems((current) => {
+      const exists = current.some((item) => item.kind === "recipe" && item.summary.fileName === recipe.fileName);
+      if (exists) {
+        return current;
+      }
+      return [...current, { kind: "recipe", summary: recipe, servings: 1 }];
+    });
+  }, []);
+
+  const handleViewRecipe = useCallback(
     (recipe: RecipeSummary) => {
-      setSelectedItems((current) => {
-        const exists = current.some((item) => item.kind === "recipe" && item.summary.fileName === recipe.fileName);
-        if (exists) {
-          return current;
-        }
-        return [...current, { kind: "recipe", summary: recipe, servings: 1 }];
-      });
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
           VIEW_RECIPE_STORAGE_KEY,
@@ -307,7 +310,12 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
                   carbs: recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"
                 })}
               </div>
-              <Button onClick={() => handleSelectRecipe(recipe)}>{t("addToDay.addRecipe")}</Button>
+              <div className={styles.cardActions}>
+                <Button onClick={() => handleSelectRecipe(recipe)}>{t("addToDay.addRecipe")}</Button>
+                <Button variant="ghost" onClick={() => handleViewRecipe(recipe)}>
+                  {t("addToDay.viewRecipe")}
+                </Button>
+              </div>
             </article>
           ))}
         </div>
@@ -319,7 +327,9 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
               <div className={styles.cardMeta}>
                 {product.nutritionPerPortion?.caloriesKcal ?? "—"} {t("mealPlan.units.kcal")}
               </div>
-              <Button onClick={() => handleSelectProduct(product)}>{t("addToDay.addProduct")}</Button>
+              <div className={styles.cardActions}>
+                <Button onClick={() => handleSelectProduct(product)}>{t("addToDay.addProduct")}</Button>
+              </div>
             </article>
           ))}
         </div>

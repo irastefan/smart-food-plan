@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
-import { loadMealPlanDay, type MealPlanDay, type MealPlanItem } from "@/utils/vaultDays";
+import {
+  loadMealPlanDay,
+  removeMealPlanItem,
+  updateMealPlanItem,
+  type MealPlanDay,
+  type MealPlanItem
+} from "@/utils/vaultDays";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { clearVaultDirectoryHandle, loadVaultDirectoryHandle } from "@/utils/vaultStorage";
 import { SELECT_RECIPE_FOR_PLAN_KEY, VIEW_PRODUCT_STORAGE_KEY, VIEW_RECIPE_STORAGE_KEY } from "@/constants/storage";
@@ -90,6 +96,13 @@ export function MealPlanDayScreen({
   const [dayPlan, setDayPlan] = useState<MealPlanDay | null>(null);
   const [isLoadingDay, setIsLoadingDay] = useState<boolean>(false);
   const [dayError, setDayError] = useState<TranslationKey | null>(null);
+  const [editingItem, setEditingItem] = useState<{
+    sectionId: string;
+    itemIndex: number;
+    type: MealPlanItem["type"];
+  } | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+  const [isMutating, setIsMutating] = useState<boolean>(false);
 
   const loadDayPlan = useCallback(
     async (handle: FileSystemDirectoryHandle | null, date: string) => {
@@ -155,6 +168,18 @@ export function MealPlanDayScreen({
     void loadDayPlan(vaultHandle, selectedDate);
   }, [vaultHandle, selectedDate, loadDayPlan]);
 
+  useEffect(() => {
+    setEditingItem(null);
+    setEditValue("");
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (!dayPlan) {
+      setEditingItem(null);
+      setEditValue("");
+    }
+  }, [dayPlan]);
+
   const handleDateChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
   }, []);
@@ -170,6 +195,100 @@ export function MealPlanDayScreen({
       onNavigateToAddFood?.();
     },
     [onNavigateToAddFood, selectedDate]
+  );
+
+  const handleStartEdit = useCallback(
+    (sectionId: string, itemIndex: number) => {
+      const section = dayPlan?.sections.find((entry) => entry.id === sectionId);
+      const item = section?.items[itemIndex];
+      if (!item) {
+        return;
+      }
+      setEditingItem({ sectionId, itemIndex, type: item.type });
+      if (item.type === "recipe") {
+        setEditValue(String(item.servings ?? 1));
+      } else {
+        setEditValue(String(item.quantity ?? item.portionGrams ?? 0));
+      }
+      setDayError(null);
+    },
+    [dayPlan]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingItem(null);
+    setEditValue("");
+    setDayError(null);
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingItem) {
+      return;
+    }
+    if (!vaultHandle) {
+      setDayError("mealPlan.state.noVault");
+      return;
+    }
+    const parsed =
+      editingItem.type === "recipe" ? Number.parseInt(editValue, 10) : Number.parseFloat(editValue);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setDayError("mealPlan.item.invalidValue");
+      return;
+    }
+
+    setIsMutating(true);
+    setDayError(null);
+    try {
+      if (editingItem.type === "recipe") {
+        const result = await updateMealPlanItem(
+          vaultHandle,
+          selectedDate,
+          editingItem.sectionId,
+          editingItem.itemIndex,
+          { servings: parsed }
+        );
+        setDayPlan(result.day);
+      } else {
+        const result = await updateMealPlanItem(
+          vaultHandle,
+          selectedDate,
+          editingItem.sectionId,
+          editingItem.itemIndex,
+          { quantity: parsed }
+        );
+        setDayPlan(result.day);
+      }
+      setEditingItem(null);
+      setEditValue("");
+    } catch (error) {
+      console.error("Failed to update meal plan item", error);
+      setDayError("mealPlan.item.updateError");
+    } finally {
+      setIsMutating(false);
+    }
+  }, [editValue, editingItem, selectedDate, vaultHandle]);
+
+  const handleRemoveItem = useCallback(
+    async (sectionId: string, itemIndex: number) => {
+      if (!vaultHandle) {
+        setDayError("mealPlan.state.noVault");
+        return;
+      }
+      setIsMutating(true);
+      setDayError(null);
+      try {
+        const result = await removeMealPlanItem(vaultHandle, selectedDate, sectionId, itemIndex);
+        setDayPlan(result.day);
+        setEditingItem(null);
+        setEditValue("");
+      } catch (error) {
+        console.error("Failed to remove meal plan item", error);
+        setDayError("mealPlan.item.deleteError");
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [selectedDate, vaultHandle]
   );
 
   const handleOpenItem = useCallback(
@@ -260,19 +379,82 @@ export function MealPlanDayScreen({
 
               <div className={styles.itemsList}>
                 {section.items.length > 0 ? (
-                  section.items.map((item) => (
-                    <div key={`${section.id}-${item.ref}`} className={styles.itemRow}>
-                      <div className={styles.itemInfo}>
-                        <span className={styles.itemTitle}>{item.title}</span>
-                        <span className={styles.itemMeta}>{buildItemMeta(item, t)}</span>
+                  section.items.map((item, index) => {
+                    const isEditing =
+                      editingItem?.sectionId === section.id && editingItem.itemIndex === index;
+                    const editLabel =
+                      item.type === "recipe"
+                        ? t("mealPlan.item.servingsLabel")
+                        : t("mealPlan.item.quantityLabel");
+                    const rowClassName = isEditing
+                      ? `${styles.itemRow} ${styles.itemRowEditing}`
+                      : styles.itemRow;
+                    return (
+                      <div
+                        key={`${section.id}-${item.ref}-${index}`}
+                        className={rowClassName}
+                      >
+                        <div className={styles.itemInfo}>
+                          <span className={styles.itemTitle}>{item.title}</span>
+                          {isEditing ? (
+                            <label className={styles.editField}>
+                              <span className={styles.editLabel}>{editLabel}</span>
+                              <input
+                                className={styles.editInput}
+                                type="number"
+                                min={item.type === "recipe" ? 1 : 0.1}
+                                step={item.type === "recipe" ? 1 : 0.1}
+                                value={editValue}
+                                onChange={(event) => setEditValue(event.target.value)}
+                                disabled={isMutating}
+                              />
+                            </label>
+                          ) : (
+                            <span className={styles.itemMeta}>{buildItemMeta(item, t)}</span>
+                          )}
+                        </div>
+                        <div className={styles.itemActions}>
+                          {isEditing ? (
+                            <>
+                              <Button variant="ghost" onClick={handleCancelEdit} disabled={isMutating}>
+                                {t("common.cancel")}
+                              </Button>
+                              <Button onClick={handleSaveEdit} disabled={isMutating}>
+                                {t("mealPlan.item.save")}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={styles.itemButton}
+                                onClick={() => handleOpenItem(item)}
+                                disabled={isMutating}
+                              >
+                                {t("mealPlan.openItem")}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.itemButton}
+                                onClick={() => handleStartEdit(section.id, index)}
+                                disabled={isMutating}
+                              >
+                                {t("mealPlan.item.edit")}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.itemButton}
+                                onClick={() => handleRemoveItem(section.id, index)}
+                                disabled={isMutating}
+                              >
+                                {t("mealPlan.item.delete")}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.itemActions}>
-                        <button type="button" className={styles.itemButton} onClick={() => handleOpenItem(item)}>
-                          {t("mealPlan.openItem")}
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <span className={styles.emptyState}>{t("mealPlan.emptySection")}</span>
                 )}

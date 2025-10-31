@@ -8,6 +8,7 @@ import {
 } from "@/constants/storage";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { addRecipeToMealPlan } from "@/utils/vaultDays";
+import { addItemsToShoppingList } from "@/utils/vaultShopping";
 import { loadRecipeDetail, type RecipeDetail } from "@/utils/vaultRecipes";
 import {
   clearVaultDirectoryHandle,
@@ -35,6 +36,7 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [status, setStatus] = useState<StatusState>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isAddingToShopping, setIsAddingToShopping] = useState<boolean>(false);
   const [servingsToAdd, setServingsToAdd] = useState<number>(1);
   const [targetSection, setTargetSection] = useState<string>("flex");
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -143,13 +145,97 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
     onNavigateAddToDay?.();
   }, [onNavigateAddToDay, recipe, targetDate]);
 
+  const handleAddIngredientToShopping = useCallback(
+    async (ingredient: RecipeDetail["ingredients"][number]) => {
+      if (!vaultHandle || !recipe) {
+        setStatus({ type: "error", message: t("recipe.status.noVault") });
+        return;
+      }
+      const title = ingredient.title?.trim();
+      if (!title) {
+        setStatus({ type: "info", message: t("recipe.status.noIngredients") });
+        return;
+      }
+      setIsAddingToShopping(true);
+      try {
+        await addItemsToShoppingList(vaultHandle, [
+          {
+            id: crypto.randomUUID(),
+            title,
+            quantity: ingredient.quantity && ingredient.quantity > 0 ? ingredient.quantity : null,
+            unit: ingredient.unit || null,
+            completed: false,
+            source: {
+              kind: "recipe" as const,
+              recipeSlug: recipe.slug,
+              recipeTitle: recipe.title,
+              ingredientId: ingredient.id
+            }
+          }
+        ]);
+        setStatus({ type: "success", message: t("recipe.status.ingredientAdded", { title }) });
+      } catch (error) {
+        console.error("Failed to add ingredient to shopping list", error);
+        setStatus({ type: "error", message: t("recipe.status.shoppingError") });
+      } finally {
+        setIsAddingToShopping(false);
+      }
+    },
+    [recipe, t, vaultHandle]
+  );
+
+  const handleAddToShopping = useCallback(async () => {
+    if (!vaultHandle || !recipe) {
+      setStatus({ type: "error", message: t("recipe.status.noVault") });
+      return;
+    }
+    if (recipe.ingredients.length === 0) {
+      setStatus({ type: "info", message: t("recipe.status.noIngredients") });
+      return;
+    }
+    const items = recipe.ingredients.map((ingredient) => {
+      const quantity = Number.isFinite(ingredient.quantity) ? ingredient.quantity : null;
+      return {
+        id: crypto.randomUUID(),
+        title: ingredient.title,
+        quantity: quantity && quantity > 0 ? quantity : null,
+        unit: ingredient.unit || null,
+        completed: false,
+        source: {
+          kind: "recipe" as const,
+          recipeSlug: recipe.slug,
+          recipeTitle: recipe.title,
+          ingredientId: ingredient.id
+        }
+      };
+    });
+    const nonEmpty = items.filter((item) => item.title && item.title.trim().length > 0);
+    if (nonEmpty.length === 0) {
+      setStatus({ type: "info", message: t("recipe.status.noIngredients") });
+      return;
+    }
+    setIsAddingToShopping(true);
+    try {
+      await addItemsToShoppingList(vaultHandle, nonEmpty);
+      setStatus({ type: "success", message: t("recipe.status.shoppingAdded") });
+    } catch (error) {
+      console.error("Failed to add ingredients to shopping list", error);
+      setStatus({ type: "error", message: t("recipe.status.shoppingError") });
+    } finally {
+      setIsAddingToShopping(false);
+    }
+  }, [recipe, t, vaultHandle]);
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
         <h1 className={styles.title}>{recipe?.title ?? t("recipe.title")}</h1>
         <div className={styles.actions}>
-          <Button variant="outlined" onClick={handleOpenAddToDay} disabled={!recipe}>
+          <Button variant="outlined" onClick={handleOpenAddToDay} disabled={!recipe || isAddingToShopping}>
             {t("recipe.addToDay")}
+          </Button>
+          <Button variant="outlined" onClick={handleAddToShopping} disabled={!recipe || isAddingToShopping}>
+            {t("recipe.addToShopping")}
           </Button>
           <Button variant="ghost" onClick={handleAddToPlan} disabled={!recipe}>
             {t("recipe.quickAdd")}
@@ -226,10 +312,19 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
             <div className={styles.ingredientList}>
               {recipe.ingredients.map((ingredient, index) => (
                 <div key={ingredient.id ?? index} className={styles.ingredientItem}>
-                  <span>{ingredient.title}</span>
-                  <span className={styles.ingredientMeta}>
-                    {ingredient.quantity} {ingredient.unit}
-                  </span>
+                  <div className={styles.ingredientContent}>
+                    <span>{ingredient.title}</span>
+                    <span className={styles.ingredientMeta}>
+                      {ingredient.quantity} {ingredient.unit}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleAddIngredientToShopping(ingredient)}
+                    disabled={isAddingToShopping}
+                  >
+                    {t("recipe.ingredient.addToShopping")}
+                  </Button>
                 </div>
               ))}
             </div>

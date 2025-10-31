@@ -99,10 +99,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
   padding: 12px 16px;
   border-radius: 16px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+}
+
+.ingredientContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .ingredientMeta {

@@ -414,3 +414,100 @@ export async function addRecipeToMealPlan(
   await writeDayFile(fileHandle, day);
   return { day };
 }
+
+export async function removeMealPlanItem(
+  vaultHandle: FileSystemDirectoryHandle,
+  date: string,
+  sectionId: string,
+  itemIndex: number
+): Promise<MealPlanUpdateResult> {
+  const isoDate = ensureIsoDate(date);
+  const daysDir = await ensureDaysDirectory(vaultHandle);
+  const fileName = formatDateToFileName(isoDate);
+  const fileHandle = await daysDir.getFileHandle(fileName, { create: true });
+
+  let day: MealPlanDay;
+  try {
+    day = await readDayFile(fileHandle, isoDate);
+  } catch (error) {
+    console.error("Failed to read meal plan day for removal, recreating", error);
+    day = createEmptyDay(isoDate);
+  }
+
+  const section = day.sections.find((entry) => entry.id === sectionId);
+  if (!section) {
+    return { day };
+  }
+
+  if (itemIndex < 0 || itemIndex >= section.items.length) {
+    return { day };
+  }
+
+  section.items.splice(itemIndex, 1);
+
+  recalculateDayTotals(day);
+  await writeDayFile(fileHandle, day);
+  return { day };
+}
+
+export async function updateMealPlanItem(
+  vaultHandle: FileSystemDirectoryHandle,
+  date: string,
+  sectionId: string,
+  itemIndex: number,
+  updates: { servings?: number; quantity?: number; unit?: string }
+): Promise<MealPlanUpdateResult> {
+  const isoDate = ensureIsoDate(date);
+  const daysDir = await ensureDaysDirectory(vaultHandle);
+  const fileName = formatDateToFileName(isoDate);
+  const fileHandle = await daysDir.getFileHandle(fileName, { create: true });
+
+  let day: MealPlanDay;
+  try {
+    day = await readDayFile(fileHandle, isoDate);
+  } catch (error) {
+    console.error("Failed to read meal plan day for update, recreating", error);
+    day = createEmptyDay(isoDate);
+  }
+
+  const section = day.sections.find((entry) => entry.id === sectionId);
+  if (!section) {
+    return { day };
+  }
+
+  const item = section.items[itemIndex];
+  if (!item) {
+    return { day };
+  }
+
+  if (item.type === "recipe" && typeof updates.servings === "number" && Number.isFinite(updates.servings)) {
+    const nextServings = Math.max(1, Math.round(updates.servings));
+    const currentServings = item.servings && item.servings > 0 ? item.servings : 1;
+    const totals = scaleNutritionTotals(item.nutrition, nextServings / currentServings);
+
+    item.servings = nextServings;
+    item.nutrition = totals;
+  } else if (item.type === "product" && typeof updates.quantity === "number" && Number.isFinite(updates.quantity)) {
+    const nextQuantity = Math.max(0, updates.quantity);
+    const currentQuantity =
+      item.quantity && item.quantity > 0
+        ? item.quantity
+        : item.portionGrams && item.portionGrams > 0
+        ? item.portionGrams
+        : 1;
+
+    const safeCurrentQuantity = currentQuantity > 0 ? currentQuantity : 1;
+    const factor = nextQuantity / safeCurrentQuantity;
+    const totals = scaleNutritionTotals(item.nutrition, factor);
+
+    item.quantity = nextQuantity;
+    item.quantityUnit = updates.unit ?? item.quantityUnit ?? null;
+    item.nutrition = totals;
+  } else {
+    return { day };
+  }
+
+  recalculateDayTotals(day);
+  await writeDayFile(fileHandle, day);
+  return { day };
+}

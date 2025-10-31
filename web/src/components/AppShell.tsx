@@ -12,10 +12,14 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const NAV_SECTIONS: { route: AppRoute; translationKey: "nav.mealPlan" | "nav.recipes" | "nav.products" | "nav.setup" }[] = [
+const NAV_SECTIONS: {
+  route: AppRoute;
+  translationKey: "nav.mealPlan" | "nav.recipes" | "nav.products" | "nav.shopping" | "nav.setup";
+}[] = [
   { route: "meal-plan", translationKey: "nav.mealPlan" },
   { route: "recipes", translationKey: "nav.recipes" },
   { route: "products", translationKey: "nav.products" },
+  { route: "shopping", translationKey: "nav.shopping" },
   { route: "onboarding", translationKey: "nav.setup" }
 ];
 
@@ -28,6 +32,7 @@ const ROUTE_TO_SECTION: Record<AppRoute, AppRoute> = {
   "products": "products",
   "add-product": "products",
   "product": "products",
+  "shopping": "shopping",
   "onboarding": "onboarding"
 };
 

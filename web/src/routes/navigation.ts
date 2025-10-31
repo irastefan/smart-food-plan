@@ -9,6 +9,7 @@ export type AppRoute =
   | "products"
   | "add-product"
   | "product"
+  | "shopping"
   | "onboarding";
 
 const DEFAULT_ROUTE: AppRoute = "meal-plan";
@@ -34,6 +35,8 @@ function hashToRoute(hash: string): AppRoute {
       return "add-recipe-to-day";
     case "product":
       return "product";
+    case "shopping":
+      return "shopping";
     case "onboarding":
       return "onboarding";
     case "add-product":
@@ -91,6 +94,7 @@ export const appRoutes: { route: AppRoute; hash: string }[] = [
   { route: "products", hash: routeToHash("products") },
   { route: "add-product", hash: routeToHash("add-product") },
   { route: "product", hash: routeToHash("product") },
+  { route: "shopping", hash: routeToHash("shopping") },
   { route: "onboarding", hash: routeToHash("onboarding") }
 ];
 
