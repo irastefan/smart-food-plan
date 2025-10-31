@@ -11,6 +11,7 @@ import { ProductScreen } from "@/screens/ProductScreen";
 import { RecipeScreen } from "@/screens/RecipeScreen";
 import { RecipesListScreen } from "@/screens/RecipesListScreen";
 import { ShoppingListScreen } from "@/screens/ShoppingListScreen";
+import { SettingsScreen } from "@/screens/SettingsScreen";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 function App(): JSX.Element {
@@ -61,6 +62,8 @@ function App(): JSX.Element {
         );
       case "shopping":
         return <ShoppingListScreen />;
+      case "settings":
+        return <SettingsScreen />;
       case "product":
         return (
           <ProductScreen

@@ -14,12 +14,13 @@ type AppShellProps = {
 
 const NAV_SECTIONS: {
   route: AppRoute;
-  translationKey: "nav.mealPlan" | "nav.recipes" | "nav.products" | "nav.shopping" | "nav.setup";
+  translationKey: "nav.mealPlan" | "nav.recipes" | "nav.products" | "nav.shopping" | "nav.settings" | "nav.setup";
 }[] = [
   { route: "meal-plan", translationKey: "nav.mealPlan" },
   { route: "recipes", translationKey: "nav.recipes" },
   { route: "products", translationKey: "nav.products" },
   { route: "shopping", translationKey: "nav.shopping" },
+  { route: "settings", translationKey: "nav.settings" },
   { route: "onboarding", translationKey: "nav.setup" }
 ];
 
@@ -33,6 +34,7 @@ const ROUTE_TO_SECTION: Record<AppRoute, AppRoute> = {
   "add-product": "products",
   "product": "products",
   "shopping": "shopping",
+  "settings": "settings",
   "onboarding": "onboarding"
 };
 
