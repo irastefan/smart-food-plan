@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
@@ -7,8 +7,11 @@ import {
   removeMealPlanItem,
   updateMealPlanItem,
   type MealPlanDay,
-  type MealPlanItem
+  type MealPlanItem,
+  type MealPlanSection,
+  type NutritionTotals
 } from "@/utils/vaultDays";
+import { loadUserSettings, type UserSettings } from "@/utils/vaultUser";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { clearVaultDirectoryHandle, loadVaultDirectoryHandle } from "@/utils/vaultStorage";
 import { SELECT_RECIPE_FOR_PLAN_KEY, VIEW_PRODUCT_STORAGE_KEY, VIEW_RECIPE_STORAGE_KEY } from "@/constants/storage";
@@ -20,14 +23,13 @@ type MealPlanDayScreenProps = {
   onNavigateToRecipes?: () => void;
   onNavigateToRecipe?: () => void;
   onNavigateToProduct?: () => void;
+  onNavigateToSettings?: () => void;
 };
 
 type SectionDescriptor = {
   id: string;
   emoji: string;
 };
-
-type MacroKey = "calories" | "protein" | "fat" | "carbs";
 
 const SECTION_METADATA: Record<string, SectionDescriptor> = {
   breakfast: { id: "breakfast", emoji: "🍳" },
@@ -36,11 +38,11 @@ const SECTION_METADATA: Record<string, SectionDescriptor> = {
   snack: { id: "snack", emoji: "🍎" }
 };
 
-const MACRO_LABEL_KEYS: Record<MacroKey, TranslationKey> = {
-  calories: "mealPlan.totals.calories",
-  protein: "mealPlan.totals.protein",
-  fat: "mealPlan.totals.fat",
-  carbs: "mealPlan.totals.carbs"
+const EMPTY_TOTALS: NutritionTotals = {
+  caloriesKcal: 0,
+  proteinG: 0,
+  fatG: 0,
+  carbsG: 0
 };
 
 function formatNumber(value: number | null | undefined): string {
@@ -88,7 +90,8 @@ export function MealPlanDayScreen({
   onNavigateToProducts,
   onNavigateToRecipes,
   onNavigateToRecipe,
-  onNavigateToProduct
+  onNavigateToProduct,
+  onNavigateToSettings
 }: MealPlanDayScreenProps): JSX.Element {
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
@@ -96,6 +99,7 @@ export function MealPlanDayScreen({
   const [dayPlan, setDayPlan] = useState<MealPlanDay | null>(null);
   const [isLoadingDay, setIsLoadingDay] = useState<boolean>(false);
   const [dayError, setDayError] = useState<TranslationKey | null>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [editingItem, setEditingItem] = useState<{
     sectionId: string;
     itemIndex: number;
@@ -126,6 +130,22 @@ export function MealPlanDayScreen({
     []
   );
 
+  const loadSettings = useCallback(
+    async (handle: FileSystemDirectoryHandle | null) => {
+      if (!handle) {
+        setUserSettings(null);
+        return;
+      }
+      try {
+        const loaded = await loadUserSettings(handle);
+        setUserSettings(loaded);
+      } catch (error) {
+        console.error("Failed to load user settings", error);
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     if (typeof window === "undefined" || !("indexedDB" in window)) {
       return;
@@ -150,23 +170,28 @@ export function MealPlanDayScreen({
           setVaultHandle(handle);
           setTimeout(() => {
             void loadDayPlan(handle, selectedDate);
+            void loadSettings(handle);
           }, 0);
-        }
-      } catch (error) {
-        console.error("Failed to restore vault handle", error);
       }
-    };
+    } catch (error) {
+      console.error("Failed to restore vault handle", error);
+    }
+  };
 
     void restoreHandle();
 
     return () => {
       cancelled = true;
     };
-  }, [loadDayPlan, selectedDate]);
+  }, [loadDayPlan, loadSettings, selectedDate]);
 
   useEffect(() => {
     void loadDayPlan(vaultHandle, selectedDate);
   }, [vaultHandle, selectedDate, loadDayPlan]);
+
+  useEffect(() => {
+    void loadSettings(vaultHandle);
+  }, [vaultHandle, loadSettings]);
 
   useEffect(() => {
     setEditingItem(null);
@@ -196,6 +221,16 @@ export function MealPlanDayScreen({
     },
     [onNavigateToAddFood, selectedDate]
   );
+
+  const handleAddFoodGeneral = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        SELECT_RECIPE_FOR_PLAN_KEY,
+        JSON.stringify({ date: selectedDate })
+      );
+    }
+    onNavigateToAddFood?.();
+  }, [onNavigateToAddFood, selectedDate]);
 
   const handleStartEdit = useCallback(
     (sectionId: string, itemIndex: number) => {
@@ -326,55 +361,200 @@ export function MealPlanDayScreen({
     }).format(parsed);
   }, [selectedDate, t]);
 
-  const totals = dayPlan?.totals;
-  const macroCards: { key: MacroKey; value: number; unit: string }[] = [
-    { key: "calories", value: totals?.caloriesKcal ?? 0, unit: t("mealPlan.units.kcal") },
-    { key: "protein", value: totals?.proteinG ?? 0, unit: t("mealPlan.units.grams") },
-    { key: "fat", value: totals?.fatG ?? 0, unit: t("mealPlan.units.grams") },
-    { key: "carbs", value: totals?.carbsG ?? 0, unit: t("mealPlan.units.grams") }
+  const totals = dayPlan?.totals ?? EMPTY_TOTALS;
+  const macroTargets = userSettings?.targets ?? null;
+
+  const macroCards = useMemo(
+    () =>
+      [
+        {
+          key: "kcal",
+          label: t("mealPlan.totals.calories"),
+          unit: t("mealPlan.units.kcal"),
+          current: totals.caloriesKcal,
+          target: macroTargets?.kcal ?? null
+        },
+        {
+          key: "protein",
+          label: t("mealPlan.totals.protein"),
+          unit: t("mealPlan.units.grams"),
+          current: totals.proteinG,
+          target: macroTargets?.proteinG ?? null
+        },
+        {
+          key: "fat",
+          label: t("mealPlan.totals.fat"),
+          unit: t("mealPlan.units.grams"),
+          current: totals.fatG,
+          target: macroTargets?.fatG ?? null
+        },
+        {
+          key: "carbs",
+          label: t("mealPlan.totals.carbs"),
+          unit: t("mealPlan.units.grams"),
+          current: totals.carbsG,
+          target: macroTargets?.carbsG ?? null
+        }
+      ].map((card) => {
+        const target = card.target;
+        const progress = target && target > 0 ? Math.min(card.current / target, 1) : 0;
+        const percent = target && target > 0 ? Math.round((card.current / target) * 100) : null;
+        return { ...card, progress, percent };
+      }),
+    [macroTargets, t, totals]
+  );
+
+  const showSectionTotals = userSettings?.meals.showSectionTotals ?? true;
+
+  type VisibleSection = { section: MealPlanSection; title: string };
+
+  const visibleSections = useMemo<VisibleSection[]>(() => {
+    const planSections = dayPlan?.sections ?? [];
+    const configs = userSettings?.meals.sections;
+    if (!configs || configs.length === 0) {
+      return planSections.map((section) => ({
+        section,
+        title: resolveSectionTitle(section.id, section.name, t)
+      }));
+    }
+    const map = new Map<string, MealPlanSection>();
+    planSections.forEach((section) => {
+      map.set(section.id, section);
+    });
+    const ordered: VisibleSection[] = [];
+    configs.forEach((config) => {
+      if (!config.enabled) {
+        return;
+      }
+      const existing = map.get(config.id);
+      if (existing) {
+        map.delete(config.id);
+        ordered.push({
+          section: existing,
+          title: config.label || resolveSectionTitle(existing.id, existing.name, t)
+        });
+      } else {
+        ordered.push({
+          section: {
+            id: config.id,
+            name: config.label,
+            items: [],
+            totals: { ...EMPTY_TOTALS }
+          },
+          title: config.label || resolveSectionTitle(config.id, undefined, t)
+        });
+      }
+    });
+    map.forEach((section) => {
+      ordered.push({
+        section,
+        title: resolveSectionTitle(section.id, section.name, t)
+      });
+    });
+    if (ordered.length === 0) {
+      return planSections.map((section) => ({
+        section,
+        title: resolveSectionTitle(section.id, section.name, t)
+      }));
+    }
+    return ordered;
+  }, [dayPlan, t, userSettings]);
+
+  const summaryMacros = [
+    {
+      label: t("mealPlan.totals.protein"),
+      value: totals.proteinG,
+      unit: t("mealPlan.units.grams")
+    },
+    {
+      label: t("mealPlan.totals.fat"),
+      value: totals.fatG,
+      unit: t("mealPlan.units.grams")
+    },
+    {
+      label: t("mealPlan.totals.carbs"),
+      value: totals.carbsG,
+      unit: t("mealPlan.units.grams")
+    }
   ];
 
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <div className={styles.headerContent}>
+        <div className={styles.headerText}>
           <h1 className={styles.title}>{t("mealPlan.dailyTitle")}</h1>
           <p className={styles.subtitle}>{formattedDate}</p>
         </div>
-        <div className={styles.datePicker}>
-          <label htmlFor="day-picker">{t("mealPlan.selectDate")}</label>
-          <input id="day-picker" type="date" value={selectedDate} onChange={handleDateChange} className={styles.dateInput} />
+        <div className={styles.headerActions}>
+          <div className={styles.datePicker}>
+            <label htmlFor="day-picker">{t("mealPlan.selectDate")}</label>
+            <input id="day-picker" type="date" value={selectedDate} onChange={handleDateChange} className={styles.dateInput} />
+          </div>
+          <button
+            type="button"
+            className={styles.settingsButton}
+            onClick={onNavigateToSettings}
+            aria-label={t("settings.title")}
+          >
+            ⚙️
+          </button>
         </div>
       </header>
 
-      <section className={styles.metricsGrid}>
+      <section className={styles.macrosSection}>
         {macroCards.map((card) => (
-          <div key={card.key} className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t(MACRO_LABEL_KEYS[card.key])}</span>
-            <span className={styles.metricValue}>
-              {formatNumber(card.value)} {card.unit}
-            </span>
-          </div>
+          <article key={card.key} className={styles.macroCard}>
+            <div
+              className={styles.macroRing}
+              style={{ ["--progress" as string]: String(card.progress) } as CSSProperties}
+            >
+              <div className={styles.macroValue}>
+                <span className={styles.macroNumber}>{formatNumber(card.current)}</span>
+                <span className={styles.macroUnit}>{card.unit}</span>
+              </div>
+            </div>
+            <div className={styles.macroMeta}>
+              <span className={styles.macroLabel}>{card.label}</span>
+              <span className={styles.macroTarget}>
+                {card.target !== null
+                  ? `${t("mealPlan.metrics.target")}: ${formatNumber(card.target)} ${card.unit}`
+                  : t("mealPlan.metrics.noTarget")}
+              </span>
+              {card.percent !== null && (
+                <span className={styles.macroPercent}>
+                  {t("mealPlan.metrics.ofTarget", { value: String(card.percent) })}
+                </span>
+              )}
+            </div>
+          </article>
         ))}
       </section>
+
+      <div className={styles.primaryActions}>
+        <Button variant="outlined" onClick={handleAddFoodGeneral}>
+          + {t("mealPlan.addFood")}
+        </Button>
+      </div>
 
       {isLoadingDay && <div className={styles.statusMessage}>{t("mealPlan.state.loading")}</div>}
       {dayError && <div className={styles.statusMessage}>{t(dayError)}</div>}
 
-      <section className={styles.sectionsGrid}>
-        {(dayPlan?.sections ?? []).map((section) => {
+      <section className={styles.sectionsList}>
+        {visibleSections.map(({ section, title }) => {
           const sectionInfo = getSectionInfo(section.id);
-          const sectionTitle = `${sectionInfo.emoji} ${resolveSectionTitle(section.id, section.name, t)}`;
+          const displayTitle = `${sectionInfo.emoji} ${title}`;
           return (
             <article key={section.id} className={styles.sectionCard}>
               <header className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>{sectionTitle}</h2>
-                <span className={styles.sectionTotal}>
-                  {t("mealPlan.sectionTotal", {
-                    value: formatNumber(section.totals.caloriesKcal),
-                    unit: t("mealPlan.units.kcal")
-                  })}
-                </span>
+                <h2 className={styles.sectionTitle}>{displayTitle}</h2>
+                {showSectionTotals && (
+                  <span className={styles.sectionTotal}>
+                    {t("mealPlan.sectionTotal", {
+                      value: formatNumber(section.totals.caloriesKcal),
+                      unit: t("mealPlan.units.kcal")
+                    })}
+                  </span>
+                )}
               </header>
 
               <div className={styles.itemsList}>
@@ -390,10 +570,7 @@ export function MealPlanDayScreen({
                       ? `${styles.itemRow} ${styles.itemRowEditing}`
                       : styles.itemRow;
                     return (
-                      <div
-                        key={`${section.id}-${item.ref}-${index}`}
-                        className={rowClassName}
-                      >
+                      <div key={`${section.id}-${item.ref}-${index}`} className={rowClassName}>
                         <div className={styles.itemInfo}>
                           <span className={styles.itemTitle}>{item.title}</span>
                           {isEditing ? (
@@ -460,31 +637,39 @@ export function MealPlanDayScreen({
                 )}
               </div>
 
-              <button
-                type="button"
-                className={styles.addButton}
-                onClick={() => handleAddFood(section.id, section.name)}
-              >
-                + {t("mealPlan.addFood")}
-              </button>
+              <div className={styles.sectionFooter}>
+                <Button variant="ghost" onClick={() => handleAddFood(section.id, title)}>
+                  + {t("mealPlan.addFood")}
+                </Button>
+              </div>
             </article>
           );
         })}
       </section>
 
       <section className={styles.summaryPanel}>
-        <div className={styles.summaryMetric}>
+        <div className={styles.summaryEnergy}>
           <span className={styles.summaryLabel}>{t("mealPlan.totalEnergy")}</span>
           <span className={styles.summaryValue}>
-            {formatNumber(dayPlan?.totals.caloriesKcal ?? 0)} {t("mealPlan.units.kcal")}
+            {formatNumber(totals.caloriesKcal)} {t("mealPlan.units.kcal")}
           </span>
+          {macroTargets?.kcal ? (
+            <span className={styles.summaryTarget}>
+              {t("mealPlan.metrics.ofTarget", {
+                value: String(Math.min(Math.round((totals.caloriesKcal / macroTargets.kcal) * 100), 500))
+              })}
+            </span>
+          ) : null}
         </div>
-        <div className={styles.summaryMetric}>
+        <div className={styles.summaryMacros}>
           <span className={styles.summaryLabel}>{t("mealPlan.totalMacros")}</span>
-          <span className={styles.summaryValue}>
-            {formatNumber(dayPlan?.totals.proteinG ?? 0)} / {formatNumber(dayPlan?.totals.fatG ?? 0)} / {formatNumber(dayPlan?.totals.carbsG ?? 0)}
-            {t("mealPlan.units.grams")}
-          </span>
+          <div className={styles.summaryValues}>
+            {summaryMacros.map((macro) => (
+              <span key={macro.label}>
+                {formatNumber(macro.value)} {macro.unit}
+              </span>
+            ))}
+          </div>
         </div>
         <div className={styles.wellnessRow}>
           <span className={styles.chip}>😌 {t("mealPlan.wellness.mood")}</span>
@@ -493,7 +678,7 @@ export function MealPlanDayScreen({
         </div>
       </section>
 
-      <footer>
+      <footer className={styles.footer}>
         <Button variant="outlined" onClick={onNavigateToRecipes}>
           {t("mealPlan.viewRecipes")}
         </Button>

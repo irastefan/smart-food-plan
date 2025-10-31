@@ -27,6 +27,7 @@ function App(): JSX.Element {
             onNavigateToRecipes={() => navigate("recipes")}
             onNavigateToRecipe={() => navigate("recipe")}
             onNavigateToProduct={() => navigate("product")}
+            onNavigateToSettings={() => navigate("settings")}
           />
         );
       case "add-recipe-to-day":
