@@ -164,8 +164,8 @@
 }
 
 .sectionsList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 18px;
 }
 
@@ -365,13 +365,17 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .header {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .macrosSection {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionsList {
     grid-template-columns: 1fr;
   }
 }
