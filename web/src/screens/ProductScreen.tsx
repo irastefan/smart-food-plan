@@ -197,7 +197,7 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
             <span>{product?.modelLabel}</span>
             {product?.portionGrams && (
               <span>
-                {t("productDetail.portion", { value: product.portionGrams, unit: t("mealPlan.units.grams") })}
+                {t("productDetail.portion", { value: String(product.portionGrams), unit: t("mealPlan.units.grams") })}
               </span>
             )}
             {product?.mealTimeLabel && <span>{product.mealTimeLabel}</span>}

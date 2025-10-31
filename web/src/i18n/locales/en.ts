@@ -46,6 +46,7 @@ export const en = {
   "mealTime.lunch": "Lunch",
   "mealTime.snack": "Snack",
   "mealTime.dinner": "Dinner",
+  "mealTime.flex": "Flexible",
   "addProduct.badge": "New product",
   "addProduct.title": "Add a product using the template",
   "addProduct.subtitle":
@@ -185,6 +186,7 @@ export const en = {
   "recipes.status.noVault": "Connect a Vault folder first.",
   "recipes.status.deleted": "Recipe deleted.",
   "recipes.status.deleteError": "We couldn't delete that recipe.",
+  "recipes.deleteConfirm": "Delete recipe “{{title}}”?",
   "recipes.status.loading": "Loading recipes…",
   "recipes.empty": "No recipes yet. Start by creating the first one.",
   "recipes.perServing": "{{kcal}} kcal • P {{protein}} g • F {{fat}} g • C {{carbs}} g",
@@ -229,6 +231,7 @@ export const en = {
   "addRecipe.chooseProduct": "Select product",
   "addRecipe.productPlaceholder": "Choose product",
   "addRecipe.saveAsProduct": "Save to products",
+  "addRecipe.removeIngredient": "Remove",
   "addRecipe.perServing": "Per serving",
   "addRecipe.generateAI": "Generate with AI 🤖",
   "addRecipe.save": "Save recipe",

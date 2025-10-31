@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
+import type { TranslationKey } from "@/i18n/messages";
 import { loadMealPlanDay, type MealPlanDay, type MealPlanItem } from "@/utils/vaultDays";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { clearVaultDirectoryHandle, loadVaultDirectoryHandle } from "@/utils/vaultStorage";
@@ -20,11 +21,20 @@ type SectionDescriptor = {
   emoji: string;
 };
 
+type MacroKey = "calories" | "protein" | "fat" | "carbs";
+
 const SECTION_METADATA: Record<string, SectionDescriptor> = {
   breakfast: { id: "breakfast", emoji: "🍳" },
   lunch: { id: "lunch", emoji: "🍝" },
   dinner: { id: "dinner", emoji: "🐟" },
   snack: { id: "snack", emoji: "🍎" }
+};
+
+const MACRO_LABEL_KEYS: Record<MacroKey, TranslationKey> = {
+  calories: "mealPlan.totals.calories",
+  protein: "mealPlan.totals.protein",
+  fat: "mealPlan.totals.fat",
+  carbs: "mealPlan.totals.carbs"
 };
 
 function formatNumber(value: number | null | undefined): string {
@@ -43,7 +53,7 @@ function resolveSectionTitle(
   fallbackName: string | undefined,
   t: ReturnType<typeof useTranslation>["t"]
 ): string {
-  const key = `mealTime.${sectionId}` as const;
+  const key = `mealTime.${sectionId}` as TranslationKey;
   const translated = t(key);
   if (!translated.startsWith("mealTime.")) {
     return `${translated}`;
@@ -79,7 +89,7 @@ export function MealPlanDayScreen({
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [dayPlan, setDayPlan] = useState<MealPlanDay | null>(null);
   const [isLoadingDay, setIsLoadingDay] = useState<boolean>(false);
-  const [dayError, setDayError] = useState<string | null>(null);
+  const [dayError, setDayError] = useState<TranslationKey | null>(null);
 
   const loadDayPlan = useCallback(
     async (handle: FileSystemDirectoryHandle | null, date: string) => {
@@ -198,7 +208,7 @@ export function MealPlanDayScreen({
   }, [selectedDate, t]);
 
   const totals = dayPlan?.totals;
-  const macroCards = [
+  const macroCards: { key: MacroKey; value: number; unit: string }[] = [
     { key: "calories", value: totals?.caloriesKcal ?? 0, unit: t("mealPlan.units.kcal") },
     { key: "protein", value: totals?.proteinG ?? 0, unit: t("mealPlan.units.grams") },
     { key: "fat", value: totals?.fatG ?? 0, unit: t("mealPlan.units.grams") },
@@ -221,7 +231,7 @@ export function MealPlanDayScreen({
       <section className={styles.metricsGrid}>
         {macroCards.map((card) => (
           <div key={card.key} className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t(`mealPlan.totals.${card.key}` as const)}</span>
+            <span className={styles.metricLabel}>{t(MACRO_LABEL_KEYS[card.key])}</span>
             <span className={styles.metricValue}>
               {formatNumber(card.value)} {card.unit}
             </span>

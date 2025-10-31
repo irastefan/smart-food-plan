@@ -328,5 +328,8 @@ export async function deleteRecipe(
   fileName: string
 ): Promise<void> {
   const directory = await ensureDirectory(vaultHandle);
+  if (typeof directory.removeEntry !== "function") {
+    throw new Error("Current browser does not support removing files");
+  }
   await directory.removeEntry(fileName, { recursive: false });
 }

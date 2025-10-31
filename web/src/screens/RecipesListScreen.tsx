@@ -199,7 +199,7 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
             <article key={recipe.fileName} className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>{recipe.title}</h2>
-                <span>{t("recipes.servings", { count: recipe.servings })}</span>
+                <span>{t("recipes.servings", { count: String(recipe.servings) })}</span>
               </div>
               <div className={styles.cardMeta}>
                 <span>

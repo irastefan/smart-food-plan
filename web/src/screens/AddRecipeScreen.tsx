@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { EDIT_RECIPE_STORAGE_KEY } from "@/constants/storage";
@@ -129,6 +129,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
+  const productsRef = useRef<ProductSummary[]>([]);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -148,11 +149,13 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
   const loadProducts = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
       if (!handle) {
+        productsRef.current = [];
         setProducts([]);
         return;
       }
       try {
         const list = await loadProductSummaries(handle);
+        productsRef.current = list;
         setProducts(list);
       } catch (error) {
         console.error("Failed to load products", error);
@@ -182,7 +185,8 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
         setDescription(detail.description ?? "");
         setServings(detail.servings ?? 1);
         setSteps(detail.stepsMarkdown ?? "");
-        setIngredients(detail.ingredients.map((ingredient) => detailIngredientToDraft(ingredient, products)));
+        const productList = productsRef.current;
+        setIngredients(detail.ingredients.map((ingredient) => detailIngredientToDraft(ingredient, productList)));
         setStatus({ type: "info", message: t("addRecipe.status.editing", { title: detail.title }) });
       } catch (error) {
         console.error("Failed to load recipe detail", error);
@@ -191,7 +195,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
         setIsLoading(false);
       }
     },
-    [products, t]
+    [t]
   );
 
   useEffect(() => {
@@ -275,7 +279,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
 
   const handleSelectProductForIngredient = useCallback(
     (id: string, fileName: string) => {
-      const product = products.find((item) => item.fileName === fileName);
+      const product = productsRef.current.find((item) => item.fileName === fileName);
       if (!product) {
         return;
       }
@@ -283,7 +287,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
         current.map((ingredient) => (ingredient.id === id ? { ...createProductDraft(product), id } : ingredient))
       );
     },
-    [products]
+    []
   );
 
   const handleToggleMode = useCallback(

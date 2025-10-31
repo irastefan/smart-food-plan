@@ -48,6 +48,7 @@ export const ru = {
   "mealTime.lunch": "Обед",
   "mealTime.snack": "Перекус",
   "mealTime.dinner": "Ужин",
+  "mealTime.flex": "Гибкий",
   "addProduct.badge": "Новый продукт",
   "addProduct.title": "Добавьте продукт по модели",
   "addProduct.subtitle":
@@ -187,6 +188,7 @@ export const ru = {
   "recipes.status.noVault": "Сначала выберите папку Vault.",
   "recipes.status.deleted": "Рецепт удалён.",
   "recipes.status.deleteError": "Не удалось удалить рецепт.",
+  "recipes.deleteConfirm": "Удалить рецепт «{{title}}»?",
   "recipes.status.loading": "Загружаем рецепты…",
   "recipes.empty": "Рецептов пока нет. Создайте первый.",
   "recipes.perServing": "{{kcal}} ккал • Б {{protein}} г • Ж {{fat}} г • У {{carbs}} г",
@@ -231,6 +233,7 @@ export const ru = {
   "addRecipe.chooseProduct": "Выберите продукт",
   "addRecipe.productPlaceholder": "Выберите продукт",
   "addRecipe.saveAsProduct": "Сохранить как продукт",
+  "addRecipe.removeIngredient": "Удалить",
   "addRecipe.perServing": "На порцию",
   "addRecipe.generateAI": "Сгенерировать с ИИ 🤖",
   "addRecipe.save": "Сохранить рецепт",

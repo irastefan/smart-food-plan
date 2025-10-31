@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "@/i18n/I18nProvider";
+import type { TranslationKey } from "@/i18n/messages";
 import type { ProductSummary } from "@/utils/vaultProducts";
 import { scaleNutritionTotals, type NutritionTotals } from "@/utils/vaultDays";
 import styles from "./AddToMealPlanDialog.module.css";
@@ -42,7 +43,7 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
   const [sectionId, setSectionId] = useState<string>(product.mealTime ?? "breakfast");
 
   const sectionName = useMemo(() => {
-    const key = `mealTime.${sectionId}` as const;
+    const key = `mealTime.${sectionId}` as TranslationKey;
     const label = t(key);
     return label.startsWith("mealTime.") ? sectionId : label;
   }, [sectionId, t]);
@@ -68,7 +69,7 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
               >
                 {MEAL_SECTION_ORDER.map((id) => (
                   <option key={id} value={id}>
-                    {t(`mealTime.${id}` as const)}
+                    {t(`mealTime.${id}` as TranslationKey)}
                   </option>
                 ))}
               </select>

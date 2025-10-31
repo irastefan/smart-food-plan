@@ -198,7 +198,7 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
         return current;
       }
       const quantity = product.portionGrams && product.portionGrams > 0 ? product.portionGrams : 100;
-      const unit = product.portionGrams ? t("mealPlan.units.grams") : t("units.portion", "portion");
+      const unit = product.portionGrams ? t("mealPlan.units.grams") : t("units.portion");
       return [...current, { kind: "product", summary: product, quantity, unit }];
     });
   }, [t]);
@@ -243,7 +243,7 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
           });
         }
       }
-      setStatus({ type: "success", message: t("addToDay.status.success", { count: selectedItems.length }) });
+      setStatus({ type: "success", message: t("addToDay.status.success", { count: String(selectedItems.length) }) });
       setSelectedItems([]);
       onNavigateBack?.();
     } catch (error) {
