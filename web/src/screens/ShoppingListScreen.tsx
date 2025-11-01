@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { Checkbox } from "@/components/Checkbox";
+import { AddItemModal } from "@/components/AddItemModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { useTranslation } from "@/i18n/I18nProvider";
 import {
   addItemsToShoppingList,
@@ -11,6 +13,7 @@ import {
   type ShoppingList,
   type ShoppingListItem
 } from "@/utils/vaultShopping";
+import { loadUserSettings } from "@/utils/vaultUser";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import {
   clearVaultDirectoryHandle,
@@ -33,8 +36,35 @@ export function ShoppingListScreen(): JSX.Element {
   const [status, setStatus] = useState<StatusState>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
 
   const hasItems = (shoppingList?.items.length ?? 0) > 0;
+
+  const groupedItems = useMemo(() => {
+    if (!shoppingList?.items) return {};
+    
+    const groups: Record<string, ShoppingListItem[]> = {};
+    
+    shoppingList.items.forEach(item => {
+      const categoryId = item.category || "uncategorized";
+      if (!groups[categoryId]) {
+        groups[categoryId] = [];
+      }
+      groups[categoryId].push(item);
+    });
+    
+    return groups;
+  }, [shoppingList?.items]);
+
+  const getCategoryName = useCallback((categoryId: string) => {
+    if (categoryId === "uncategorized") {
+      return t("shopping.uncategorized");
+    }
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || categoryId;
+  }, [categories, t]);
 
   const vaultLabel = useMemo(() => {
     if (!vaultHandle) {
@@ -47,12 +77,17 @@ export function ShoppingListScreen(): JSX.Element {
     async (handle: FileSystemDirectoryHandle | null) => {
       if (!handle) {
         setShoppingList(null);
+        setCategories([]);
         return;
       }
       setIsLoading(true);
       try {
-        const list = await loadShoppingList(handle);
+        const [list, settings] = await Promise.all([
+          loadShoppingList(handle),
+          loadUserSettings(handle)
+        ]);
         setShoppingList(list);
+        setCategories(settings.shopping.categories || []);
       } catch (error) {
         console.error("Failed to load shopping list", error);
         setStatus({ type: "error", message: t("shopping.status.loadError") });
@@ -186,35 +221,23 @@ export function ShoppingListScreen(): JSX.Element {
     }
   }, [t, vaultHandle]);
 
-  const handleAddCustom = useCallback(async () => {
+  const handleAddItem = useCallback(async (itemData: Omit<ShoppingListItem, "id">) => {
     if (!vaultHandle) {
       setStatus({ type: "error", message: t("shopping.status.noVault") });
       return;
     }
-    const title = window.prompt(t("shopping.prompt.title"));
-    if (!title || !title.trim()) {
-      return;
-    }
-    const quantityRaw = window.prompt(t("shopping.prompt.quantity"));
-    const quantity = quantityRaw ? Number.parseFloat(quantityRaw.replace(",", ".")) : null;
-    const unit = window.prompt(t("shopping.prompt.unit"));
-
     setIsMutating(true);
     try {
       const list = await addItemsToShoppingList(vaultHandle, [
         {
           id: crypto.randomUUID(),
-          title: title.trim(),
-          quantity: Number.isFinite(quantity) ? quantity ?? null : null,
-          unit: unit?.trim() || null,
-          completed: false,
-          source: { kind: "custom" }
+          ...itemData
         }
       ]);
       setShoppingList(list);
       setStatus({ type: "success", message: t("shopping.status.added") });
     } catch (error) {
-      console.error("Failed to add custom shopping item", error);
+      console.error("Failed to add shopping item", error);
       setStatus({ type: "error", message: t("shopping.status.updateError") });
     } finally {
       setIsMutating(false);
@@ -224,67 +247,119 @@ export function ShoppingListScreen(): JSX.Element {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerContent}>
           <h1 className={styles.title}>{t("shopping.title")}</h1>
-          <p className={styles.subtitle}>{t("shopping.subtitle")}</p>
+          <p className={styles.subtitle}>
+            {hasItems 
+              ? t("shopping.itemCount", { count: String(shoppingList?.items.length || 0) })
+              : t("shopping.subtitle")
+            }
+          </p>
         </div>
         <div className={styles.headerActions}>
           <Button variant="outlined" onClick={handleSelectVault} disabled={isMutating}>
-            {t("shopping.changeVault")}
+            {vaultHandle ? t("shopping.changeVault") : t("shopping.chooseVault")}
           </Button>
-          <Button variant="ghost" onClick={handleAddCustom} disabled={isMutating || !vaultHandle}>
-            {t("shopping.addCustom")}
+          <Button onClick={() => setShowAddModal(true)} disabled={!vaultHandle}>
+            + {t("shopping.addItem")}
           </Button>
-          <Button variant="ghost" onClick={handleClear} disabled={!vaultHandle || !hasItems || isMutating}>
+          <Button 
+            variant="ghost" 
+            onClick={() => setShowClearModal(true)} 
+            disabled={!vaultHandle || !hasItems || isMutating}
+            className={styles.clearButton}
+          >
             {t("shopping.clearAll")}
           </Button>
         </div>
       </header>
 
-      <section className={styles.vaultInfo}>
-        <span className={styles.vaultLabel}>{vaultLabel}</span>
-        <span className={styles.vaultHint}>{t("shopping.vault.hint")}</span>
-      </section>
-
       {status && <div className={styles.statusMessage}>{status.message}</div>}
-      {isLoading && <div className={styles.statusMessage}>{t("shopping.status.loading")}</div>}
+      {isLoading && <div className={styles.loadingState}>{t("shopping.status.loading")}</div>}
 
-      <section className={styles.listCard}>
-        {hasItems ? (
-          shoppingList?.items.map((item) => (
-            <article key={item.id} className={styles.listItem}>
-              <div className={styles.itemMain}>
-                <Checkbox
-                  id={`shopping-${item.id}`}
-                  label={item.title}
-                  checked={Boolean(item.completed)}
-                  onChange={(checked) => handleToggleItem(item, checked)}
-                />
-                <div className={styles.itemMeta}>
-                  {item.quantity ? (
-                    <span>
-                      {item.quantity} {item.unit ?? ""}
-                    </span>
-                  ) : null}
-                  {item.source?.recipeTitle ? (
-                    <span className={styles.itemSource}>
-                      {t("shopping.item.fromRecipe", { title: item.source.recipeTitle })}
-                    </span>
-                  ) : null}
-                </div>
+      {hasItems ? (
+        <div className={styles.categoriesContainer}>
+          {Object.entries(groupedItems).map(([categoryId, items]) => (
+            <section key={categoryId} className={styles.categorySection}>
+              <h2 className={styles.categoryTitle}>
+                {getCategoryName(categoryId)}
+                <span className={styles.categoryCount}>({items.length})</span>
+              </h2>
+              
+              <div className={styles.itemsGrid}>
+                {items.map((item) => (
+                  <article key={item.id} className={`${styles.itemCard} ${item.completed ? styles.completed : ''}`}>
+                    <div className={styles.itemMain}>
+                      <div className={styles.itemCheckbox}>
+                        <Checkbox
+                          id={`shopping-${item.id}`}
+                          label=""
+                          checked={Boolean(item.completed)}
+                          onChange={(checked) => handleToggleItem(item, checked)}
+                        />
+                      </div>
+                      <div className={styles.itemContent}>
+                        <h3 className={styles.itemTitle}>{item.title}</h3>
+                        <div className={styles.itemMeta}>
+                          {item.quantity && (
+                            <span className={styles.itemQuantity}>
+                              {item.quantity} {item.unit || ""}
+                            </span>
+                          )}
+                          {item.source?.recipeTitle && (
+                            <span className={styles.itemSource}>
+                              {t("shopping.item.fromRecipe", { title: item.source.recipeTitle })}
+                            </span>
+                          )}
+                          {item.notes && (
+                            <span className={styles.itemNotes}>{item.notes}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      className={styles.removeButton}
+                      onClick={() => handleRemoveItem(item)} 
+                      disabled={isMutating}
+                      title={t("shopping.remove")}
+                    >
+                      ✕
+                    </button>
+                  </article>
+                ))}
               </div>
-              <Button variant="ghost" onClick={() => handleRemoveItem(item)} disabled={isMutating}>
-                {t("shopping.remove")}
-              </Button>
-            </article>
-          ))
-        ) : (
-          <div className={styles.emptyState}>
-            <h2>{t("shopping.empty.title")}</h2>
-            <p>{t("shopping.empty.hint")}</p>
-          </div>
-        )}
-      </section>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>🛒</div>
+          <h2 className={styles.emptyTitle}>{t("shopping.empty.title")}</h2>
+          <p className={styles.emptyDescription}>{t("shopping.empty.hint")}</p>
+          <Button onClick={() => setShowAddModal(true)} disabled={!vaultHandle}>
+            {t("shopping.addFirstItem")}
+          </Button>
+        </div>
+      )}
+
+      <AddItemModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddItem}
+        categories={categories}
+        isLoading={isMutating}
+      />
+
+      <ConfirmModal
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        onConfirm={handleClear}
+        title={t("shopping.clearList.title")}
+        message={t("shopping.clearList.message")}
+        confirmText={t("shopping.clearList.confirm")}
+        variant="danger"
+        isLoading={isMutating}
+      />
     </div>
   );
 }

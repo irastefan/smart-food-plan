@@ -40,3 +40,51 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .toggle {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .indicator {
+    width: 24px;
+    height: 24px;
+  }
+
+  .label {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .toggle {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .indicator {
+    width: 20px;
+    height: 20px;
+  }
+
+  .label {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .toggle {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .indicator {
+    width: 18px;
+    height: 18px;
+  }
+
+  .label {
+    display: none; /* Hide label on very small screens */
+  }
+}

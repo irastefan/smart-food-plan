@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/Button";
+import { CategorySelectModal } from "@/components/CategorySelectModal";
 import { useTranslation } from "@/i18n/I18nProvider";
 import {
   EDIT_RECIPE_STORAGE_KEY,
@@ -10,6 +11,7 @@ import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { addRecipeToMealPlan } from "@/utils/vaultDays";
 import { addItemsToShoppingList } from "@/utils/vaultShopping";
 import { loadRecipeDetail, type RecipeDetail } from "@/utils/vaultRecipes";
+import { loadUserSettings } from "@/utils/vaultUser";
 import {
   clearVaultDirectoryHandle,
   loadVaultDirectoryHandle
@@ -42,6 +44,9 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedIngredient, setSelectedIngredient] = useState<RecipeDetail["ingredients"][number] | null>(null);
 
   const loadRecipe = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
@@ -58,8 +63,12 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
           return;
         }
         setIsLoading(true);
-        const detail = await loadRecipeDetail(handle, payload.fileName);
+        const [detail, settings] = await Promise.all([
+          loadRecipeDetail(handle, payload.fileName),
+          loadUserSettings(handle)
+        ]);
         setRecipe(detail);
+        setCategories(settings.shopping.categories || []);
         
         // Load image if it exists and is a vault path
         if (detail.photoUrl && detail.photoUrl.startsWith('images/')) {
@@ -154,7 +163,7 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   }, [onNavigateAddToDay, recipe, targetDate]);
 
   const handleAddIngredientToShopping = useCallback(
-    async (ingredient: RecipeDetail["ingredients"][number]) => {
+    (ingredient: RecipeDetail["ingredients"][number]) => {
       if (!vaultHandle || !recipe) {
         setStatus({ type: "error", message: t("recipe.status.noVault") });
         return;
@@ -164,20 +173,40 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
         setStatus({ type: "info", message: t("recipe.status.noIngredients") });
         return;
       }
+      
+      // Show category selection modal
+      setSelectedIngredient(ingredient);
+      setShowCategoryModal(true);
+    },
+    [recipe, t, vaultHandle]
+  );
+
+  const handleAddIngredientWithCategory = useCallback(
+    async (categoryId: string | null) => {
+      if (!vaultHandle || !recipe || !selectedIngredient) {
+        return;
+      }
+      
+      const title = selectedIngredient.title?.trim();
+      if (!title) {
+        return;
+      }
+      
       setIsAddingToShopping(true);
       try {
         await addItemsToShoppingList(vaultHandle, [
           {
             id: crypto.randomUUID(),
             title,
-            quantity: ingredient.quantity && ingredient.quantity > 0 ? ingredient.quantity : null,
-            unit: ingredient.unit || null,
+            quantity: selectedIngredient.quantity && selectedIngredient.quantity > 0 ? selectedIngredient.quantity : null,
+            unit: selectedIngredient.unit || null,
+            category: categoryId,
             completed: false,
             source: {
               kind: "recipe" as const,
               recipeSlug: recipe.slug,
               recipeTitle: recipe.title,
-              ingredientId: ingredient.id
+              ingredientId: selectedIngredient.id
             }
           }
         ]);
@@ -187,9 +216,10 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
         setStatus({ type: "error", message: t("recipe.status.shoppingError") });
       } finally {
         setIsAddingToShopping(false);
+        setSelectedIngredient(null);
       }
     },
-    [recipe, t, vaultHandle]
+    [recipe, t, vaultHandle, selectedIngredient]
   );
 
   const handleAddToShopping = useCallback(async () => {
@@ -201,6 +231,9 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
       setStatus({ type: "info", message: t("recipe.status.noIngredients") });
       return;
     }
+    
+    // For bulk add, we'll add all ingredients without category for now
+    // User can organize them later in the shopping list
     const items = recipe.ingredients.map((ingredient) => {
       const quantity = Number.isFinite(ingredient.quantity) ? ingredient.quantity : null;
       return {
@@ -208,6 +241,7 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
         title: ingredient.title,
         quantity: quantity && quantity > 0 ? quantity : null,
         unit: ingredient.unit || null,
+        category: null, // No category for bulk add
         completed: false,
         source: {
           kind: "recipe" as const,
@@ -465,6 +499,18 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
           </div>
         </>
       )}
+
+      <CategorySelectModal
+        isOpen={showCategoryModal}
+        onClose={() => {
+          setShowCategoryModal(false);
+          setSelectedIngredient(null);
+        }}
+        onSelect={handleAddIngredientWithCategory}
+        categories={categories}
+        itemName={selectedIngredient?.title || ""}
+        isLoading={isAddingToShopping}
+      />
     </div>
   );
 }

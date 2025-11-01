@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTranslation } from "@/i18n/I18nProvider";
@@ -40,6 +41,16 @@ const ROUTE_TO_SECTION: Record<AppRoute, AppRoute> = {
 
 export function AppShell({ currentRoute, onNavigate, children }: AppShellProps): JSX.Element {
   const { t } = useTranslation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleNavigate = (route: AppRoute) => {
+    onNavigate(route);
+    setIsMobileMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <div className={styles.layout}>
@@ -47,6 +58,8 @@ export function AppShell({ currentRoute, onNavigate, children }: AppShellProps):
         <div className={styles.brand} role="banner">
           {t("nav.brand")}
         </div>
+        
+        {/* Desktop Navigation */}
         <nav className={styles.nav} aria-label="Main navigation">
           {NAV_SECTIONS.map((item) => (
             <button
@@ -62,11 +75,48 @@ export function AppShell({ currentRoute, onNavigate, children }: AppShellProps):
             </button>
           ))}
         </nav>
+
         <div className={styles.actions}>
           <LanguageToggle />
           <ThemeToggle />
+          
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            className={styles.mobileMenuButton}
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <span className={clsx(styles.hamburger, isMobileMenuOpen && styles.hamburgerOpen)}>
+              <span className={styles.hamburgerLine}></span>
+              <span className={styles.hamburgerLine}></span>
+              <span className={styles.hamburgerLine}></span>
+            </span>
+          </button>
         </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className={styles.mobileMenuOverlay} onClick={() => setIsMobileMenuOpen(false)}>
+          <nav className={styles.mobileMenu} onClick={(e) => e.stopPropagation()}>
+            {NAV_SECTIONS.map((item) => (
+              <button
+                key={item.route}
+                type="button"
+                className={clsx(
+                  styles.mobileNavLink,
+                  ROUTE_TO_SECTION[currentRoute] === item.route && styles.mobileNavLinkActive
+                )}
+                onClick={() => handleNavigate(item.route)}
+              >
+                {t(item.translationKey)}
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
       <main className={styles.content}>{children}</main>
     </div>

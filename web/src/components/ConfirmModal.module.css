@@ -1,0 +1,62 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.icon {
+  font-size: 48px;
+  opacity: 0.8;
+}
+
+.icon.danger {
+  color: var(--color-error);
+}
+
+.icon.warning {
+  color: var(--color-warning);
+}
+
+.icon.info {
+  color: var(--color-accent);
+}
+
+.message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  max-width: 300px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.dangerButton {
+  background: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.dangerButton:hover {
+  background: var(--color-error) !important;
+  opacity: 0.9;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+  
+  .message {
+    font-size: 15px;
+  }
+}

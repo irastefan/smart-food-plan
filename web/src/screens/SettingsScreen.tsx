@@ -1533,17 +1533,25 @@ export function SettingsScreen(): JSX.Element {
                   setDragCategoryId(category.id);
                 }
               }}
+              onDragEnd={() => {
+                setDragCategoryId(null);
+              }}
               onDragOver={(event: DragEvent<HTMLDivElement>) => {
-                if (!category.builtin) {
+                if (!category.builtin && dragCategoryId && dragCategoryId !== category.id) {
                   event.preventDefault();
                   event.currentTarget.classList.add(styles.dragOver);
                 }
               }}
-              onDragLeave={(event: DragEvent<HTMLDivElement>) => event.currentTarget.classList.remove(styles.dragOver)}
+              onDragLeave={(event: DragEvent<HTMLDivElement>) => {
+                event.currentTarget.classList.remove(styles.dragOver);
+              }}
               onDrop={(event: DragEvent<HTMLDivElement>) => {
                 event.preventDefault();
                 event.currentTarget.classList.remove(styles.dragOver);
-                reorderCategories(category.id);
+                if (dragCategoryId && dragCategoryId !== category.id) {
+                  reorderCategories(category.id);
+                }
+                setDragCategoryId(null);
               }}
             >
               <div className={styles.sortableHandle}>⋮⋮</div>
