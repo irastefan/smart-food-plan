@@ -1,3 +1,9 @@
+import {
+  buildMarkdownDocument,
+  parseMarkdownDocument,
+  upsertAutoBlock,
+  type JsonValue
+} from "@/utils/markdown";
 import type { ProductSummary } from "@/utils/vaultProducts";
 import type { RecipeSummary } from "@/utils/vaultRecipes";
 
@@ -6,6 +12,17 @@ export type NutritionTotals = {
   proteinG: number;
   fatG: number;
   carbsG: number;
+  sugarG?: number | null;
+  fiberG?: number | null;
+};
+
+export type NutritionTargetsSnapshot = {
+  caloriesKcal?: number | null;
+  proteinG?: number | null;
+  fatG?: number | null;
+  carbsG?: number | null;
+  sugarG?: number | null;
+  fiberG?: number | null;
 };
 
 export type MealPlanItem = {
@@ -35,6 +52,14 @@ export type MealPlanDay = {
   date: string;
   sections: MealPlanSection[];
   totals: NutritionTotals;
+  targetsSnapshot?: NutritionTargetsSnapshot | null;
+  wellness?: {
+    mood?: string;
+    sleepHours?: number | null;
+    steps?: number | null;
+    notes?: string | null;
+  } | null;
+  updatedAt?: string;
   meta?: Record<string, unknown>;
 };
 
@@ -46,20 +71,28 @@ const DAYS_DIRECTORY_NAME = "days";
 
 const DEFAULT_SECTION_IDS = ["breakfast", "lunch", "snack", "dinner"] as const;
 
-const ZERO_TOTALS: NutritionTotals = {
+const EMPTY_TOTALS: NutritionTotals = {
   caloriesKcal: 0,
   proteinG: 0,
   fatG: 0,
-  carbsG: 0
+  carbsG: 0,
+  sugarG: 0,
+  fiberG: 0
 };
 
-function cloneTotals(totals?: NutritionTotals): NutritionTotals {
-  return {
-    caloriesKcal: totals?.caloriesKcal ?? 0,
-    proteinG: totals?.proteinG ?? 0,
-    fatG: totals?.fatG ?? 0,
-    carbsG: totals?.carbsG ?? 0
-  };
+const DEFAULT_QUANTITY_UNIT = "g";
+
+function ensureDaysDirectory(
+  vaultHandle: FileSystemDirectoryHandle
+): Promise<FileSystemDirectoryHandle> {
+  return vaultHandle.getDirectoryHandle(DAYS_DIRECTORY_NAME, { create: true });
+}
+
+function countDecimals(value: number | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  return value % 1 === 0 ? 0 : 1;
 }
 
 function normalizeNumber(value: number | string | null | undefined): number {
@@ -69,12 +102,39 @@ function normalizeNumber(value: number | string | null | undefined): number {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : 0;
   }
-  const parsed = Number.parseFloat(String(value));
+  const parsed = Number.parseFloat(String(value).replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatDateToFileName(date: string): string {
-  return `${date}.md`;
+function normalizeOptionalNumber(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const parsed = Number.parseFloat(String(value).replace(",", "."));
+  if (Number.isFinite(parsed)) {
+    return Number.parseFloat(parsed.toFixed(2));
+  }
+  return null;
+}
+
+function readNumeric(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): number | string | null | undefined {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      const value = record[key];
+      if (
+        typeof value === "number" ||
+        typeof value === "string" ||
+        value === null ||
+        value === undefined
+      ) {
+        return value as number | string | null | undefined;
+      }
+    }
+  }
+  return undefined;
 }
 
 function ensureIsoDate(date: string): string {
@@ -89,55 +149,50 @@ function ensureIsoDate(date: string): string {
   return parsed.toISOString().slice(0, 10);
 }
 
-async function ensureDaysDirectory(
-  vaultHandle: FileSystemDirectoryHandle
-): Promise<FileSystemDirectoryHandle> {
-  return vaultHandle.getDirectoryHandle(DAYS_DIRECTORY_NAME, { create: true });
+function formatDateHeading(date: string): string {
+  try {
+    const parsed = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(parsed.valueOf())) {
+      return date;
+    }
+    return parsed.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return date;
+  }
 }
 
-type FrontMatterParseResult = {
-  meta: Record<string, string>;
-  body: string;
-};
-
-function parseFrontMatter(source: string): FrontMatterParseResult {
-  const lines = source.split(/\r?\n/);
-  if (lines.length === 0 || lines[0].trim() !== "---") {
-    return { meta: {}, body: source.trim() };
-  }
-
-  let endIndex = -1;
-  for (let i = 1; i < lines.length; i += 1) {
-    if (lines[i].trim() === "---") {
-      endIndex = i;
-      break;
-    }
-  }
-
-  if (endIndex === -1) {
-    return { meta: {}, body: source.trim() };
-  }
-
-  const metaLines = lines.slice(1, endIndex);
-  const meta: Record<string, string> = {};
-  for (const line of metaLines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      continue;
-    }
-    const [key, ...rest] = trimmed.split(":");
-    if (!key) {
-      continue;
-    }
-    meta[key.trim()] = rest.join(":").trim().replace(/^"|"$/g, "");
-  }
-
-  const body = lines.slice(endIndex + 1).join("\n").trim();
-  return { meta, body };
+function cloneTotals(source?: NutritionTotals): NutritionTotals {
+  return {
+    caloriesKcal: source?.caloriesKcal ?? 0,
+    proteinG: source?.proteinG ?? 0,
+    fatG: source?.fatG ?? 0,
+    carbsG: source?.carbsG ?? 0,
+    sugarG: source?.sugarG ?? 0,
+    fiberG: source?.fiberG ?? 0
+  };
 }
 
-function buildFrontMatter(date: string): string {
-  return `---\ndate: "${date}"\n---`;
+function addTotals(left: NutritionTotals, right: NutritionTotals): NutritionTotals {
+  return {
+    caloriesKcal: Number.parseFloat((left.caloriesKcal + right.caloriesKcal).toFixed(2)),
+    proteinG: Number.parseFloat((left.proteinG + right.proteinG).toFixed(2)),
+    fatG: Number.parseFloat((left.fatG + right.fatG).toFixed(2)),
+    carbsG: Number.parseFloat((left.carbsG + right.carbsG).toFixed(2)),
+    sugarG: Number.parseFloat(((left.sugarG ?? 0) + (right.sugarG ?? 0)).toFixed(2)),
+    fiberG: Number.parseFloat(((left.fiberG ?? 0) + (right.fiberG ?? 0)).toFixed(2))
+  };
+}
+
+function recalculateSectionTotals(section: MealPlanSection): void {
+  section.totals = section.items.reduce(
+    (acc, item) => addTotals(acc, item.nutrition),
+    cloneTotals()
+  );
+}
+
+function recalculateDayTotals(day: MealPlanDay): void {
+  day.sections.forEach(recalculateSectionTotals);
+  day.totals = day.sections.reduce((acc, section) => addTotals(acc, section.totals), cloneTotals());
 }
 
 function createEmptyDay(date: string): MealPlanDay {
@@ -150,33 +205,323 @@ function createEmptyDay(date: string): MealPlanDay {
       totals: cloneTotals()
     })),
     totals: cloneTotals(),
+    targetsSnapshot: null,
+    wellness: null,
+    updatedAt: new Date().toISOString(),
     meta: {}
   };
 }
 
-function recalculateSectionTotals(section: MealPlanSection): void {
-  section.totals = section.items.reduce(
-    (acc, item) => ({
-      caloriesKcal: acc.caloriesKcal + normalizeNumber(item.nutrition.caloriesKcal),
-      proteinG: acc.proteinG + normalizeNumber(item.nutrition.proteinG),
-      fatG: acc.fatG + normalizeNumber(item.nutrition.fatG),
-      carbsG: acc.carbsG + normalizeNumber(item.nutrition.carbsG)
-    }),
-    { ...ZERO_TOTALS }
-  );
+function buildNutritionObject(totals: NutritionTotals): Record<string, JsonValue> {
+  return {
+    kcal: Number.parseFloat(totals.caloriesKcal.toFixed(2)),
+    protein_g: Number.parseFloat(totals.proteinG.toFixed(2)),
+    fat_g: Number.parseFloat(totals.fatG.toFixed(2)),
+    carbs_g: Number.parseFloat(totals.carbsG.toFixed(2)),
+    sugar_g: Number.parseFloat((totals.sugarG ?? 0).toFixed(2)),
+    fiber_g: Number.parseFloat((totals.fiberG ?? 0).toFixed(2))
+  };
 }
 
-function recalculateDayTotals(day: MealPlanDay): void {
-  day.sections.forEach(recalculateSectionTotals);
-  day.totals = day.sections.reduce(
-    (acc, section) => ({
-      caloriesKcal: acc.caloriesKcal + section.totals.caloriesKcal,
-      proteinG: acc.proteinG + section.totals.proteinG,
-      fatG: acc.fatG + section.totals.fatG,
-      carbsG: acc.carbsG + section.totals.carbsG
-    }),
-    { ...ZERO_TOTALS }
-  );
+function buildTargetsObject(targets?: NutritionTargetsSnapshot | null): Record<string, JsonValue> | null {
+  if (!targets) {
+    return null;
+  }
+  const entries: Record<string, JsonValue> = {};
+  if (targets.caloriesKcal !== undefined && targets.caloriesKcal !== null) {
+    entries.kcal = Number.parseFloat(Number(targets.caloriesKcal).toFixed(0));
+  }
+  if (targets.proteinG !== undefined && targets.proteinG !== null) {
+    entries.protein_g = Number.parseFloat(Number(targets.proteinG).toFixed(1));
+  }
+  if (targets.fatG !== undefined && targets.fatG !== null) {
+    entries.fat_g = Number.parseFloat(Number(targets.fatG).toFixed(1));
+  }
+  if (targets.carbsG !== undefined && targets.carbsG !== null) {
+    entries.carbs_g = Number.parseFloat(Number(targets.carbsG).toFixed(1));
+  }
+  if (targets.sugarG !== undefined && targets.sugarG !== null) {
+    entries.sugar_g = Number.parseFloat(Number(targets.sugarG).toFixed(1));
+  }
+  if (targets.fiberG !== undefined && targets.fiberG !== null) {
+    entries.fiber_g = Number.parseFloat(Number(targets.fiberG).toFixed(1));
+  }
+  return Object.keys(entries).length > 0 ? entries : null;
+}
+
+function serializeDay(day: MealPlanDay): { frontMatter: Record<string, JsonValue>; body: string } {
+  const sections = day.sections.map((section) => ({
+    id: section.id,
+    title: section.name ?? null,
+    totals: buildNutritionObject(section.totals),
+    items: section.items.map((item) => ({
+      type: item.type,
+      ref: item.ref,
+      title: item.title,
+      portion_grams: item.portionGrams ?? null,
+      quantity: item.quantity ?? null,
+      unit: item.quantityUnit ?? null,
+      servings: item.servings ?? null,
+      nutrition: buildNutritionObject(item.nutrition),
+      source: item.source
+        ? {
+            kind: item.source.kind,
+            slug: item.source.slug ?? null,
+            file_name: item.source.fileName ?? null
+          }
+        : null
+    }))
+  }));
+
+  const frontMatter: Record<string, JsonValue> = {
+    date: day.date,
+    sections,
+    totals: buildNutritionObject(day.totals),
+    updated_at: day.updatedAt ?? new Date().toISOString()
+  };
+
+  const targetsObject = buildTargetsObject(day.targetsSnapshot);
+  if (targetsObject) {
+    frontMatter.targets_snapshot = targetsObject;
+  }
+
+  if (day.wellness) {
+    const wellness: Record<string, JsonValue> = {};
+    if (day.wellness.mood) {
+      wellness.mood = day.wellness.mood;
+    }
+    if (day.wellness.sleepHours !== undefined && day.wellness.sleepHours !== null) {
+      wellness.sleep_hours = Number.parseFloat(day.wellness.sleepHours.toFixed(1));
+    }
+    if (day.wellness.steps !== undefined && day.wellness.steps !== null) {
+      wellness.steps = Math.round(day.wellness.steps);
+    }
+    if (day.wellness.notes) {
+      wellness.notes = day.wellness.notes;
+    }
+    if (Object.keys(wellness).length > 0) {
+      frontMatter.wellness = wellness;
+    }
+  }
+
+  if (day.meta && Object.keys(day.meta).length > 0) {
+    frontMatter.meta = day.meta as JsonValue;
+  }
+
+  const body = buildDayBody(day);
+
+  return {
+    frontMatter,
+    body
+  };
+}
+
+function buildDayBody(day: MealPlanDay): string {
+  const heading = `# План на ${formatDateHeading(day.date)}`;
+  const autoSummary = buildDayAutoSummary(day);
+  return upsertAutoBlock(`${heading}\n`, "SUMMARY", autoSummary);
+}
+
+function buildDayAutoSummary(day: MealPlanDay): string {
+  const lines: string[] = [];
+  for (const section of day.sections) {
+    const hasItems = section.items.length > 0;
+    const title = section.name || section.id;
+    lines.push(`## ${title}`);
+    if (!hasItems) {
+      lines.push("_Пока пусто_");
+    } else {
+      for (const item of section.items) {
+        if (item.type === "recipe") {
+          const servings = item.servings && item.servings > 0 ? item.servings : 1;
+          lines.push(`- 🥗 ${item.title} — ${servings} порция(и)`);
+        } else {
+          const quantity = item.quantity ?? item.portionGrams ?? null;
+          const unit = item.quantityUnit ?? DEFAULT_QUANTITY_UNIT;
+          const formattedQuantity =
+            quantity !== null ? `${Number.parseFloat(quantity.toFixed(countDecimals(quantity)))} ${unit}` : "";
+          lines.push(`- 🥣 ${item.title}${formattedQuantity ? ` — ${formattedQuantity}` : ""}`);
+        }
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push("## Итог дня");
+  const targets = day.targetsSnapshot;
+  const kcalLine = targets?.caloriesKcal
+    ? `**Ккал:** ${Number.parseFloat(day.totals.caloriesKcal.toFixed(0))} из ${Math.round(targets.caloriesKcal)}`
+    : `**Ккал:** ${Number.parseFloat(day.totals.caloriesKcal.toFixed(0))}`;
+  const macrosLine = [
+    `**Б:** ${Number.parseFloat(day.totals.proteinG.toFixed(1))} г`,
+    `**Ж:** ${Number.parseFloat(day.totals.fatG.toFixed(1))} г`,
+    `**У:** ${Number.parseFloat(day.totals.carbsG.toFixed(1))} г`
+  ].join(" · ");
+
+  lines.push(`${kcalLine} · ${macrosLine}`);
+
+  if (day.wellness) {
+    const wellnessPieces: string[] = [];
+    if (day.wellness.mood) {
+      wellnessPieces.push(`Настроение: ${day.wellness.mood}`);
+    }
+    if (day.wellness.sleepHours !== undefined && day.wellness.sleepHours !== null) {
+      wellnessPieces.push(`Сон: ${Number.parseFloat(day.wellness.sleepHours.toFixed(1))} ч`);
+    }
+    if (day.wellness.steps !== undefined && day.wellness.steps !== null) {
+      wellnessPieces.push(`Шаги: ${Math.round(day.wellness.steps).toLocaleString("ru-RU")}`);
+    }
+    if (wellnessPieces.length > 0) {
+      lines.push(wellnessPieces.join(" · "));
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function parseNutritionTotals(source: unknown): NutritionTotals {
+  if (typeof source !== "object" || source === null) {
+    return cloneTotals();
+  }
+  const record = source as Record<string, unknown>;
+  return {
+    caloriesKcal: normalizeNumber(readNumeric(record, "caloriesKcal", "kcal")),
+    proteinG: normalizeNumber(readNumeric(record, "proteinG", "protein_g")),
+    fatG: normalizeNumber(readNumeric(record, "fatG", "fat_g")),
+    carbsG: normalizeNumber(readNumeric(record, "carbsG", "carbs_g")),
+    sugarG: normalizeNumber(readNumeric(record, "sugarG", "sugar_g") ?? 0),
+    fiberG: normalizeNumber(readNumeric(record, "fiberG", "fiber_g") ?? 0)
+  };
+}
+
+function parseTargetsSnapshot(source: unknown): NutritionTargetsSnapshot | null {
+  if (typeof source !== "object" || source === null) {
+    return null;
+  }
+  const record = source as Record<string, unknown>;
+  return {
+    caloriesKcal: normalizeOptionalNumber(readNumeric(record, "kcal", "caloriesKcal")),
+    proteinG: normalizeOptionalNumber(readNumeric(record, "protein_g", "proteinG")),
+    fatG: normalizeOptionalNumber(readNumeric(record, "fat_g", "fatG")),
+    carbsG: normalizeOptionalNumber(readNumeric(record, "carbs_g", "carbsG")),
+    sugarG: normalizeOptionalNumber(readNumeric(record, "sugar_g", "sugarG")),
+    fiberG: normalizeOptionalNumber(readNumeric(record, "fiber_g", "fiberG"))
+  };
+}
+
+function parseDay(data: Record<string, JsonValue>, body: string, fallbackDate: string): MealPlanDay {
+  const date = typeof data.date === "string" ? ensureIsoDate(data.date) : ensureIsoDate(fallbackDate);
+  const sectionsRaw = Array.isArray(data.sections) ? data.sections : [];
+  const sections: MealPlanSection[] = [];
+  for (const entry of sectionsRaw) {
+    if (typeof entry !== "object" || entry === null) {
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const itemsRaw = Array.isArray(record.items) ? record.items : [];
+    const items: MealPlanItem[] = [];
+
+    for (const itemEntry of itemsRaw) {
+      if (typeof itemEntry !== "object" || itemEntry === null) {
+        continue;
+      }
+      const itemRecord = itemEntry as Record<string, unknown>;
+      const type: MealPlanItem["type"] = (itemRecord.type as string) === "recipe" ? "recipe" : "product";
+      const sourceRaw = itemRecord.source;
+      const source =
+        typeof sourceRaw === "object" && sourceRaw !== null
+          ? (() => {
+              const sourceRecord = sourceRaw as Record<string, unknown>;
+              const kind: "recipe" | "product" =
+                sourceRecord.kind === "recipe" ? "recipe" : "product";
+              return {
+                kind,
+                slug:
+                  typeof sourceRecord.slug === "string"
+                    ? (sourceRecord.slug as string)
+                    : undefined,
+                fileName:
+                  typeof sourceRecord.file_name === "string"
+                    ? (sourceRecord.file_name as string)
+                    : typeof sourceRecord.fileName === "string"
+                    ? (sourceRecord.fileName as string)
+                    : undefined
+              };
+            })()
+          : undefined;
+
+      const portionGrams = normalizeOptionalNumber(
+        readNumeric(itemRecord, "portion_grams", "portionGrams")
+      );
+      const quantityValue = normalizeOptionalNumber(readNumeric(itemRecord, "quantity"));
+      const servingsValue = normalizeOptionalNumber(readNumeric(itemRecord, "servings"));
+      const quantityUnitValue =
+        typeof itemRecord.unit === "string"
+          ? itemRecord.unit
+          : typeof itemRecord.quantityUnit === "string"
+          ? itemRecord.quantityUnit
+          : null;
+
+      items.push({
+        type,
+        ref: typeof itemRecord.ref === "string" ? itemRecord.ref : "",
+        title: typeof itemRecord.title === "string" ? itemRecord.title : "",
+        portionGrams,
+        quantity: quantityValue,
+        quantityUnit: quantityUnitValue,
+        servings: servingsValue,
+        nutrition: parseNutritionTotals(itemRecord.nutrition),
+        source
+      });
+    }
+
+    sections.push({
+      id: typeof record.id === "string" ? record.id : "custom",
+      name: typeof record.title === "string" ? record.title : undefined,
+      items,
+      totals: parseNutritionTotals(record.totals)
+    });
+  }
+
+  const totals = parseNutritionTotals(data.totals);
+  const targetsSnapshot = parseTargetsSnapshot(data.targets_snapshot);
+  const wellness =
+    typeof data.wellness === "object" && data.wellness !== null
+      ? {
+          mood: typeof (data.wellness as Record<string, unknown>).mood === "string"
+            ? ((data.wellness as Record<string, unknown>).mood as string)
+            : undefined,
+          sleepHours: normalizeOptionalNumber(
+            readNumeric(data.wellness as Record<string, unknown>, "sleep_hours", "sleepHours")
+          ),
+          steps: normalizeOptionalNumber(readNumeric(data.wellness as Record<string, unknown>, "steps")),
+          notes: typeof (data.wellness as Record<string, unknown>).notes === "string"
+            ? ((data.wellness as Record<string, unknown>).notes as string)
+            : null
+        }
+      : null;
+
+  const updatedAt = typeof data.updated_at === "string" ? data.updated_at : new Date().toISOString();
+  const meta = typeof data.meta === "object" && data.meta !== null ? (data.meta as Record<string, unknown>) : {};
+
+  const day: MealPlanDay = {
+    date,
+    sections,
+    totals,
+    targetsSnapshot,
+    wellness,
+    updatedAt,
+    meta
+  };
+
+  if (day.sections.length === 0) {
+    day.sections = createEmptyDay(date).sections;
+  }
+
+  recalculateDayTotals(day);
+  day.updatedAt = updatedAt;
+
+  return day;
 }
 
 async function writeDayFile(
@@ -184,14 +529,8 @@ async function writeDayFile(
   day: MealPlanDay
 ): Promise<void> {
   const writable = await fileHandle.createWritable({ keepExistingData: false });
-  const frontMatter = buildFrontMatter(day.date);
-  const bodyObject = {
-    sections: day.sections,
-    totals: day.totals,
-    meta: day.meta ?? {}
-  };
-  const body = `${JSON.stringify(bodyObject, null, 2)}\n`;
-  const content = `${frontMatter}\n${body}`;
+  const { frontMatter, body } = serializeDay(day);
+  const content = buildMarkdownDocument(frontMatter, body);
   try {
     await writable.write(content);
   } finally {
@@ -202,52 +541,12 @@ async function writeDayFile(
 async function readDayFile(fileHandle: FileSystemFileHandle, date: string): Promise<MealPlanDay> {
   const file = await fileHandle.getFile();
   const text = await file.text();
-  const { meta, body } = parseFrontMatter(text);
-  const parsedDate = ensureIsoDate(meta.date ?? date);
+  const { data, body } = parseMarkdownDocument(text);
+  return parseDay(data, body, date);
+}
 
-  let json: Partial<MealPlanDay> & { sections?: MealPlanSection[] } = {};
-  if (body) {
-    try {
-      json = JSON.parse(body) as Partial<MealPlanDay>;
-    } catch (error) {
-      console.warn("Failed to parse meal plan JSON body", error);
-      json = {};
-    }
-  }
-
-  const day: MealPlanDay = {
-    date: parsedDate,
-    sections: (json.sections ?? []).map((section) => ({
-      id: section.id ?? "custom",
-      name: section.name,
-      items: (section.items ?? []).map((item) => ({
-        type: item.type ?? "product",
-        ref: item.ref ?? "",
-        title: item.title ?? "",
-        portionGrams: item.portionGrams ?? null,
-        quantity: item.quantity ?? null,
-        quantityUnit: item.quantityUnit ?? null,
-        servings: item.servings ?? null,
-        nutrition: cloneTotals(item.nutrition as NutritionTotals | undefined),
-        source: item.source
-      })),
-      totals: cloneTotals(section.totals)
-    })),
-    totals: cloneTotals(json.totals),
-    meta: json.meta ?? {}
-  };
-
-  if (day.sections.length === 0) {
-    day.sections = createEmptyDay(parsedDate).sections;
-  } else {
-    day.sections = day.sections.map((section) => ({
-      ...section,
-      totals: cloneTotals(section.totals)
-    }));
-  }
-
-  recalculateDayTotals(day);
-  return day;
+function formatDateToFileName(date: string): string {
+  return `${date}.md`;
 }
 
 function findOrCreateSection(day: MealPlanDay, sectionId: string, sectionName?: string): MealPlanSection {
@@ -263,7 +562,7 @@ function findOrCreateSection(day: MealPlanDay, sectionId: string, sectionName?: 
     id: sectionId,
     name: sectionName,
     items: [],
-    totals: { ...ZERO_TOTALS }
+    totals: cloneTotals()
   };
   day.sections.push(section);
   return section;
@@ -280,7 +579,9 @@ function productSummaryToItem(product: ProductSummary): MealPlanItem {
       caloriesKcal: normalizeNumber(nutrition.caloriesKcal),
       proteinG: normalizeNumber(nutrition.proteinG),
       fatG: normalizeNumber(nutrition.fatG),
-      carbsG: normalizeNumber(nutrition.carbsG)
+      carbsG: normalizeNumber(nutrition.carbsG),
+      sugarG: normalizeNumber((product.nutritionPerPortion?.sugarG ?? 0) || 0),
+      fiberG: normalizeNumber((product.nutritionPerPortion?.fiberG ?? 0) || 0)
     },
     quantity: product.portionGrams ?? null,
     quantityUnit: product.portionGrams ? "g" : null,
@@ -293,7 +594,9 @@ export function scaleNutritionTotals(nutrition: NutritionTotals, factor: number)
     caloriesKcal: Number.parseFloat((nutrition.caloriesKcal * factor).toFixed(2)),
     proteinG: Number.parseFloat((nutrition.proteinG * factor).toFixed(2)),
     fatG: Number.parseFloat((nutrition.fatG * factor).toFixed(2)),
-    carbsG: Number.parseFloat((nutrition.carbsG * factor).toFixed(2))
+    carbsG: Number.parseFloat((nutrition.carbsG * factor).toFixed(2)),
+    sugarG: Number.parseFloat(((nutrition.sugarG ?? 0) * factor).toFixed(2)),
+    fiberG: Number.parseFloat(((nutrition.fiberG ?? 0) * factor).toFixed(2))
   };
 }
 
@@ -312,7 +615,7 @@ function withScaledProductItem(
   return {
     ...base,
     quantity,
-    quantityUnit: unit ?? (portion ? "g" : "portion"),
+    quantityUnit: unit ?? (portion ? "g" : null),
     nutrition: scaleNutritionTotals(base.nutrition, factor)
   };
 }
@@ -382,6 +685,7 @@ export async function addProductToMealPlan(
   section.items.push(withScaledProductItem(product, options?.quantity, options?.unit));
 
   recalculateDayTotals(day);
+  day.updatedAt = new Date().toISOString();
   await writeDayFile(fileHandle, day);
   return { day };
 }
@@ -411,6 +715,7 @@ export async function addRecipeToMealPlan(
   section.items.push(recipeSummaryToItem(recipe, options?.servings));
 
   recalculateDayTotals(day);
+  day.updatedAt = new Date().toISOString();
   await writeDayFile(fileHandle, day);
   return { day };
 }
@@ -446,6 +751,7 @@ export async function removeMealPlanItem(
   section.items.splice(itemIndex, 1);
 
   recalculateDayTotals(day);
+  day.updatedAt = new Date().toISOString();
   await writeDayFile(fileHandle, day);
   return { day };
 }
@@ -483,7 +789,8 @@ export async function updateMealPlanItem(
   if (item.type === "recipe" && typeof updates.servings === "number" && Number.isFinite(updates.servings)) {
     const nextServings = Math.max(1, Math.round(updates.servings));
     const currentServings = item.servings && item.servings > 0 ? item.servings : 1;
-    const totals = scaleNutritionTotals(item.nutrition, nextServings / currentServings);
+    const factor = nextServings / currentServings;
+    const totals = scaleNutritionTotals(item.nutrition, factor);
 
     item.servings = nextServings;
     item.nutrition = totals;
@@ -508,6 +815,7 @@ export async function updateMealPlanItem(
   }
 
   recalculateDayTotals(day);
+  day.updatedAt = new Date().toISOString();
   await writeDayFile(fileHandle, day);
   return { day };
 }

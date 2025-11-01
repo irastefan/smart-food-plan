@@ -7,7 +7,12 @@ import {
   SELECT_PRODUCT_FOR_PLAN_KEY,
   VIEW_PRODUCT_STORAGE_KEY
 } from "@/constants/storage";
-import { ensureDirectoryAccess, loadProductDetail, type ProductDetail } from "@/utils/vaultProducts";
+import {
+  ensureDirectoryAccess,
+  loadProductDetail,
+  loadProductSummaries,
+  type ProductDetail
+} from "@/utils/vaultProducts";
 import { addProductToMealPlan } from "@/utils/vaultDays";
 import {
   clearVaultDirectoryHandle,
@@ -46,16 +51,44 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
       if (!payloadRaw) {
         return;
       }
+      let parsed: { fileName?: string; slug?: string } | null = null;
       try {
-        const payload = JSON.parse(payloadRaw) as { fileName?: string };
-        if (!payload.fileName) {
-          throw new Error("Missing fileName");
+        parsed = JSON.parse(payloadRaw) as { fileName?: string; slug?: string };
+      } catch (error) {
+        console.warn("Failed to parse product view payload", error);
+        window.sessionStorage.removeItem(VIEW_PRODUCT_STORAGE_KEY);
+      }
+
+      if (!parsed) {
+        return;
+      }
+
+      try {
+        let fileName = parsed.fileName;
+        if (!fileName && parsed.slug) {
+          const summaries = await loadProductSummaries(handle);
+          const match = summaries.find((entry) => entry.slug === parsed.slug);
+          if (match?.fileName) {
+            fileName = match.fileName;
+            window.sessionStorage.setItem(
+              VIEW_PRODUCT_STORAGE_KEY,
+              JSON.stringify({ fileName, slug: match.slug })
+            );
+          }
         }
+
+        if (!fileName) {
+          window.sessionStorage.removeItem(VIEW_PRODUCT_STORAGE_KEY);
+          setStatus({ type: "error", message: t("productDetail.status.loadError") });
+          return;
+        }
+
         setIsLoading(true);
-        const detail = await loadProductDetail(handle, payload.fileName);
+        const detail = await loadProductDetail(handle, fileName);
         setProduct(detail);
       } catch (error) {
         console.error("Failed to load product detail", error);
+        window.sessionStorage.removeItem(VIEW_PRODUCT_STORAGE_KEY);
         setStatus({ type: "error", message: t("productDetail.status.loadError") });
       } finally {
         setIsLoading(false);
