@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import {
@@ -12,9 +12,9 @@ import { addItemsToShoppingList } from "@/utils/vaultShopping";
 import { loadRecipeDetail, type RecipeDetail } from "@/utils/vaultRecipes";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
+import { getImageFromVault } from "@/utils/vaultImages";
 import styles from "./RecipeScreen.module.css";
 
 type RecipeScreenProps = {
@@ -25,9 +25,9 @@ type RecipeScreenProps = {
 
 type StatusState =
   | {
-      type: "info" | "success" | "error";
-      message: string;
-    }
+    type: "info" | "success" | "error";
+    message: string;
+  }
   | null;
 
 export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBackToPlan }: RecipeScreenProps): JSX.Element {
@@ -40,6 +40,8 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   const [servingsToAdd, setServingsToAdd] = useState<number>(1);
   const [targetSection, setTargetSection] = useState<string>("flex");
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const loadRecipe = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
@@ -58,6 +60,15 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
         setIsLoading(true);
         const detail = await loadRecipeDetail(handle, payload.fileName);
         setRecipe(detail);
+        
+        // Load image if it exists and is a vault path
+        if (detail.photoUrl && detail.photoUrl.startsWith('images/')) {
+          const imageUrl = await getImageFromVault(handle, detail.photoUrl);
+          setImageUrl(imageUrl);
+        } else if (detail.photoUrl) {
+          // Legacy base64 or external URL
+          setImageUrl(detail.photoUrl);
+        }
       } catch (error) {
         console.error("Failed to load recipe detail", error);
         setStatus({ type: "error", message: t("recipe.status.loadError") });
@@ -102,9 +113,6 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
       cancelled = true;
     };
   }, [loadRecipe, t]);
-
-  const macrosPerServing = recipe?.nutritionPerServing;
-  const totals = recipe?.nutritionTotal;
 
   const handleEdit = useCallback(() => {
     if (typeof window !== "undefined" && recipe) {
@@ -226,114 +234,235 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
     }
   }, [recipe, t, vaultHandle]);
 
+
+
+  const toggleIngredientCheck = useCallback((ingredientId: string) => {
+    setCheckedIngredients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ingredientId)) {
+        newSet.delete(ingredientId);
+      } else {
+        newSet.add(ingredientId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const getNutritionPercentages = useCallback(() => {
+    if (!recipe?.nutritionPerServing) return null;
+
+    const { proteinG = 0, fatG = 0, carbsG = 0 } = recipe.nutritionPerServing;
+    const total = proteinG + fatG + carbsG;
+
+    if (total === 0) return null;
+
+    return {
+      protein: Math.round((proteinG / total) * 100),
+      fat: Math.round((fatG / total) * 100),
+      carbs: Math.round((carbsG / total) * 100)
+    };
+  }, [recipe]);
+
+  const macrosPerServing = recipe?.nutritionPerServing;
+  const totals = recipe?.nutritionTotal;
+  const nutritionPercentages = getNutritionPercentages();
+
   return (
     <div className={styles.root}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>{recipe?.title ?? t("recipe.title")}</h1>
-        <div className={styles.actions}>
-          <Button variant="outlined" onClick={handleOpenAddToDay} disabled={!recipe || isAddingToShopping}>
-            {t("recipe.addToDay")}
-          </Button>
-          <Button variant="outlined" onClick={handleAddToShopping} disabled={!recipe || isAddingToShopping}>
-            {t("recipe.addToShopping")}
-          </Button>
-          <Button variant="ghost" onClick={handleAddToPlan} disabled={!recipe}>
-            {t("recipe.quickAdd")}
-          </Button>
-          <Button variant="ghost" onClick={handleEdit} disabled={!recipe}>
-            {t("recipe.edit")}
-          </Button>
+      {/* Hero Image Section */}
+      <div className={styles.heroSection}>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={recipe?.title || t("recipe.title")}
+            className={styles.heroImage}
+          />
+        ) : (
+          <div className={styles.heroImagePlaceholder}>
+            <div className={styles.uploadIcon}>🍽️</div>
+          </div>
+        )}
+
+        <div className={styles.heroContent}>
+          <div className={styles.recipeTag}>
+            {recipe?.tags?.[0] || t("recipe.defaultTag")}
+          </div>
+          <button className={styles.closeButton} onClick={() => window.history.back()}>
+            ✕
+          </button>
         </div>
-      </header>
+
+        <div className={styles.heroTitle}>
+          <h1>{recipe?.title ?? t("recipe.title")}</h1>
+        </div>
+      </div>
 
       {status && <div className={styles.statusMessage}>{status.message}</div>}
       {isLoading && <div className={styles.statusMessage}>{t("recipe.loading")}</div>}
 
       {recipe && (
         <>
-          <section className={styles.summaryCard}>
-            <div className={styles.macrosRow}>
-              <div className={styles.macroItem}>
-                <span className={styles.macroLabel}>{t("recipes.perServingLabel")}</span>
-                <span className={styles.macroValue}>{macrosPerServing?.caloriesKcal?.toFixed(0) ?? "—"} {t("mealPlan.units.kcal")}</span>
+          {/* Nutrition Summary */}
+          <section className={styles.nutritionCard}>
+            <div className={styles.servingInfo}>
+              <span className={styles.servingLabel}>1 {t("recipe.serving")}</span>
+            </div>
+
+            <div className={styles.nutritionChart}>
+              <div className={styles.calorieCenter}>
+                <div className={styles.calorieNumber}>
+                  {macrosPerServing?.caloriesKcal?.toFixed(0) ?? "—"}
+                </div>
+                <div className={styles.calorieLabel}>{t("mealPlan.units.kcal")}</div>
               </div>
+
+              {nutritionPercentages && (
+                <svg className={styles.nutritionRing} viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="var(--color-border)"
+                    strokeWidth="8"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="#4ECDC4"
+                    strokeWidth="8"
+                    strokeDasharray={`${nutritionPercentages.carbs * 2.51} 251.2`}
+                    strokeDashoffset="0"
+                    transform="rotate(-90 50 50)"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="#45B7D1"
+                    strokeWidth="8"
+                    strokeDasharray={`${nutritionPercentages.fat * 2.51} 251.2`}
+                    strokeDashoffset={`-${nutritionPercentages.carbs * 2.51}`}
+                    transform="rotate(-90 50 50)"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="#FFA726"
+                    strokeWidth="8"
+                    strokeDasharray={`${nutritionPercentages.protein * 2.51} 251.2`}
+                    strokeDashoffset={`-${(nutritionPercentages.carbs + nutritionPercentages.fat) * 2.51}`}
+                    transform="rotate(-90 50 50)"
+                  />
+                </svg>
+              )}
+            </div>
+
+            <div className={styles.macroBreakdown}>
               <div className={styles.macroItem}>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.protein")}</span>
-                <span className={styles.macroValue}>{macrosPerServing?.proteinG?.toFixed(1) ?? "—"}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.fat")}</span>
-                <span className={styles.macroValue}>{macrosPerServing?.fatG?.toFixed(1) ?? "—"}</span>
-              </div>
-              <div className={styles.macroItem}>
+                <span className={styles.macroPercent}>{nutritionPercentages?.carbs ?? 0}%</span>
+                <span className={styles.macroAmount}>{macrosPerServing?.carbsG?.toFixed(1) ?? "—"} г</span>
                 <span className={styles.macroLabel}>{t("mealPlan.totals.carbs")}</span>
-                <span className={styles.macroValue}>{macrosPerServing?.carbsG?.toFixed(1) ?? "—"}</span>
+              </div>
+              <div className={styles.macroItem}>
+                <span className={styles.macroPercent}>{nutritionPercentages?.fat ?? 0}%</span>
+                <span className={styles.macroAmount}>{macrosPerServing?.fatG?.toFixed(1) ?? "—"} г</span>
+                <span className={styles.macroLabel}>{t("mealPlan.totals.fat")}</span>
+              </div>
+              <div className={styles.macroItem}>
+                <span className={styles.macroPercent}>{nutritionPercentages?.protein ?? 0}%</span>
+                <span className={styles.macroAmount}>{macrosPerServing?.proteinG?.toFixed(1) ?? "—"} г</span>
+                <span className={styles.macroLabel}>{t("mealPlan.totals.protein")}</span>
               </div>
             </div>
-            <div className={styles.macrosRow}>
-              <div className={styles.macroItem}>
-                <span className={styles.macroLabel}>{t("recipes.totalNutrition")}</span>
-                <span className={styles.macroValue}>{totals?.caloriesKcal?.toFixed(0) ?? "—"} {t("mealPlan.units.kcal")}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroLabel}>{t("recipes.totalServings")}</span>
-                <span className={styles.macroValue}>{recipe.servings}</span>
-              </div>
-            </div>
-            <div className={styles.macrosRow}>
-              <div className={styles.macroItem}>
-                <label>{t("recipe.add.servings")}</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={servingsToAdd}
-                  onChange={(event) => setServingsToAdd(Math.max(1, Number.parseInt(event.target.value, 10) || 1))}
-                />
-              </div>
-              <div className={styles.macroItem}>
-                <label>{t("recipe.add.date")}</label>
-                <input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} />
-              </div>
-              <div className={styles.macroItem}>
-                <label>{t("recipe.add.section")}</label>
-                <select value={targetSection} onChange={(event) => setTargetSection(event.target.value)}>
-                  <option value="breakfast">{t("mealTime.breakfast")}</option>
-                  <option value="lunch">{t("mealTime.lunch")}</option>
-                  <option value="dinner">{t("mealTime.dinner")}</option>
-                  <option value="snack">{t("mealTime.snack")}</option>
-                  <option value="flex">{t("mealTime.flex")}</option>
-                </select>
-              </div>
+
+            <div className={styles.recipeMetadata}>
+              {(recipe as any).cookTimeMinutes && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataIcon}>⏱</span>
+                  <span>{(recipe as any).cookTimeMinutes} {t("recipe.minutes")}</span>
+                </div>
+              )}
+              {recipe.tags && recipe.tags.length > 0 && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataIcon}>🏷️</span>
+                  <span>{recipe.tags.join(', ')}</span>
+                </div>
+              )}
             </div>
           </section>
 
+          {/* Ingredients Section */}
           <section className={styles.ingredientsCard}>
             <h2 className={styles.sectionTitle}>{t("recipe.ingredients")}</h2>
+            <div className={styles.ingredientSubtitle}>{t("recipe.mainList")}</div>
+
             <div className={styles.ingredientList}>
               {recipe.ingredients.map((ingredient, index) => (
                 <div key={ingredient.id ?? index} className={styles.ingredientItem}>
+                  <label className={styles.ingredientCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={checkedIngredients.has(ingredient.id)}
+                      onChange={() => toggleIngredientCheck(ingredient.id)}
+                    />
+                    <span className={styles.checkmark}></span>
+                  </label>
                   <div className={styles.ingredientContent}>
-                    <span>{ingredient.title}</span>
-                    <span className={styles.ingredientMeta}>
+                    <span className={`${styles.ingredientTitle} ${checkedIngredients.has(ingredient.id) ? styles.checked : ''}`}>
+                      {ingredient.title}
+                    </span>
+                    <span className={styles.ingredientAmount}>
                       {ingredient.quantity} {ingredient.unit}
                     </span>
                   </div>
-                  <Button
-                    variant="ghost"
+                  <button
+                    className={styles.addIngredientButton}
                     onClick={() => handleAddIngredientToShopping(ingredient)}
                     disabled={isAddingToShopping}
+                    title={t("recipe.ingredient.addToShopping")}
                   >
-                    {t("recipe.ingredient.addToShopping")}
-                  </Button>
+                    +
+                  </button>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className={styles.stepsCard}>
-            <h2 className={styles.sectionTitle}>{t("recipe.steps")}</h2>
-            <div className={styles.stepsContent}>{recipe.stepsMarkdown}</div>
-          </section>
+          {/* Instructions Section */}
+          {recipe.stepsMarkdown && (
+            <section className={styles.instructionsCard}>
+              <h2 className={styles.sectionTitle}>{t("recipe.instructions")}</h2>
+              <div className={styles.instructionsContent}>
+                {recipe.stepsMarkdown.split('\n').map((step, index) => (
+                  step.trim() && (
+                    <div key={index} className={styles.instructionStep}>
+                      <span className={styles.stepNumber}>{index + 1}</span>
+                      <span className={styles.stepText}>{step.trim()}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Action Buttons */}
+          <div className={styles.actionButtons}>
+            <Button variant="outlined" onClick={handleAddToShopping} disabled={!recipe || isAddingToShopping}>
+              {t("recipe.addToShopping")}
+            </Button>
+            <Button variant="outlined" onClick={handleOpenAddToDay} disabled={!recipe || isAddingToShopping}>
+              {t("recipe.addToDay")}
+            </Button>
+            <Button variant="ghost" onClick={handleEdit} disabled={!recipe}>
+              {t("recipe.edit")}
+            </Button>
+          </div>
         </>
       )}
     </div>

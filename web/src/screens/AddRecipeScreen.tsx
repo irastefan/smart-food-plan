@@ -3,6 +3,7 @@ import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { EDIT_RECIPE_STORAGE_KEY } from "@/constants/storage";
 import { ensureDirectoryAccess, loadProductSummaries, persistProductMarkdown, type ProductSummary } from "@/utils/vaultProducts";
+import { saveImageToVault, deleteImageFromVault, getImageFromVault } from "@/utils/vaultImages";
 import {
   loadRecipeDetail,
   persistRecipe,
@@ -130,11 +131,17 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const productsRef = useRef<ProductSummary[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [servings, setServings] = useState<number>(4);
   const [steps, setSteps] = useState<string>("");
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>("");
+  const [cookTimeMinutes, setCookTimeMinutes] = useState<number>(30);
+  const [category, setCategory] = useState<string>("");
   const [status, setStatus] = useState<StatusState>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [editing, setEditing] = useState<{ fileName: string; slug?: string } | null>(null);
@@ -155,6 +162,11 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     setDescription("");
     setServings(4);
     setSteps("");
+    setPhotoUrl("");
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
+    setCookTimeMinutes(30);
+    setCategory("");
     setIngredients([]);
     setStatus(null);
   }, []);
@@ -198,6 +210,20 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
         setDescription(detail.description ?? "");
         setServings(detail.servings ?? 1);
         setSteps(detail.stepsMarkdown ?? "");
+        setPhotoUrl(detail.photoUrl ?? "");
+        setCookTimeMinutes((detail as any).cookTimeMinutes ?? 30);
+        setCategory(detail.tags?.[0] ?? "");
+        
+        // Load image preview if it exists and is a vault path
+        if (detail.photoUrl && detail.photoUrl.startsWith('images/')) {
+          const imageUrl = await getImageFromVault(handle, detail.photoUrl);
+          if (imageUrl) {
+            setPhotoPreviewUrl(imageUrl);
+          }
+        } else if (detail.photoUrl) {
+          // Legacy base64 or external URL
+          setPhotoPreviewUrl(detail.photoUrl);
+        }
         const productList = productsRef.current;
         setIngredients(detail.ingredients.map((ingredient) => detailIngredientToDraft(ingredient, productList)));
         setStatus({ type: "info", message: t("addRecipe.status.editing", { title: detail.title }) });
@@ -348,11 +374,13 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
       title,
       description,
       servings,
-      photoUrl: "",
+      photoUrl,
+      cookTimeMinutes,
+      tags: category ? [category] : [],
       stepsMarkdown: steps,
       ingredients: ingredientDrafts
     };
-  }, [description, ingredients, servings, steps, t, title]);
+  }, [description, ingredients, servings, steps, t, title, photoUrl, cookTimeMinutes, category]);
 
   const persistCustomProducts = useCallback(
     async (handle: FileSystemDirectoryHandle) => {
@@ -389,8 +417,21 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     }
     setIsSaving(true);
     try {
-      const payload = buildRecipePayload();
+      let finalPhotoUrl = photoUrl;
+      
+      // Save new image if uploaded
+      if (photoFile && title.trim()) {
+        const recipeSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        finalPhotoUrl = await saveImageToVault(vaultHandle, photoFile, recipeSlug);
+      }
+      
+      const payload = { ...buildRecipePayload(), photoUrl: finalPhotoUrl };
+      
       if (editing) {
+        // Delete old image if we're replacing it
+        if (photoFile && photoUrl && photoUrl.startsWith('images/')) {
+          await deleteImageFromVault(vaultHandle, photoUrl);
+        }
         await updateRecipe(vaultHandle, editing.fileName, { ...payload, slug: editing.slug });
         setStatus({ type: "success", message: t("addRecipe.status.updated") });
         clearEditingState();
@@ -408,11 +449,25 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     } finally {
       setIsSaving(false);
     }
-  }, [buildRecipePayload, editing, onSaved, persistCustomProducts, t, title, vaultHandle, clearEditingState]);
+  }, [buildRecipePayload, editing, onSaved, persistCustomProducts, t, title, vaultHandle, clearEditingState, photoUrl, photoFile]);
 
   const handleGenerateWithAI = useCallback(() => {
     setStatus({ type: "info", message: t("addRecipe.ai.placeholder") });
   }, [t]);
+
+  const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPhotoFile(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setPhotoPreviewUrl(previewUrl);
+    }
+  }, []);
+
+  const handleImageClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
   return (
     <div className={styles.root}>
@@ -464,6 +519,76 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
               value={servings}
               onChange={(event) => setServings(Math.max(1, Number.parseInt(event.target.value, 10) || 1))}
             />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="recipe-cooking-time">{t("recipe.cookingTime")}</label>
+            <input
+              id="recipe-cooking-time"
+              type="number"
+              min="1"
+              value={cookTimeMinutes}
+              onChange={(event) => setCookTimeMinutes(Math.max(1, Number.parseInt(event.target.value, 10) || 30))}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="recipe-category">{t("recipe.category")}</label>
+            <select
+              id="recipe-category"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              <option value="">{t("addRecipe.chooseCategory")}</option>
+              <option value={t("recipe.categories.breakfast")}>{t("recipe.categories.breakfast")}</option>
+              <option value={t("recipe.categories.lunch")}>{t("recipe.categories.lunch")}</option>
+              <option value={t("recipe.categories.dinner")}>{t("recipe.categories.dinner")}</option>
+              <option value={t("recipe.categories.snack")}>{t("recipe.categories.snack")}</option>
+              <option value={t("recipe.categories.dessert")}>{t("recipe.categories.dessert")}</option>
+              <option value={t("recipe.categories.salad")}>{t("recipe.categories.salad")}</option>
+              <option value={t("recipe.categories.soup")}>{t("recipe.categories.soup")}</option>
+              <option value={t("recipe.categories.main")}>{t("recipe.categories.main")}</option>
+              <option value={t("recipe.categories.side")}>{t("recipe.categories.side")}</option>
+              <option value={t("recipe.categories.drink")}>{t("recipe.categories.drink")}</option>
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label>{t("addRecipe.fields.photo")}</label>
+            <div className={styles.photoUpload}>
+              <div className={styles.photoContainer}>
+                <div 
+                  className={styles.photoPreview}
+                  onClick={handleImageClick}
+                >
+                  {photoPreviewUrl || photoUrl ? (
+                    <img src={photoPreviewUrl || photoUrl} alt="Recipe preview" className={styles.photoImage} />
+                  ) : (
+                    <div className={styles.photoPlaceholder}>
+                      <div className={styles.photoIcon}>📷</div>
+                      <span>{t("addRecipe.uploadPhoto")}</span>
+                    </div>
+                  )}
+                </div>
+                {(photoPreviewUrl || photoUrl) && (
+                  <button
+                    type="button"
+                    className={styles.removePhotoButton}
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreviewUrl("");
+                      setPhotoUrl("");
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className={styles.hiddenFileInput}
+              />
+            </div>
           </div>
           <div className={styles.field}>
             <label htmlFor="recipe-steps">{t("addRecipe.fields.steps")}</label>

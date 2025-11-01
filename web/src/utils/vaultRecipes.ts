@@ -44,6 +44,7 @@ export type RecipeSummary = {
   nutritionTotal: NutritionTotals;
   nutritionPerServing: NutritionTotals;
   photoUrl?: string;
+  cookTimeMinutes?: number;
   updatedAt?: string;
   createdAt?: string;
   tags?: string[];

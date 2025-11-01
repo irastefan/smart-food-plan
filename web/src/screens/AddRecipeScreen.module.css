@@ -130,3 +130,96 @@
     align-items: stretch;
   }
 }
+/* Photo upload styles */
+.photoUpload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photoContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.photoPreview {
+  width: 200px;
+  height: 150px;
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.photoPreview:hover {
+  border-color: var(--color-accent);
+}
+
+.photoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+}
+
+.photoIcon {
+  font-size: 32px;
+  opacity: 0.6;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.removePhotoButton {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-error);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.removePhotoButton:hover {
+  background: var(--color-error);
+  transform: scale(1.1);
+}
+
+/* Desktop responsive adjustments */
+@media (min-width: 768px) {
+  .root {
+    max-width: 1200px;
+  }
+  
+  .fieldGroup {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  .photoPreview {
+    width: 300px;
+    height: 200px;
+  }
+}

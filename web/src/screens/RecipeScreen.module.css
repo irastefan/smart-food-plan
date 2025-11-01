@@ -1,133 +1,558 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 960px;
+  gap: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--color-background);
+  min-height: 100vh;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+/* Desktop version */
+@media (min-width: 768px) {
+  .root {
+    max-width: 1400px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 32px;
+    padding: 32px;
+    min-height: calc(100vh - 64px);
+  }
 }
 
-.title {
-  font-size: 34px;
-  font-weight: 700;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
+/* Hero Section */
+.heroSection {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  overflow: hidden;
 }
 
 .heroImage {
   width: 100%;
-  max-height: 420px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 26px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
 }
 
-.summaryCard {
-  background: var(--card-background);
-  border-radius: 24px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
+.heroImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--color-text-secondary);
+}
+
+.uploadIcon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.heroContent {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.recipeTag {
+  background: var(--color-accent);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.heroTitle {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.heroTitle h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  line-height: 1.2;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  padding: 20px 0 0 0;
+  border-radius: 0 0 0 0;
+}
+
+/* Desktop hero adjustments */
+@media (min-width: 768px) {
+  .heroSection {
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
+    height: auto;
+    min-height: 600px;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+  
+  .heroTitle h1 {
+    font-size: 36px;
+  }
+}
+
+/* Nutrition Card */
+.nutritionCard {
+  background: var(--color-surface);
   padding: 24px;
-  display: grid;
-  gap: 16px;
+  margin: -40px 20px 20px;
+  border-radius: 24px;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  z-index: 3;
 }
 
-.macrosRow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+/* Desktop nutrition card */
+@media (min-width: 768px) {
+  .nutritionCard {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    margin: 0;
+    height: fit-content;
+    padding: 32px;
+  }
+}
+
+.servingInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.servingLabel {
+  font-size: 16px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.nutritionChart {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+}
+
+.calorieCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.calorieNumber {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.calorieLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.nutritionRing {
+  width: 100%;
+  height: 100%;
+}
+
+.macroBreakdown {
+  display: flex;
+  justify-content: space-between;
   gap: 16px;
+  margin-bottom: 20px;
 }
 
 .macroItem {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.macroPercent {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.macroItem:nth-child(1) .macroPercent {
+  color: #4ECDC4; /* Teal for carbs */
+}
+
+.macroItem:nth-child(2) .macroPercent {
+  color: #45B7D1; /* Blue for fat */
+}
+
+.macroItem:nth-child(3) .macroPercent {
+  color: #FFA726; /* Orange for protein */
+}
+
+.macroAmount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .macroLabel {
-  font-size: 13px;
-  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+}
+
+.recipeMetadata {
+  display: flex;
+  gap: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.metadataItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
-.macroValue {
-  font-size: 22px;
-  font-weight: 600;
+.metadataIcon {
+  font-size: 16px;
 }
 
-.ingredientsCard,
-.stepsCard {
-  background: var(--card-background);
+/* Ingredients Card */
+.ingredientsCard {
+  background: var(--color-surface);
+  margin: 0 20px 20px;
   border-radius: 24px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
   padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Desktop ingredients card */
+@media (min-width: 768px) {
+  .ingredientsCard {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    margin: 0;
+    padding: 32px;
+  }
 }
 
 .sectionTitle {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  margin: 0;
+  margin: 0 0 8px 0;
   color: var(--color-text-primary);
+}
+
+.ingredientSubtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
 }
 
 .ingredientList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .ingredientItem {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ingredientItem:last-child {
+  border-bottom: none;
+}
+
+.ingredientCheckbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.ingredientCheckbox input {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ingredientCheckbox input:checked + .checkmark {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ingredientCheckbox input:checked + .checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .ingredientContent {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
-.ingredientMeta {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-}
-
-.stepsContent {
-  white-space: pre-wrap;
+.ingredientTitle {
   font-size: 16px;
-  line-height: 1.6;
   color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.ingredientTitle.checked {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+
+.ingredientAmount {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.addIngredientButton {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.addIngredientButton:hover {
+  background: var(--color-accent);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.addIngredientButton:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Instructions Card */
+.instructionsCard {
+  background: var(--color-surface);
+  margin: 0 20px 20px;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+}
+
+.instructionsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.instructionStep {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.stepNumber {
+  background: var(--color-accent);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.stepText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+/* Desktop instructions card */
+@media (min-width: 768px) {
+  .instructionsCard {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
+    margin: 0;
+    padding: 32px;
+  }
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  margin-top: auto;
+}
+
+/* Desktop action buttons */
+@media (min-width: 768px) {
+  .actionButtons {
+    grid-column: 1 / 3;
+    grid-row: 4 / 5;
+    padding: 0;
+    margin-top: 32px;
+    justify-content: center;
+    gap: 16px;
+  }
 }
 
 .statusMessage {
   padding: 14px;
+  margin: 0 20px;
   border-radius: 12px;
   background: var(--info-chip-background);
   color: var(--color-text-primary);
+}
+
+/* Desktop improvements */
+@media (min-width: 768px) {
+  .nutritionChart {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .calorieNumber {
+    font-size: 36px;
+  }
+  
+  .macroBreakdown {
+    gap: 20px;
+  }
+  
+  .macroPercent {
+    font-size: 18px;
+  }
+  
+  .macroAmount {
+    font-size: 16px;
+  }
+  
+  .ingredientList {
+    gap: 20px;
+  }
+  
+  .ingredientItem {
+    padding: 16px 0;
+  }
+  
+  .ingredientTitle {
+    font-size: 18px;
+  }
+  
+  .ingredientAmount {
+    font-size: 16px;
+  }
+  
+  .addIngredientButton {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .root {
+    max-width: 100%;
+  }
+  
+  .heroSection {
+    height: 50vh;
+    min-height: 300px;
+  }
+  
+  .nutritionCard,
+  .ingredientsCard,
+  .instructionsCard {
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 20px;
+  }
+  
+  .actionButtons {
+    padding: 16px;
+  }
+  
+  .macroBreakdown {
+    gap: 12px;
+  }
+  
+  .heroTitle h1 {
+    font-size: 24px;
+  }
 }

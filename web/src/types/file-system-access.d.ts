@@ -31,7 +31,7 @@ declare global {
       options?: { create?: boolean }
     ) => Promise<FileSystemDirectoryHandle>;
     getFileHandle: (name: string, options?: { create?: boolean }) => Promise<FileSystemFileHandle>;
-    removeEntry?: (name: string, options?: { recursive?: boolean }) => Promise<void>;
+    removeEntry: (name: string, options?: { recursive?: boolean }) => Promise<void>;
     entries: () => AsyncIterableIterator<[string, FileSystemFileHandle | FileSystemDirectoryHandle]>;
     values: () => AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
     keys: () => AsyncIterableIterator<string>;
