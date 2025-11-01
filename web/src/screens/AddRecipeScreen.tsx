@@ -146,6 +146,19 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     return scaleNutritionTotals(totals, 1 / safeServings);
   }, [servings, totals]);
 
+  const clearEditingState = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(EDIT_RECIPE_STORAGE_KEY);
+    }
+    setEditing(null);
+    setTitle("");
+    setDescription("");
+    setServings(4);
+    setSteps("");
+    setIngredients([]);
+    setStatus(null);
+  }, []);
+
   const loadProducts = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
       if (!handle) {
@@ -380,20 +393,22 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
       if (editing) {
         await updateRecipe(vaultHandle, editing.fileName, { ...payload, slug: editing.slug });
         setStatus({ type: "success", message: t("addRecipe.status.updated") });
+        clearEditingState();
+        onSaved?.();
       } else {
         const result = await persistRecipe(vaultHandle, payload);
-        setEditing({ fileName: result.fileName, slug: result.slug });
         setStatus({ type: "success", message: t("addRecipe.status.saved") });
+        clearEditingState();
+        onSaved?.();
       }
       await persistCustomProducts(vaultHandle);
-      onSaved?.();
     } catch (error) {
       console.error("Failed to save recipe", error);
       setStatus({ type: "error", message: t("addRecipe.status.error") });
     } finally {
       setIsSaving(false);
     }
-  }, [buildRecipePayload, editing, onSaved, persistCustomProducts, t, title, vaultHandle]);
+  }, [buildRecipePayload, editing, onSaved, persistCustomProducts, t, title, vaultHandle, clearEditingState]);
 
   const handleGenerateWithAI = useCallback(() => {
     setStatus({ type: "info", message: t("addRecipe.ai.placeholder") });
@@ -402,10 +417,24 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("addRecipe.title")}</h1>
-        <Button variant="outlined" onClick={handleSelectVault}>
-          {t("addRecipe.selectVault")}
-        </Button>
+        <div>
+          <h1 className={styles.title}>
+            {editing ? t("addRecipe.editTitle", { title: editing.fileName }) : t("addRecipe.title")}
+          </h1>
+          {editing && (
+            <p className={styles.subtitle}>{t("addRecipe.editSubtitle")}</p>
+          )}
+        </div>
+        <div className={styles.headerActions}>
+          {editing && (
+            <Button variant="ghost" onClick={clearEditingState}>
+              {t("addRecipe.newRecipe")}
+            </Button>
+          )}
+          <Button variant="outlined" onClick={handleSelectVault}>
+            {t("addRecipe.selectVault")}
+          </Button>
+        </div>
       </header>
 
       {status && <div className={styles.statusMessage}>{status.message}</div>}
@@ -624,8 +653,13 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
           <Button variant="ghost" onClick={handleGenerateWithAI}>
             {t("addRecipe.generateAI")}
           </Button>
+          {editing && (
+            <Button variant="ghost" onClick={clearEditingState}>
+              {t("addRecipe.cancelEdit")}
+            </Button>
+          )}
           <Button onClick={handleSave} disabled={isSaving}>
-            {t("addRecipe.save")}
+            {editing ? t("addRecipe.update") : t("addRecipe.save")}
           </Button>
         </div>
       </section>
