@@ -13,6 +13,7 @@ import {
   loadVaultDirectoryHandle,
   saveVaultDirectoryHandle
 } from "@/utils/vaultStorage";
+import { getImageFromVault } from "@/utils/vaultImages";
 import styles from "./RecipesListScreen.module.css";
 
 type RecipesListScreenProps = {
@@ -34,17 +35,39 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<StatusState>(null);
   const [search, setSearch] = useState<string>("");
+  const [recipeImages, setRecipeImages] = useState<Map<string, string>>(new Map());
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const refreshRecipes = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
       if (!handle) {
         setRecipes([]);
+        setRecipeImages(new Map());
         return;
       }
       try {
         setIsLoading(true);
         const list = await loadRecipeSummaries(handle);
         setRecipes(list);
+        
+        // Load images for recipes that have them
+        const imageMap = new Map<string, string>();
+        for (const recipe of list) {
+          if (recipe.photoUrl && recipe.photoUrl.startsWith('images/')) {
+            try {
+              const imageUrl = await getImageFromVault(handle, recipe.photoUrl);
+              if (imageUrl) {
+                imageMap.set(recipe.fileName, imageUrl);
+              }
+            } catch (error) {
+              console.error(`Failed to load image for recipe ${recipe.title}:`, error);
+            }
+          } else if (recipe.photoUrl) {
+            // Legacy base64 or external URL
+            imageMap.set(recipe.fileName, recipe.photoUrl);
+          }
+        }
+        setRecipeImages(imageMap);
       } catch (error) {
         console.error("Failed to load recipes", error);
         setStatus({ type: "error", message: t("recipes.status.loadError") });
@@ -126,12 +149,35 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   }, [refreshRecipes, t]);
 
   const filteredRecipes = useMemo(() => {
-    if (!search.trim()) {
-      return recipes;
+    let filtered = recipes;
+    
+    // Filter by search query
+    if (search.trim()) {
+      const query = search.trim().toLowerCase();
+      filtered = filtered.filter((recipe) => 
+        recipe.title.toLowerCase().includes(query) ||
+        recipe.description?.toLowerCase().includes(query) ||
+        recipe.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
     }
-    const query = search.trim().toLowerCase();
-    return recipes.filter((recipe) => recipe.title.toLowerCase().includes(query));
-  }, [recipes, search]);
+    
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter((recipe) => 
+        recipe.tags?.includes(selectedCategory)
+      );
+    }
+    
+    return filtered;
+  }, [recipes, search, selectedCategory]);
+
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    recipes.forEach(recipe => {
+      recipe.tags?.forEach(tag => categories.add(tag));
+    });
+    return Array.from(categories).sort();
+  }, [recipes]);
 
   const handleViewRecipe = useCallback(
     (recipe: RecipeSummary) => {
@@ -183,47 +229,154 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
     [refreshRecipes, t, vaultHandle]
   );
 
+  const getNutritionPercentages = useCallback((recipe: RecipeSummary) => {
+    const { proteinG = 0, fatG = 0, carbsG = 0 } = recipe.nutritionPerServing;
+    const total = proteinG + fatG + carbsG;
+    
+    if (total === 0) return null;
+    
+    return {
+      protein: Math.round((proteinG / total) * 100),
+      fat: Math.round((fatG / total) * 100),
+      carbs: Math.round((carbsG / total) * 100)
+    };
+  }, []);
+
   const renderContent = () => {
     if (isLoading) {
-      return <div className={styles.statusMessage}>{t("recipes.status.loading")}</div>;
+      return (
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}></div>
+          <div>{t("recipes.status.loading")}</div>
+        </div>
+      );
     }
     if (!filteredRecipes.length) {
-      return <div className={styles.emptyState}>{t("recipes.empty")}</div>;
+      return (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>🍽️</div>
+          <h3>{search ? t("recipes.noSearchResults") : t("recipes.empty")}</h3>
+          <p>{search ? t("recipes.tryDifferentSearch") : t("recipes.emptyDescription")}</p>
+          {!search && (
+            <Button onClick={onNavigateAddRecipe}>
+              {t("recipes.createFirst")}
+            </Button>
+          )}
+        </div>
+      );
     }
 
     return (
       <div className={styles.listGrid}>
         {filteredRecipes.map((recipe) => {
           const calories = recipe.nutritionPerServing.caloriesKcal ?? 0;
+          const nutritionPercentages = getNutritionPercentages(recipe);
+          const imageUrl = recipeImages.get(recipe.fileName);
+          
           return (
-            <article key={recipe.fileName} className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>{recipe.title}</h2>
-                <span>{t("recipes.servings", { count: String(recipe.servings) })}</span>
+            <article key={recipe.fileName} className={styles.card} onClick={() => handleViewRecipe(recipe)}>
+              <div className={styles.cardImage}>
+                {imageUrl ? (
+                  <img src={imageUrl} alt={recipe.title} className={styles.recipeImage} />
+                ) : (
+                  <div className={styles.imagePlaceholder}>
+                    <div className={styles.placeholderIcon}>🍽️</div>
+                  </div>
+                )}
+                {recipe.tags && recipe.tags.length > 0 && (
+                  <div className={styles.recipeTag}>
+                    {recipe.tags[0]}
+                  </div>
+                )}
               </div>
-              <div className={styles.cardMeta}>
-                <span>
-                  {t("recipes.perServing", {
-                    kcal: calories.toFixed(0),
-                    protein: recipe.nutritionPerServing.proteinG?.toFixed(1) ?? "0",
-                    fat: recipe.nutritionPerServing.fatG?.toFixed(1) ?? "0",
-                    carbs: recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"
-                  })}
-                </span>
-                <span>
-                  {t("recipes.totalKcal", { value: recipe.nutritionTotal.caloriesKcal?.toFixed(0) ?? "0" })}
-                </span>
-              </div>
-              <div className={styles.cardActions}>
-                <Button variant="outlined" onClick={() => handleViewRecipe(recipe)}>
-                  {t("recipes.view")}
-                </Button>
-                <Button variant="ghost" onClick={() => handleEditRecipe(recipe)}>
-                  {t("recipes.edit")}
-                </Button>
-                <Button variant="ghost" onClick={() => handleDeleteRecipe(recipe)}>
-                  {t("recipes.delete")}
-                </Button>
+              
+              <div className={styles.cardContent}>
+                <div className={styles.cardHeader}>
+                  <h2 className={styles.cardTitle}>{recipe.title}</h2>
+                  {recipe.description && (
+                    <p className={styles.cardDescription}>{recipe.description}</p>
+                  )}
+                </div>
+                
+                <div className={styles.nutritionSummary}>
+                  <div className={styles.caloriesBadge}>
+                    <span className={styles.caloriesNumber}>{calories.toFixed(0)}</span>
+                    <span className={styles.caloriesLabel}>{t("mealPlan.units.kcal")}</span>
+                  </div>
+                  
+                  {nutritionPercentages && (
+                    <div className={styles.macroIndicators}>
+                      <div className={styles.macroBar}>
+                        <div 
+                          className={styles.macroSegment} 
+                          style={{ 
+                            width: `${nutritionPercentages.carbs}%`, 
+                            backgroundColor: '#4ECDC4' 
+                          }}
+                        />
+                        <div 
+                          className={styles.macroSegment} 
+                          style={{ 
+                            width: `${nutritionPercentages.fat}%`, 
+                            backgroundColor: '#45B7D1' 
+                          }}
+                        />
+                        <div 
+                          className={styles.macroSegment} 
+                          style={{ 
+                            width: `${nutritionPercentages.protein}%`, 
+                            backgroundColor: '#FFA726' 
+                          }}
+                        />
+                      </div>
+                      <div className={styles.macroLabels}>
+                        <span style={{ color: '#4ECDC4' }}>
+                          {recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"}г У
+                        </span>
+                        <span style={{ color: '#45B7D1' }}>
+                          {recipe.nutritionPerServing.fatG?.toFixed(1) ?? "0"}г Ж
+                        </span>
+                        <span style={{ color: '#FFA726' }}>
+                          {recipe.nutritionPerServing.proteinG?.toFixed(1) ?? "0"}г Б
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className={styles.cardMeta}>
+                  <div className={styles.metaItem}>
+                    <span className={styles.metaIcon}>👥</span>
+                    <span>{recipe.servings} {t("recipe.serving")}</span>
+                  </div>
+                  {(recipe as any).cookTimeMinutes && (
+                    <div className={styles.metaItem}>
+                      <span className={styles.metaIcon}>⏱</span>
+                      <span>{(recipe as any).cookTimeMinutes} {t("recipe.minutes")}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className={styles.cardActions}>
+                  <Button 
+                    variant="ghost" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditRecipe(recipe);
+                    }}
+                  >
+                    {t("recipes.edit")}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteRecipe(recipe);
+                    }}
+                  >
+                    {t("recipes.delete")}
+                  </Button>
+                </div>
               </div>
             </article>
           );
@@ -235,9 +388,14 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   return (
     <div className={styles.root}>
       <header className={styles.pageHeader}>
-        <div>
+        <div className={styles.headerContent}>
           <h1 className={styles.title}>{t("recipes.title")}</h1>
-          <p className={styles.subtitle}>{t("recipes.subtitle")}</p>
+          <p className={styles.subtitle}>
+            {recipes.length > 0 
+              ? t("recipes.count", { count: String(recipes.length) })
+              : t("recipes.subtitle")
+            }
+          </p>
         </div>
         <div className={styles.headerActions}>
           <Button variant="outlined" onClick={handleSelectVault}>
@@ -247,14 +405,46 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
         </div>
       </header>
 
-      <div className={styles.searchBar}>
-        <input
-          className={styles.searchInput}
-          type="search"
-          value={search}
-          placeholder={t("recipes.searchPlaceholder")}
-          onChange={(event) => setSearch(event.target.value)}
-        />
+      <div className={styles.searchSection}>
+        <div className={styles.searchBar}>
+          <div className={styles.searchIcon}>🔍</div>
+          <input
+            className={styles.searchInput}
+            type="search"
+            value={search}
+            placeholder={t("recipes.searchPlaceholder")}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+        {availableCategories.length > 0 && (
+          <div className={styles.categoryFilters}>
+            <button
+              className={`${styles.categoryButton} ${!selectedCategory ? styles.active : ''}`}
+              onClick={() => setSelectedCategory("")}
+            >
+              {t("recipes.allCategories")}
+            </button>
+            {availableCategories.map(category => (
+              <button
+                key={category}
+                className={`${styles.categoryButton} ${selectedCategory === category ? styles.active : ''}`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
+        {(search || selectedCategory) && (
+          <div className={styles.searchResults}>
+            {search && selectedCategory 
+              ? t("recipes.filteredResults", { count: String(filteredRecipes.length), query: search, category: selectedCategory })
+              : search 
+                ? t("recipes.searchResults", { count: String(filteredRecipes.length), query: search })
+                : t("recipes.categoryResults", { count: String(filteredRecipes.length), category: selectedCategory })
+            }
+          </div>
+        )}
       </div>
 
       {status && <div className={styles.statusMessage}>{status.message}</div>}
