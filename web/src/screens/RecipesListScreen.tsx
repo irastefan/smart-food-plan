@@ -37,6 +37,7 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   const [search, setSearch] = useState<string>("");
   const [recipeImages, setRecipeImages] = useState<Map<string, string>>(new Map());
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"name" | "calories" | "recent">("recent");
 
   const refreshRecipes = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
@@ -168,8 +169,21 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
       );
     }
     
+    // Sort recipes
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.title.localeCompare(b.title);
+        case "calories":
+          return (b.nutritionPerServing.caloriesKcal ?? 0) - (a.nutritionPerServing.caloriesKcal ?? 0);
+        case "recent":
+        default:
+          return (b.updatedAt || b.createdAt || "").localeCompare(a.updatedAt || a.createdAt || "");
+      }
+    });
+    
     return filtered;
-  }, [recipes, search, selectedCategory]);
+  }, [recipes, search, selectedCategory, sortBy]);
 
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
@@ -331,13 +345,13 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
                       </div>
                       <div className={styles.macroLabels}>
                         <span style={{ color: '#4ECDC4' }}>
-                          {recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"}г У
+                          {recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"}г {t("recipe.macros.carbs")}
                         </span>
                         <span style={{ color: '#45B7D1' }}>
-                          {recipe.nutritionPerServing.fatG?.toFixed(1) ?? "0"}г Ж
+                          {recipe.nutritionPerServing.fatG?.toFixed(1) ?? "0"}г {t("recipe.macros.fat")}
                         </span>
                         <span style={{ color: '#FFA726' }}>
-                          {recipe.nutritionPerServing.proteinG?.toFixed(1) ?? "0"}г Б
+                          {recipe.nutritionPerServing.proteinG?.toFixed(1) ?? "0"}г {t("recipe.macros.protein")}
                         </span>
                       </div>
                     </div>
@@ -392,12 +406,21 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
           <h1 className={styles.title}>{t("recipes.title")}</h1>
           <p className={styles.subtitle}>
             {recipes.length > 0 
-              ? t("recipes.count", { count: String(recipes.length) })
+              ? `${recipes.length} ${t("recipes.count")}`
               : t("recipes.subtitle")
             }
           </p>
         </div>
         <div className={styles.headerActions}>
+          <select 
+            className={styles.sortSelect}
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value as "name" | "calories" | "recent")}
+          >
+            <option value="recent">{t("recipes.sort.recent")}</option>
+            <option value="name">{t("recipes.sort.name")}</option>
+            <option value="calories">{t("recipes.sort.calories")}</option>
+          </select>
           <Button variant="outlined" onClick={handleSelectVault}>
             {vaultHandle ? t("recipes.changeVault") : t("recipes.chooseVault")}
           </Button>
@@ -438,10 +461,10 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
         {(search || selectedCategory) && (
           <div className={styles.searchResults}>
             {search && selectedCategory 
-              ? t("recipes.filteredResults", { count: String(filteredRecipes.length), query: search, category: selectedCategory })
+              ? `${filteredRecipes.length} ${t("recipes.searchResults")} "${search}" в ${selectedCategory}`
               : search 
-                ? t("recipes.searchResults", { count: String(filteredRecipes.length), query: search })
-                : t("recipes.categoryResults", { count: String(filteredRecipes.length), category: selectedCategory })
+                ? `${filteredRecipes.length} ${t("recipes.searchResults")} "${search}"`
+                : `${filteredRecipes.length} ${t("recipes.count")} в ${selectedCategory}`
             }
           </div>
         )}
@@ -450,10 +473,6 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
       {status && <div className={styles.statusMessage}>{status.message}</div>}
 
       {renderContent()}
-
-      <Button className={styles.fabButton} onClick={onNavigateAddRecipe}>
-        + {t("recipes.add")}
-      </Button>
     </div>
   );
 }
