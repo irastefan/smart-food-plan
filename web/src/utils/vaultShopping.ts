@@ -4,10 +4,41 @@ import {
   upsertAutoBlock,
   type JsonValue
 } from "@/utils/markdown";
+import { messages, type Language, type TranslationKey } from "@/i18n/messages";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
+import { loadUserSettings, type UserSettings } from "@/utils/vaultUser";
 
 const SHOPPING_DIRECTORY_NAME = "shopping";
 const SHOPPING_FILE_NAME = "shopping-list.md";
+
+type ShoppingCategory = UserSettings["shopping"]["categories"][number];
+
+type ShoppingSerializeContext = {
+  categories: ShoppingCategory[];
+  language: Language;
+  sortUnpurchasedFirst: boolean;
+};
+
+type TranslationValues = Record<string, string>;
+
+const FALLBACK_LANGUAGE: Language = "en";
+
+function formatTemplate(template: string, values?: TranslationValues): string {
+  if (!values) {
+    return template;
+  }
+  return Object.keys(values).reduce((result, key) => {
+    const pattern = new RegExp(`{{${key}}}`, "g");
+    return result.replace(pattern, values[key]);
+  }, template);
+}
+
+function translate(language: Language, key: TranslationKey, values?: TranslationValues): string {
+  const table = messages[language] ?? messages[FALLBACK_LANGUAGE];
+  const fallbackTable = messages[FALLBACK_LANGUAGE];
+  const template = table[key] ?? fallbackTable[key] ?? key;
+  return formatTemplate(template, values);
+}
 
 export type ShoppingListItem = {
   id: string;
@@ -40,6 +71,7 @@ type ShoppingFrontMatter = {
     qty?: number | null;
     unit?: string | null;
     category?: string | null;
+    category_name?: string | null;
     notes?: string | null;
     checked: boolean;
     source?: ShoppingListItem["source"] | null;
@@ -57,19 +89,42 @@ function createEmptyList(): ShoppingList {
   };
 }
 
-function serializeShoppingList(list: ShoppingList): { frontMatter: Record<string, JsonValue>; body: string } {
+async function loadShoppingContext(
+  vaultHandle: FileSystemDirectoryHandle
+): Promise<ShoppingSerializeContext> {
+  const settings = await loadUserSettings(vaultHandle);
+  return {
+    categories: settings.shopping.categories ?? [],
+    sortUnpurchasedFirst: Boolean(settings.shopping.sortUnpurchasedFirst),
+    language: (settings.ui.language as Language) ?? FALLBACK_LANGUAGE
+  };
+}
+
+function serializeShoppingList(
+  list: ShoppingList,
+  context: ShoppingSerializeContext
+): { frontMatter: Record<string, JsonValue>; body: string } {
   const frontMatter: ShoppingFrontMatter = {
     updated_at: list.updatedAt,
-    items: list.items.map((item) => ({
-      id: item.id,
-      name: item.title,
-      qty: typeof item.quantity === "number" && Number.isFinite(item.quantity) ? Number.parseFloat(item.quantity.toFixed(2)) : null,
-      unit: item.unit ?? null,
-      category: item.category ?? null,
-      notes: item.notes ?? null,
-      checked: Boolean(item.completed),
-      source: item.source ?? null
-    }))
+    items: list.items.map((item) => {
+      const qty =
+        typeof item.quantity === "number" && Number.isFinite(item.quantity)
+          ? Number.parseFloat(item.quantity.toFixed(2))
+          : null;
+      const categoryId = item.category ?? null;
+      const categoryName = resolveCategoryName(categoryId, context);
+      return {
+        id: item.id,
+        name: item.title,
+        qty,
+        unit: item.unit ?? null,
+        category: categoryId,
+        category_name: categoryName,
+        notes: item.notes ?? null,
+        checked: Boolean(item.completed),
+        source: item.source ?? null
+      };
+    })
   };
 
   const serialized: Record<string, JsonValue> = {
@@ -80,41 +135,192 @@ function serializeShoppingList(list: ShoppingList): { frontMatter: Record<string
       qty: item.qty ?? null,
       unit: item.unit ?? null,
       category: item.category ?? null,
+      category_name: item.category_name ?? null,
       notes: item.notes ?? null,
       checked: item.checked,
       source: item.source ?? null
     }))
   };
 
-  const body = buildShoppingBody(list);
+  const body = buildShoppingBody(list, context);
 
   return { frontMatter: serialized, body };
 }
 
-function buildShoppingBody(list: ShoppingList): string {
-  const heading = "# Shopping List";
-  const checklist = buildShoppingChecklist(list.items);
-  return upsertAutoBlock(`${heading}\n`, "SHOPPING", checklist);
+function buildShoppingBody(list: ShoppingList, context: ShoppingSerializeContext): string {
+  const heading = `# ${translate(context.language, "shopping.title")}`;
+  const sections = buildShoppingSections(list.items, context);
+  return upsertAutoBlock(`${heading}\n\n`, "SHOPPING", sections);
 }
 
-function buildShoppingChecklist(items: ShoppingListItem[]): string {
+function buildShoppingSections(items: ShoppingListItem[], context: ShoppingSerializeContext): string {
   if (items.length === 0) {
-    return "_Пока пусто — добавьте ингредиенты из рецептов или вручную._";
+    return translate(context.language, "shopping.markdown.empty");
   }
 
-  return items
-    .map((item) => {
-      const checkbox = item.completed ? "[x]" : "[ ]";
-      const quantity =
-        typeof item.quantity === "number" && Number.isFinite(item.quantity)
-          ? `${Number.parseFloat(item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 1))}${item.unit ? ` ${item.unit}` : ""}`
-          : item.unit
-          ? `(${item.unit})`
-          : "";
-      const category = item.category ? ` — ${item.category}` : "";
-      return `- ${checkbox} ${item.title}${quantity ? ` (${quantity})` : ""}${category}`;
+  const groups = groupItemsByCategory(items);
+  const orderedIds = orderCategoryIds(groups, context);
+  const sections: string[] = [];
+
+  for (const categoryId of orderedIds) {
+    const categoryItems = groups.get(categoryId);
+    if (!categoryItems || categoryItems.length === 0) {
+      continue;
+    }
+    const categoryName = resolveCategoryName(categoryId, context);
+    const sectionTitle = translate(context.language, "shopping.markdown.section", {
+      name: categoryName,
+      count: String(categoryItems.length)
+    });
+    const renderedItems = renderItems(categoryItems, context);
+    sections.push(`## ${sectionTitle}\n\n${renderedItems}`);
+  }
+
+  return sections.join("\n\n").trim();
+}
+
+function groupItemsByCategory(items: ShoppingListItem[]): Map<string, ShoppingListItem[]> {
+  const groups = new Map<string, ShoppingListItem[]>();
+  for (const item of items) {
+    const categoryId = normalizeCategoryId(item.category);
+    if (!groups.has(categoryId)) {
+      groups.set(categoryId, []);
+    }
+    groups.get(categoryId)!.push(item);
+  }
+  return groups;
+}
+
+function normalizeCategoryId(raw: string | null | undefined): string {
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  return trimmed.length > 0 ? trimmed : "uncategorized";
+}
+
+function orderCategoryIds(
+  groups: Map<string, ShoppingListItem[]>,
+  context: ShoppingSerializeContext
+): string[] {
+  const groupIds = Array.from(groups.keys());
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+
+  for (const category of context.categories) {
+    if (groups.has(category.id)) {
+      ordered.push(category.id);
+      seen.add(category.id);
+    }
+  }
+
+  const extras = groupIds.filter((id) => id !== "uncategorized" && !seen.has(id));
+  const locale = context.language === "ru" ? "ru" : "en";
+  extras.sort((a, b) =>
+    resolveCategoryName(a, context).localeCompare(resolveCategoryName(b, context), locale, {
+      sensitivity: "base"
     })
-    .join("  \n");
+  );
+  ordered.push(...extras);
+
+  if (groups.has("uncategorized")) {
+    ordered.push("uncategorized");
+  }
+
+  return ordered;
+}
+
+function resolveCategoryName(
+  categoryId: string | null,
+  context: ShoppingSerializeContext
+): string {
+  const normalized = normalizeCategoryId(categoryId);
+  if (normalized === "uncategorized") {
+    return translate(context.language, "shopping.uncategorized");
+  }
+  const match = context.categories.find((category) => category.id === normalized);
+  if (match) {
+    if (match.builtin) {
+      const key = `shopping.category.${match.id}` as TranslationKey;
+      const translated = translate(context.language, key);
+      if (translated && translated !== key) {
+        return translated;
+      }
+    }
+    if (match.name && match.name.trim().length > 0) {
+      return match.name;
+    }
+  }
+  return normalized;
+}
+
+function renderItems(items: ShoppingListItem[], context: ShoppingSerializeContext): string {
+  const sorted = sortItemsForCategory(items, context.sortUnpurchasedFirst);
+  return sorted.map((item) => renderItem(item, context)).join("\n");
+}
+
+function sortItemsForCategory(
+  items: ShoppingListItem[],
+  sortUnpurchasedFirst: boolean
+): ShoppingListItem[] {
+  if (!sortUnpurchasedFirst) {
+    return [...items];
+  }
+  return [...items].sort((a, b) => {
+    const left = Number(Boolean(a.completed));
+    const right = Number(Boolean(b.completed));
+    if (left === right) {
+      return 0;
+    }
+    return left - right;
+  });
+}
+
+function formatQuantity(item: ShoppingListItem): string | null {
+  if (typeof item.quantity === "number" && Number.isFinite(item.quantity)) {
+    const precision = item.quantity % 1 === 0 ? 0 : 2;
+    const value = Number.parseFloat(item.quantity.toFixed(precision));
+    const unitPart = item.unit ? ` ${item.unit}` : "";
+    return `${value}${unitPart}`.trim();
+  }
+  if (item.unit) {
+    return item.unit.trim();
+  }
+  return null;
+}
+
+function renderItem(item: ShoppingListItem, context: ShoppingSerializeContext): string {
+  const checkbox = item.completed ? "[x]" : "[ ]";
+  const title = item.title?.trim() || "Item";
+  const quantity = formatQuantity(item);
+  let line = `- ${checkbox} ${title}`;
+  if (quantity) {
+    line += ` — ${quantity}`;
+  }
+
+  const details: string[] = [];
+  if (item.notes) {
+    const cleanedNotes = item.notes.replace(/\r?\n/g, " ").trim();
+    if (cleanedNotes.length > 0) {
+      details.push(`${translate(context.language, "shopping.addItem.notes")}: ${cleanedNotes}`);
+    }
+  }
+  if (item.source?.recipeTitle) {
+    details.push(
+      translate(context.language, "shopping.item.fromRecipe", {
+        title: item.source.recipeTitle
+      })
+    );
+  } else if (item.source?.productTitle) {
+    details.push(
+      translate(context.language, "shopping.item.fromProduct", {
+        title: item.source.productTitle
+      })
+    );
+  }
+
+  if (details.length === 0) {
+    return line;
+  }
+
+  return `${line}\n${details.map((detail) => `  - ${detail}`).join("\n")}`;
 }
 
 function parseShoppingList(data: Record<string, JsonValue>, body: string): ShoppingList {
@@ -187,9 +393,13 @@ function extractManualNotes(body: string): string {
   return cleaned;
 }
 
-async function writeShoppingListToHandle(fileHandle: FileSystemFileHandle, list: ShoppingList): Promise<void> {
+async function writeShoppingListToHandle(
+  fileHandle: FileSystemFileHandle,
+  list: ShoppingList,
+  context: ShoppingSerializeContext
+): Promise<void> {
   const writable = await fileHandle.createWritable({ keepExistingData: false });
-  const { frontMatter, body } = serializeShoppingList(list);
+  const { frontMatter, body } = serializeShoppingList(list, context);
   const content = buildMarkdownDocument(frontMatter, body);
   try {
     await writable.write(content);
@@ -225,7 +435,8 @@ export async function loadShoppingList(vaultHandle: FileSystemDirectoryHandle): 
     }
     fileHandle = await directory.getFileHandle(SHOPPING_FILE_NAME, { create: true });
     const emptyList = createEmptyList();
-    await writeShoppingListToHandle(fileHandle, emptyList);
+    const context = await loadShoppingContext(vaultHandle);
+    await writeShoppingListToHandle(fileHandle, emptyList, context);
     return emptyList;
   }
 
@@ -269,6 +480,7 @@ export async function addItemsToShoppingList(
     return loadShoppingList(vaultHandle);
   }
 
+  const contextPromise = loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   let list: ShoppingList;
   try {
@@ -280,7 +492,8 @@ export async function addItemsToShoppingList(
 
   list.items = mergeItems(list.items, items);
   list.updatedAt = new Date().toISOString();
-  await writeShoppingListToHandle(fileHandle, list);
+  const context = await contextPromise;
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }
 
@@ -288,6 +501,7 @@ async function toggleShoppingListItem(
   vaultHandle: FileSystemDirectoryHandle,
   itemId: string
 ): Promise<ShoppingList> {
+  const contextPromise = loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   let list: ShoppingList;
   try {
@@ -304,13 +518,15 @@ async function toggleShoppingListItem(
     return { ...item, completed: !item.completed };
   });
   list.updatedAt = new Date().toISOString();
-  await writeShoppingListToHandle(fileHandle, list);
+  const context = await contextPromise;
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }
 
 export async function clearCompletedShoppingItems(
   vaultHandle: FileSystemDirectoryHandle
 ): Promise<ShoppingList> {
+  const contextPromise = loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   let list: ShoppingList;
   try {
@@ -322,7 +538,8 @@ export async function clearCompletedShoppingItems(
 
   list.items = list.items.filter((item) => !item.completed);
   list.updatedAt = new Date().toISOString();
-  await writeShoppingListToHandle(fileHandle, list);
+  const context = await contextPromise;
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }
 
@@ -338,6 +555,7 @@ export async function updateShoppingItem(
     completed?: boolean;
   }
 ): Promise<ShoppingList> {
+  const contextPromise = loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   let list: ShoppingList;
   try {
@@ -367,7 +585,8 @@ export async function updateShoppingItem(
     };
   });
   list.updatedAt = new Date().toISOString();
-  await writeShoppingListToHandle(fileHandle, list);
+  const context = await contextPromise;
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }
 
@@ -375,6 +594,7 @@ export async function removeShoppingItem(
   vaultHandle: FileSystemDirectoryHandle,
   itemId: string
 ): Promise<ShoppingList> {
+  const contextPromise = loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   let list: ShoppingList;
   try {
@@ -386,16 +606,18 @@ export async function removeShoppingItem(
 
   list.items = list.items.filter((item) => item.id !== itemId);
   list.updatedAt = new Date().toISOString();
-  await writeShoppingListToHandle(fileHandle, list);
+  const context = await contextPromise;
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }
 
 export async function clearShoppingList(vaultHandle: FileSystemDirectoryHandle): Promise<ShoppingList> {
+  const context = await loadShoppingContext(vaultHandle);
   const fileHandle = await getListFileHandle(vaultHandle, { create: true });
   const list: ShoppingList = {
     updatedAt: new Date().toISOString(),
     items: []
   };
-  await writeShoppingListToHandle(fileHandle, list);
+  await writeShoppingListToHandle(fileHandle, list, context);
   return list;
 }

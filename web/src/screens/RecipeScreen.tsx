@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "@/components/Button";
 import { CategorySelectModal } from "@/components/CategorySelectModal";
 import { useTranslation } from "@/i18n/I18nProvider";
+import type { TranslationKey } from "@/i18n/messages";
 import {
   EDIT_RECIPE_STORAGE_KEY,
   SELECT_RECIPE_FOR_PLAN_KEY,
@@ -11,7 +12,7 @@ import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import { addRecipeToMealPlan, type NutritionTotals } from "@/utils/vaultDays";
 import { addItemsToShoppingList } from "@/utils/vaultShopping";
 import { loadRecipeDetail, type RecipeDetail } from "@/utils/vaultRecipes";
-import { loadUserSettings } from "@/utils/vaultUser";
+import { loadUserSettings, type UserSettings } from "@/utils/vaultUser";
 import {
   clearVaultDirectoryHandle,
   loadVaultDirectoryHandle
@@ -71,9 +72,24 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [categories, setCategories] = useState<UserSettings["shopping"]["categories"]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<RecipeDetail["ingredients"][number] | null>(null);
+
+  const localizedCategories = useMemo(
+    () =>
+      categories.map((category) => {
+        if (category.builtin) {
+          const key = `shopping.category.${category.id}` as TranslationKey;
+          const translated = t(key);
+          if (translated && translated !== key) {
+            return { id: category.id, name: translated };
+          }
+        }
+        return { id: category.id, name: category.name || category.id };
+      }),
+    [categories, t]
+  );
 
   const loadRecipe = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
@@ -559,7 +575,7 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
           setSelectedIngredient(null);
         }}
         onSelect={handleAddIngredientWithCategory}
-        categories={categories}
+        categories={localizedCategories}
         itemName={selectedIngredient?.title || ""}
         isLoading={isAddingToShopping}
       />

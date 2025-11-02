@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/Checkbox";
 import { AddItemModal } from "@/components/AddItemModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useTranslation } from "@/i18n/I18nProvider";
+import type { TranslationKey } from "@/i18n/messages";
 import {
   addItemsToShoppingList,
   clearShoppingList,
@@ -13,7 +14,7 @@ import {
   type ShoppingList,
   type ShoppingListItem
 } from "@/utils/vaultShopping";
-import { loadUserSettings } from "@/utils/vaultUser";
+import { loadUserSettings, type UserSettings } from "@/utils/vaultUser";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import {
   clearVaultDirectoryHandle,
@@ -36,11 +37,26 @@ export function ShoppingListScreen(): JSX.Element {
   const [status, setStatus] = useState<StatusState>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isMutating, setIsMutating] = useState<boolean>(false);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [categories, setCategories] = useState<UserSettings["shopping"]["categories"]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
 
   const hasItems = (shoppingList?.items.length ?? 0) > 0;
+
+  const localizedCategories = useMemo(
+    () =>
+      categories.map((category) => {
+        if (category.builtin) {
+          const key = `shopping.category.${category.id}` as TranslationKey;
+          const translated = t(key);
+          if (translated && translated !== key) {
+            return { id: category.id, name: translated };
+          }
+        }
+        return { id: category.id, name: category.name || category.id };
+      }),
+    [categories, t]
+  );
 
   const groupedItems = useMemo(() => {
     if (!shoppingList?.items) return {};
@@ -58,13 +74,32 @@ export function ShoppingListScreen(): JSX.Element {
     return groups;
   }, [shoppingList?.items]);
 
-  const getCategoryName = useCallback((categoryId: string) => {
-    if (categoryId === "uncategorized") {
-      return t("shopping.uncategorized");
+  const orderedGroups = useMemo(() => {
+    const entries = Object.entries(groupedItems) as Array<[string, ShoppingListItem[]]>;
+    if (entries.length === 0) {
+      return entries;
     }
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.name || categoryId;
-  }, [categories, t]);
+    const order = localizedCategories.map((cat) => cat.id);
+    const rank = (id: string) => {
+      if (id === "uncategorized") {
+        return order.length + 1;
+      }
+      const index = order.indexOf(id);
+      return index === -1 ? order.length : index;
+    };
+    return [...entries].sort((a, b) => rank(a[0]) - rank(b[0]));
+  }, [groupedItems, localizedCategories]);
+
+  const getCategoryName = useCallback(
+    (categoryId: string) => {
+      if (categoryId === "uncategorized") {
+        return t("shopping.uncategorized");
+      }
+      const category = localizedCategories.find((cat) => cat.id === categoryId);
+      return category?.name || categoryId;
+    },
+    [localizedCategories, t]
+  );
 
   const vaultLabel = useMemo(() => {
     if (!vaultHandle) {
@@ -279,7 +314,7 @@ export function ShoppingListScreen(): JSX.Element {
 
       {hasItems ? (
         <div className={styles.categoriesContainer}>
-          {Object.entries(groupedItems).map(([categoryId, items]) => (
+          {orderedGroups.map(([categoryId, items]) => (
             <section key={categoryId} className={styles.categorySection}>
               <h2 className={styles.categoryTitle}>
                 {getCategoryName(categoryId)}
@@ -346,7 +381,7 @@ export function ShoppingListScreen(): JSX.Element {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddItem}
-        categories={categories}
+        categories={localizedCategories}
         isLoading={isMutating}
       />
 
