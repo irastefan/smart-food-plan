@@ -6,6 +6,8 @@
   margin: 0 auto;
   background: var(--color-background);
   min-height: 100vh;
+  width: 100%;
+  padding-bottom: 48px;
 }
 
 /* Desktop version */
@@ -24,9 +26,11 @@
 /* Hero Section */
 .heroSection {
   position: relative;
-  height: 60vh;
-  min-height: 400px;
+  height: clamp(280px, 55vh, 520px);
+  min-height: 0;
   overflow: hidden;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
 }
 
 .heroImage {
@@ -101,7 +105,7 @@
 }
 
 .heroTitle h1 {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 36px);
   font-weight: 700;
   margin: 0;
   color: white;
@@ -132,7 +136,7 @@
 .nutritionCard {
   background: var(--color-surface);
   padding: 24px;
-  margin: -40px 20px 20px;
+  margin: -56px 16px 16px;
   border-radius: 24px;
   box-shadow: var(--card-shadow);
   position: relative;
@@ -264,7 +268,7 @@
 /* Ingredients Card */
 .ingredientsCard {
   background: var(--color-surface);
-  margin: 0 20px 20px;
+  margin: 0 16px 16px;
   border-radius: 24px;
   padding: 24px;
   box-shadow: var(--card-shadow);
@@ -366,9 +370,56 @@
   color: var(--color-text-secondary);
 }
 
+.ingredientMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .ingredientAmount {
   font-size: 14px;
   color: var(--color-text-secondary);
+}
+
+.ingredientNutrition {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+
+.macroChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .heroSection {
+    border-radius: 0;
+  }
+
+  .macroChip {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .ingredientNutrition {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .ingredientNutrition {
+    grid-template-columns: 1fr;
+  }
 }
 
 .addIngredientButton {
@@ -403,7 +454,7 @@
 /* Instructions Card */
 .instructionsCard {
   background: var(--color-surface);
-  margin: 0 20px 20px;
+  margin: 0 16px 16px;
   border-radius: 24px;
   padding: 24px;
   box-shadow: var(--card-shadow);
