@@ -8,7 +8,7 @@ import {
   VIEW_RECIPE_STORAGE_KEY
 } from "@/constants/storage";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
-import { addRecipeToMealPlan } from "@/utils/vaultDays";
+import { addRecipeToMealPlan, type NutritionTotals } from "@/utils/vaultDays";
 import { addItemsToShoppingList } from "@/utils/vaultShopping";
 import { loadRecipeDetail, type RecipeDetail } from "@/utils/vaultRecipes";
 import { loadUserSettings } from "@/utils/vaultUser";
@@ -24,6 +24,33 @@ type RecipeScreenProps = {
   onNavigateAddToDay?: () => void;
   onNavigateBackToPlan?: () => void;
 };
+
+function formatNumber(value: number | null | undefined, fractionDigits = 1): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  const numeric = typeof value === "number" ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(numeric)) {
+    return "—";
+  }
+  const fixed = numeric.toFixed(fractionDigits);
+  if (fractionDigits > 0) {
+    const trimmed = Number.parseFloat(fixed);
+    if (Number.isFinite(trimmed)) {
+      return trimmed.toString();
+    }
+  }
+  return fixed;
+}
+
+function extractMacroValues(macros: NutritionTotals | null | undefined) {
+  return {
+    calories: formatNumber(macros?.caloriesKcal ?? null, 0),
+    protein: formatNumber(macros?.proteinG ?? null),
+    fat: formatNumber(macros?.fatG ?? null),
+    carbs: formatNumber(macros?.carbsG ?? null)
+  };
+}
 
 type StatusState =
   | {
@@ -437,34 +464,59 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
             <div className={styles.ingredientSubtitle}>{t("recipe.mainList")}</div>
 
             <div className={styles.ingredientList}>
-              {recipe.ingredients.map((ingredient, index) => (
-                <div key={ingredient.id ?? index} className={styles.ingredientItem}>
-                  <label className={styles.ingredientCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={checkedIngredients.has(ingredient.id)}
-                      onChange={() => toggleIngredientCheck(ingredient.id)}
-                    />
-                    <span className={styles.checkmark}></span>
-                  </label>
-                  <div className={styles.ingredientContent}>
-                    <span className={`${styles.ingredientTitle} ${checkedIngredients.has(ingredient.id) ? styles.checked : ''}`}>
-                      {ingredient.title}
-                    </span>
-                    <span className={styles.ingredientAmount}>
-                      {ingredient.quantity} {ingredient.unit}
-                    </span>
+              {recipe.ingredients.map((ingredient, index) => {
+                const macros = extractMacroValues(ingredient.totals);
+                const hasNutrition = Object.values(macros).some((value) => value !== "—");
+
+                return (
+                  <div key={ingredient.id ?? index} className={styles.ingredientItem}>
+                    <label className={styles.ingredientCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={checkedIngredients.has(ingredient.id)}
+                        onChange={() => toggleIngredientCheck(ingredient.id)}
+                      />
+                      <span className={styles.checkmark}></span>
+                    </label>
+                    <div className={styles.ingredientContent}>
+                      <span
+                        className={`${styles.ingredientTitle} ${checkedIngredients.has(ingredient.id) ? styles.checked : ""}`}
+                      >
+                        {ingredient.title}
+                      </span>
+                      <div className={styles.ingredientMeta}>
+                        <span className={styles.ingredientAmount}>
+                          {`${formatNumber(ingredient.quantity)}${ingredient.unit ? ` ${ingredient.unit}` : ""}`}
+                        </span>
+                        {hasNutrition && (
+                          <div className={styles.ingredientNutrition}>
+                            <span className={styles.macroChip}>
+                              {macros.calories} {t("mealPlan.units.kcal")}
+                            </span>
+                            <span className={styles.macroChip}>
+                              {t("mealPlan.totals.protein")} {macros.protein} {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
+                            <span className={styles.macroChip}>
+                              {t("mealPlan.totals.fat")} {macros.fat} {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
+                            <span className={styles.macroChip}>
+                              {t("mealPlan.totals.carbs")} {macros.carbs} {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      className={styles.addIngredientButton}
+                      onClick={() => handleAddIngredientToShopping(ingredient)}
+                      disabled={isAddingToShopping}
+                      title={t("recipe.ingredient.addToShopping")}
+                    >
+                      +
+                    </button>
                   </div>
-                  <button
-                    className={styles.addIngredientButton}
-                    onClick={() => handleAddIngredientToShopping(ingredient)}
-                    disabled={isAddingToShopping}
-                    title={t("recipe.ingredient.addToShopping")}
-                  >
-                    +
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 

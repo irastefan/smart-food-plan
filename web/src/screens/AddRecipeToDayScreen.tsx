@@ -3,7 +3,12 @@ import { Button } from "@/components/Button";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { SELECT_RECIPE_FOR_PLAN_KEY, VIEW_RECIPE_STORAGE_KEY } from "@/constants/storage";
 import { ensureDirectoryAccess, loadProductSummaries, type ProductSummary } from "@/utils/vaultProducts";
-import { addProductToMealPlan, addRecipeToMealPlan } from "@/utils/vaultDays";
+import {
+  addProductToMealPlan,
+  addRecipeToMealPlan,
+  scaleNutritionTotals,
+  type NutritionTotals
+} from "@/utils/vaultDays";
 import { loadRecipeSummaries, type RecipeSummary } from "@/utils/vaultRecipes";
 import {
   clearVaultDirectoryHandle,
@@ -39,6 +44,66 @@ type AddRecipeToDayScreenProps = {
   onNavigateToRecipe?: () => void;
 };
 
+function formatNumber(value: number | null | undefined, fractionDigits = 1): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  const numeric = typeof value === "number" ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(numeric)) {
+    return "—";
+  }
+  const fixed = numeric.toFixed(fractionDigits);
+  if (fractionDigits > 0) {
+    const trimmed = Number.parseFloat(fixed);
+    if (Number.isFinite(trimmed)) {
+      return trimmed.toString();
+    }
+  }
+  return fixed;
+}
+
+function normalizeProductNutrition(
+  macros: ProductSummary["nutritionPerPortion"] | null | undefined
+): Partial<NutritionTotals> | null {
+  if (!macros) {
+    return null;
+  }
+  return {
+    caloriesKcal: macros.caloriesKcal ?? undefined,
+    proteinG: macros.proteinG ?? undefined,
+    fatG: macros.fatG ?? undefined,
+    carbsG: macros.carbsG ?? undefined,
+    sugarG: macros.sugarG ?? undefined,
+    fiberG: macros.fiberG ?? undefined
+  };
+}
+
+function scaleProductMacros(product: ProductSummary, quantity: number): Partial<NutritionTotals> | null {
+  const base = normalizeProductNutrition(product.nutritionPerPortion);
+  if (!base) {
+    return null;
+  }
+  const portion = product.portionGrams ?? null;
+  const rawFactor = portion && portion > 0 ? quantity / portion : quantity || 1;
+  const factor = Number.isFinite(rawFactor) && rawFactor > 0 ? rawFactor : 1;
+
+  const scaleValue = (value: number | null | undefined): number | undefined => {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    return Number.parseFloat((value * factor).toFixed(2));
+  };
+
+  return {
+    caloriesKcal: scaleValue(base.caloriesKcal),
+    proteinG: scaleValue(base.proteinG),
+    fatG: scaleValue(base.fatG),
+    carbsG: scaleValue(base.carbsG),
+    sugarG: scaleValue(base.sugarG),
+    fiberG: scaleValue(base.fiberG)
+  };
+}
+
 export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: AddRecipeToDayScreenProps): JSX.Element {
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
@@ -51,6 +116,22 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
   const [targetSection, setTargetSection] = useState<string>("flex");
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  const formatMacrosLine = useCallback(
+    (macros: Partial<NutritionTotals> | null | undefined) => {
+      const values = {
+        kcal: formatNumber(macros?.caloriesKcal ?? null, 0),
+        protein: formatNumber(macros?.proteinG ?? null),
+        fat: formatNumber(macros?.fatG ?? null),
+        carbs: formatNumber(macros?.carbsG ?? null)
+      };
+      if (Object.values(values).every((value) => value === "—")) {
+        return "—";
+      }
+      return t("nutrition.macrosLine", values);
+    },
+    [t]
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -299,39 +380,46 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
 
       {activeTab === "recipes" ? (
         <div className={styles.list}>
-          {filteredRecipes.map((recipe) => (
-            <article key={recipe.fileName} className={styles.card}>
-              <div className={styles.cardTitle}>{recipe.title}</div>
-              <div className={styles.cardMeta}>
-                {t("recipes.perServing", {
-                  kcal: recipe.nutritionPerServing.caloriesKcal?.toFixed(0) ?? "0",
-                  protein: recipe.nutritionPerServing.proteinG?.toFixed(1) ?? "0",
-                  fat: recipe.nutritionPerServing.fatG?.toFixed(1) ?? "0",
-                  carbs: recipe.nutritionPerServing.carbsG?.toFixed(1) ?? "0"
-                })}
-              </div>
-              <div className={styles.cardActions}>
-                <Button onClick={() => handleSelectRecipe(recipe)}>{t("addToDay.addRecipe")}</Button>
-                <Button variant="ghost" onClick={() => handleViewRecipe(recipe)}>
-                  {t("addToDay.viewRecipe")}
-                </Button>
-              </div>
-            </article>
-          ))}
+          {filteredRecipes.map((recipe) => {
+            const macrosText = formatMacrosLine(recipe.nutritionPerServing);
+            return (
+              <article key={recipe.fileName} className={styles.card}>
+                <div className={styles.cardTitle}>{recipe.title}</div>
+                {macrosText !== "—" && (
+                  <div className={styles.cardMeta}>
+                    <span className={styles.cardMetaLabel}>{t("recipes.perServingLabel")}</span>
+                    <span className={styles.cardMacros}>{macrosText}</span>
+                  </div>
+                )}
+                <div className={styles.cardActions}>
+                  <Button onClick={() => handleSelectRecipe(recipe)}>{t("addToDay.addRecipe")}</Button>
+                  <Button variant="ghost" onClick={() => handleViewRecipe(recipe)}>
+                    {t("addToDay.viewRecipe")}
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className={styles.list}>
-          {filteredProducts.map((product) => (
-            <article key={product.fileName} className={styles.card}>
-              <div className={styles.cardTitle}>{product.title}</div>
-              <div className={styles.cardMeta}>
-                {product.nutritionPerPortion?.caloriesKcal ?? "—"} {t("mealPlan.units.kcal")}
-              </div>
-              <div className={styles.cardActions}>
-                <Button onClick={() => handleSelectProduct(product)}>{t("addToDay.addProduct")}</Button>
-              </div>
-            </article>
-          ))}
+          {filteredProducts.map((product) => {
+            const macrosText = formatMacrosLine(normalizeProductNutrition(product.nutritionPerPortion));
+            return (
+              <article key={product.fileName} className={styles.card}>
+                <div className={styles.cardTitle}>{product.title}</div>
+                {macrosText !== "—" && (
+                  <div className={styles.cardMeta}>
+                    <span className={styles.cardMetaLabel}>{t("addToDay.perPortion")}</span>
+                    <span className={styles.cardMacros}>{macrosText}</span>
+                  </div>
+                )}
+                <div className={styles.cardActions}>
+                  <Button onClick={() => handleSelectProduct(product)}>{t("addToDay.addProduct")}</Button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -352,37 +440,52 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
         </div>
 
         <div className={styles.selectionList}>
-          {selectedItems.map((item, index) => (
-            <div key={`${item.kind}-${item.summary.fileName}`} className={styles.selectionItem}>
-              <span className={styles.selectionTitle}>{item.summary.title}</span>
-              {item.kind === "recipe" ? (
-                <input
-                  type="number"
-                  min="1"
-                  value={item.servings}
-                  onChange={(event) =>
-                    handleUpdateSelected(index, {
-                      servings: Math.max(1, Number.parseInt(event.target.value, 10) || 1)
-                    } as SelectedRecipe)
-                  }
-                />
-              ) : (
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(event) =>
-                    handleUpdateSelected(index, {
-                      quantity: Math.max(1, Number.parseFloat(event.target.value) || 1)
-                    } as SelectedProduct)
-                  }
-                />
-              )}
-              <Button variant="ghost" onClick={() => handleRemoveSelected(index)}>
-                {t("addToDay.remove")}
-              </Button>
-            </div>
-          ))}
+          {selectedItems.map((item, index) => {
+            const macrosText =
+              item.kind === "recipe"
+                ? formatMacrosLine(scaleNutritionTotals(item.summary.nutritionPerServing, item.servings))
+                : formatMacrosLine(scaleProductMacros(item.summary, item.quantity));
+
+            return (
+              <div key={`${item.kind}-${item.summary.fileName}`} className={styles.selectionItem}>
+                <div className={styles.selectionInfo}>
+                  <span className={styles.selectionTitle}>{item.summary.title}</span>
+                  {macrosText !== "—" && (
+                    <div className={styles.selectionMacros}>
+                      <span className={styles.selectionMacroLabel}>{t("addToDay.selectionTotals")}</span>
+                      <span className={styles.selectionMacroValue}>{macrosText}</span>
+                    </div>
+                  )}
+                </div>
+                {item.kind === "recipe" ? (
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.servings}
+                    onChange={(event) =>
+                      handleUpdateSelected(index, {
+                        servings: Math.max(1, Number.parseInt(event.target.value, 10) || 1)
+                      } as SelectedRecipe)
+                    }
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(event) =>
+                      handleUpdateSelected(index, {
+                        quantity: Math.max(1, Number.parseFloat(event.target.value) || 1)
+                      } as SelectedProduct)
+                    }
+                  />
+                )}
+                <Button variant="ghost" onClick={() => handleRemoveSelected(index)}>
+                  {t("addToDay.remove")}
+                </Button>
+              </div>
+            );
+          })}
         </div>
 
         <div className={styles.actions}>
