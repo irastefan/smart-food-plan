@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
+import { ActionIconButton } from "@/components/ActionIconButton";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { EDIT_RECIPE_STORAGE_KEY, VIEW_RECIPE_STORAGE_KEY } from "@/constants/storage";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
@@ -372,24 +373,22 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
                 </div>
                 
                 <div className={styles.cardActions}>
-                  <Button 
-                    variant="ghost" 
-                    onClick={(e) => {
-                      e.stopPropagation();
+                  <ActionIconButton
+                    action="edit"
+                    label={t("recipes.edit")}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       handleEditRecipe(recipe);
                     }}
-                  >
-                    {t("recipes.edit")}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={(e) => {
-                      e.stopPropagation();
+                  />
+                  <ActionIconButton
+                    action="delete"
+                    label={t("recipes.delete")}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       handleDeleteRecipe(recipe);
                     }}
-                  >
-                    {t("recipes.delete")}
-                  </Button>
+                  />
                 </div>
               </div>
             </article>
