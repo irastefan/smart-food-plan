@@ -522,10 +522,10 @@ export function SettingsScreen(): JSX.Element {
     if (hasRestoredRef.current) {
       return;
     }
-    hasRestoredRef.current = true;
 
     if (typeof window === "undefined" || !("indexedDB" in window)) {
       setIsLoading(false);
+      hasRestoredRef.current = true;
       return;
     }
 
@@ -534,24 +534,43 @@ export function SettingsScreen(): JSX.Element {
     const restore = async () => {
       try {
         const handle = await loadVaultDirectoryHandle();
+        if (cancelled) {
+          return;
+        }
         if (!handle) {
           setIsLoading(false);
           return;
         }
         const hasAccess = await ensureDirectoryAccess(handle);
-        if (!hasAccess) {
-          await clearVaultDirectoryHandle();
-          setIsLoading(false);
+        if (cancelled) {
           return;
         }
-        if (!cancelled) {
-          setVaultHandle(handle);
-          void loadVaultData(handle);
+        if (!hasAccess) {
+          await clearVaultDirectoryHandle();
+          if (!cancelled) {
+            setIsLoading(false);
+          }
+          return;
         }
+        if (cancelled) {
+          return;
+        }
+        setVaultHandle(handle);
+        if (cancelled) {
+          return;
+        }
+        await loadVaultData(handle);
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
         console.error("Failed to restore vault handle", error);
         setStatus({ type: "error", message: t("settings.status.loadError") });
         setIsLoading(false);
+      } finally {
+        if (!cancelled) {
+          hasRestoredRef.current = true;
+        }
       }
     };
 
