@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Button } from "@/components/Button";
+import { ActionIconButton } from "@/components/ActionIconButton";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
 import {
@@ -602,30 +603,26 @@ export function MealPlanDayScreen({
                             </>
                           ) : (
                             <>
-                              <button
-                                type="button"
-                                className={styles.itemButton}
-                                onClick={() => handleOpenItem(item)}
-                                disabled={isMutating}
-                              >
-                                {t("mealPlan.openItem")}
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.itemButton}
-                                onClick={() => handleStartEdit(section.id, index)}
-                                disabled={isMutating}
-                              >
-                                {t("mealPlan.item.edit")}
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.itemButton}
-                                onClick={() => handleRemoveItem(section.id, index)}
-                                disabled={isMutating}
-                              >
-                                {t("mealPlan.item.delete")}
-                              </button>
+                              <div className={styles.itemIconActions}>
+                                <ActionIconButton
+                                  action="view"
+                                  label={t("mealPlan.openItem")}
+                                  onClick={() => handleOpenItem(item)}
+                                  disabled={isMutating}
+                                />
+                                <ActionIconButton
+                                  action="edit"
+                                  label={t("mealPlan.item.edit")}
+                                  onClick={() => handleStartEdit(section.id, index)}
+                                  disabled={isMutating}
+                                />
+                                <ActionIconButton
+                                  action="delete"
+                                  label={t("mealPlan.item.delete")}
+                                  onClick={() => handleRemoveItem(section.id, index)}
+                                  disabled={isMutating}
+                                />
+                              </div>
                             </>
                           )}
                         </div>

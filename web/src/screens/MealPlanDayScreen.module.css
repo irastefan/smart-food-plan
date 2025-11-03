@@ -276,12 +276,11 @@
   justify-content: flex-end;
 }
 
-.itemButton {
-  border: none;
-  background: transparent;
-  color: var(--color-accent);
-  font-weight: 600;
-  cursor: pointer;
+.itemIconActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .emptyState {
