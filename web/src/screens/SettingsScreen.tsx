@@ -292,6 +292,8 @@ export function SettingsScreen(): JSX.Element {
   const dirtyRef = useRef(false);
   const profileRef = useRef<UserProfile>(profile);
   const settingsRef = useRef<UserSettings>(settings);
+  const languageRef = useRef(language);
+  const hasRestoredRef = useRef(false);
 
   useEffect(() => {
     profileRef.current = profile;
@@ -300,6 +302,10 @@ export function SettingsScreen(): JSX.Element {
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   const validateProfile = useCallback(
     (next: UserProfile): ProfileErrors => {
@@ -498,7 +504,8 @@ export function SettingsScreen(): JSX.Element {
         setMacroErrors(validateMacros(loadedProfile, loadedSettings, preview));
         setMealsErrors(validateMeals(loadedSettings));
         setShoppingErrors(validateShopping(loadedSettings));
-        if (loadedSettings.ui.language && loadedSettings.ui.language !== language) {
+        const currentLanguage = languageRef.current;
+        if (loadedSettings.ui.language && loadedSettings.ui.language !== currentLanguage) {
           setLanguage(loadedSettings.ui.language);
         }
       } catch (error) {
@@ -508,10 +515,15 @@ export function SettingsScreen(): JSX.Element {
         setIsLoading(false);
       }
     },
-    [language, setLanguage, t, validateMacros, validateMeals, validateProfile, validateShopping]
+    [setLanguage, t, validateMacros, validateMeals, validateProfile, validateShopping]
   );
 
   useEffect(() => {
+    if (hasRestoredRef.current) {
+      return;
+    }
+    hasRestoredRef.current = true;
+
     if (typeof window === "undefined" || !("indexedDB" in window)) {
       setIsLoading(false);
       return;
