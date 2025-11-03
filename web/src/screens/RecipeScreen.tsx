@@ -359,19 +359,6 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
             <div className={styles.uploadIcon}>🍽️</div>
           </div>
         )}
-
-        <div className={styles.heroContent}>
-          <div className={styles.recipeTag}>
-            {recipe?.tags?.[0] || t("recipe.defaultTag")}
-          </div>
-          <button className={styles.closeButton} onClick={() => window.history.back()}>
-            ✕
-          </button>
-        </div>
-
-        <div className={styles.heroTitle}>
-          <h1>{recipe?.title ?? t("recipe.title")}</h1>
-        </div>
       </div>
 
       {status && <div className={styles.statusMessage}>{status.message}</div>}
@@ -381,6 +368,10 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
         <>
           {/* Nutrition Summary */}
           <section className={styles.nutritionCard}>
+
+        <div className={styles.heroTitle}>
+          <h1>{recipe?.title ?? t("recipe.title")}</h1>
+        </div>  
             <div className={styles.servingInfo}>
               <span className={styles.servingLabel}>1 {t("recipe.serving")}</span>
             </div>

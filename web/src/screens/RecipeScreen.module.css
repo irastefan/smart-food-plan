@@ -97,10 +97,10 @@
 }
 
 .heroTitle {
-  position: absolute;
+  /* position: absolute;
   bottom: 20px;
   left: 20px;
-  right: 20px;
+  right: 20px; */
   z-index: 10;
 }
 
@@ -108,11 +108,12 @@
   font-size: clamp(24px, 6vw, 36px);
   font-weight: 700;
   margin: 0;
+  padding: 0 10px 15px 10px;
+  text-align: center;
   color: white;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
   line-height: 1.2;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
-  padding: 20px 0 0 0;
+  /* background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent); */
   border-radius: 0 0 0 0;
 }
 
@@ -157,8 +158,9 @@
 .servingInfo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .servingLabel {

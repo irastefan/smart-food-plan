@@ -1,8 +1,12 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 48px;
+  gap: 32px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+  background: var(--color-background);
 }
 
 .header {
