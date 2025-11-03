@@ -32,6 +32,37 @@ type SelectedProduct = {
 
 type SelectedItem = SelectedRecipe | SelectedProduct;
 
+type TranslateFn = ReturnType<typeof useTranslation>["t"];
+
+type MacroDisplay = {
+  calories: string;
+  protein: string;
+  fat: string;
+  carbs: string;
+};
+
+type AvailableRecipeItem = {
+  kind: "recipe";
+  id: string;
+  title: string;
+  description?: string;
+  macros: MacroDisplay | null;
+  summary: RecipeSummary;
+};
+
+type AvailableProductItem = {
+  kind: "product";
+  id: string;
+  title: string;
+  description?: string;
+  macros: MacroDisplay | null;
+  summary: ProductSummary;
+};
+
+type AvailableListItem = AvailableRecipeItem | AvailableProductItem;
+
+type TabKey = "all" | "recipes" | "products";
+
 type StatusState =
   | {
       type: "info" | "success" | "error";
@@ -104,34 +135,54 @@ function scaleProductMacros(product: ProductSummary, quantity: number): Partial<
   };
 }
 
+function toMacroDisplay(macros: Partial<NutritionTotals> | null | undefined): MacroDisplay | null {
+  const values: MacroDisplay = {
+    calories: formatNumber(macros?.caloriesKcal ?? null, 0),
+    protein: formatNumber(macros?.proteinG ?? null),
+    fat: formatNumber(macros?.fatG ?? null),
+    carbs: formatNumber(macros?.carbsG ?? null)
+  };
+  return Object.values(values).every((value) => value === "—") ? null : values;
+}
+
+function getProductPortionLabel(product: ProductSummary, translate: TranslateFn): string | null {
+  const portion = product.portionGrams ?? null;
+  const unit = product.portionUnit ?? (portion ? translate("units.grams") : null);
+  if (portion && portion > 0 && unit) {
+    const digits = Number.isInteger(portion) ? 0 : 1;
+    const formatted = formatNumber(portion, digits);
+    if (formatted !== "—") {
+      return translate("addToDay.productPortion", { value: formatted, unit });
+    }
+  }
+
+  if (!portion && product.portionUnit) {
+    return translate("addToDay.productPortion", { value: "1", unit: product.portionUnit });
+  }
+
+  if (product.brand) {
+    return product.brand;
+  }
+
+  if (product.modelLabel) {
+    return product.modelLabel;
+  }
+
+  return null;
+}
+
 export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: AddRecipeToDayScreenProps): JSX.Element {
   const { t } = useTranslation();
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
-  const [activeTab, setActiveTab] = useState<"recipes" | "products">("recipes");
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [search, setSearch] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [status, setStatus] = useState<StatusState>(null);
   const [targetSection, setTargetSection] = useState<string>("flex");
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [isSaving, setIsSaving] = useState<boolean>(false);
-
-  const formatMacrosLine = useCallback(
-    (macros: Partial<NutritionTotals> | null | undefined) => {
-      const values = {
-        kcal: formatNumber(macros?.caloriesKcal ?? null, 0),
-        protein: formatNumber(macros?.proteinG ?? null),
-        fat: formatNumber(macros?.fatG ?? null),
-        carbs: formatNumber(macros?.carbsG ?? null)
-      };
-      if (Object.values(values).every((value) => value === "—")) {
-        return "—";
-      }
-      return t("nutrition.macrosLine", values);
-    },
-    [t]
-  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -252,6 +303,56 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
     return products.filter((product) => product.title.toLowerCase().includes(term));
   }, [products, search]);
 
+  const tabOptions = useMemo(
+    () => [
+      { key: "all" as TabKey, label: t("addToDay.tabAll") },
+      { key: "recipes" as TabKey, label: t("addToDay.tabRecipes") },
+      { key: "products" as TabKey, label: t("addToDay.tabProducts") }
+    ],
+    [t]
+  );
+
+  const recipeItems = useMemo<AvailableRecipeItem[]>(
+    () =>
+      filteredRecipes.map((recipe) => ({
+        kind: "recipe",
+        id: recipe.fileName,
+        title: recipe.title,
+        description: t("addToDay.recipeServings", { count: String(recipe.servings) }),
+        macros: toMacroDisplay(recipe.nutritionPerServing),
+        summary: recipe
+      })),
+    [filteredRecipes, t]
+  );
+
+  const productItems = useMemo<AvailableProductItem[]>(
+    () =>
+      filteredProducts.map((product) => ({
+        kind: "product",
+        id: product.fileName,
+        title: product.title,
+        description: getProductPortionLabel(product, t) ?? undefined,
+        macros: toMacroDisplay(normalizeProductNutrition(product.nutritionPerPortion)),
+        summary: product
+      })),
+    [filteredProducts, t]
+  );
+
+  const allItems = useMemo<AvailableListItem[]>(() => {
+    const locale = t("mealPlan.locale");
+    return [...recipeItems, ...productItems].sort((a, b) => a.title.localeCompare(b.title, locale));
+  }, [productItems, recipeItems, t]);
+
+  const visibleItems = useMemo(() => {
+    if (activeTab === "recipes") {
+      return recipeItems;
+    }
+    if (activeTab === "products") {
+      return productItems;
+    }
+    return allItems;
+  }, [activeTab, allItems, productItems, recipeItems]);
+
   const handleSelectRecipe = useCallback((recipe: RecipeSummary) => {
     setSelectedItems((current) => {
       const exists = current.some((item) => item.kind === "recipe" && item.summary.fileName === recipe.fileName);
@@ -302,6 +403,10 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
     );
   }, []);
 
+  const handleClearSelection = useCallback(() => {
+    setSelectedItems([]);
+  }, []);
+
   const handleAddToDay = useCallback(async () => {
     if (!vaultHandle) {
       setStatus({ type: "error", message: t("addToDay.status.noVault") });
@@ -338,165 +443,272 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
     }
   }, [onNavigateBack, selectedItems, t, targetDate, targetSection, vaultHandle]);
 
+  const hasSelection = selectedItems.length > 0;
+  const selectionSubtitle = hasSelection
+    ? t("addToDay.selectionCount", { count: String(selectedItems.length) })
+    : t("addToDay.selectionHint");
+
+  const renderMacroBadges = useCallback(
+    (macros: MacroDisplay | null, variant: "default" | "compact" = "default") => {
+      if (!macros) {
+        return null;
+      }
+      const className =
+        variant === "compact"
+          ? `${styles.macroRow} ${styles.macroRowCompact}`
+          : styles.macroRow;
+      return (
+        <div className={className}>
+          <div className={styles.macroCell}>
+            <span className={styles.macroValue}>{macros.calories}</span>
+            <span className={styles.macroLabel}>{t("addToDay.macros.calories")}</span>
+          </div>
+          <div className={styles.macroCell}>
+            <span className={styles.macroValue}>{macros.protein}</span>
+            <span className={styles.macroLabel}>{t("addToDay.macros.protein")}</span>
+          </div>
+          <div className={styles.macroCell}>
+            <span className={styles.macroValue}>{macros.fat}</span>
+            <span className={styles.macroLabel}>{t("addToDay.macros.fat")}</span>
+          </div>
+          <div className={styles.macroCell}>
+            <span className={styles.macroValue}>{macros.carbs}</span>
+            <span className={styles.macroLabel}>{t("addToDay.macros.carbs")}</span>
+          </div>
+        </div>
+      );
+    },
+    [t]
+  );
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerContent}>
           <h1 className={styles.title}>{t("addToDay.title")}</h1>
-          <p>{t("addToDay.subtitle", { date: targetDate })}</p>
+          <p className={styles.subtitle}>{t("addToDay.subtitle", { date: targetDate })}</p>
         </div>
         <Button variant="outlined" onClick={handleSelectVault}>
           {t("addToDay.changeVault")}
         </Button>
       </header>
 
-      <div className={styles.tabs}>
-        <button
-          type="button"
-          className={`${styles.tabButton} ${activeTab === "recipes" ? styles.tabActive : ""}`}
-          onClick={() => setActiveTab("recipes")}
-        >
-          {t("addToDay.tabRecipes")}
-        </button>
-        <button
-          type="button"
-          className={`${styles.tabButton} ${activeTab === "products" ? styles.tabActive : ""}`}
-          onClick={() => setActiveTab("products")}
-        >
-          {t("addToDay.tabProducts")}
-        </button>
+      <div className={styles.toolbar}>
+        <div className={styles.toolbarRow}>
+          <label className={styles.searchField}>
+            <span className={styles.srOnly}>{t("addToDay.searchPlaceholder")}</span>
+            <input
+              className={styles.searchInput}
+              placeholder={t("addToDay.searchPlaceholder")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <div className={styles.tabList}>
+            {tabOptions.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`${styles.tabButton} ${activeTab === tab.key ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {status && <div className={styles.statusMessage}>{status.message}</div>}
       </div>
 
-      <div className={styles.searchBar}>
-        <input
-          className={styles.searchInput}
-          placeholder={t("addToDay.searchPlaceholder")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </div>
-
-      {status && <div className={styles.statusMessage}>{status.message}</div>}
-
-      {activeTab === "recipes" ? (
-        <div className={styles.list}>
-          {filteredRecipes.map((recipe) => {
-            const macrosText = formatMacrosLine(recipe.nutritionPerServing);
-            return (
-              <article key={recipe.fileName} className={styles.card}>
-                <div className={styles.cardTitle}>{recipe.title}</div>
-                {macrosText !== "—" && (
-                  <div className={styles.cardMeta}>
-                    <span className={styles.cardMetaLabel}>{t("recipes.perServingLabel")}</span>
-                    <span className={styles.cardMacros}>{macrosText}</span>
-                  </div>
-                )}
-                <div className={styles.cardActions}>
-                  <Button onClick={() => handleSelectRecipe(recipe)}>{t("addToDay.addRecipe")}</Button>
-                  <Button variant="ghost" onClick={() => handleViewRecipe(recipe)}>
-                    {t("addToDay.viewRecipe")}
-                  </Button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className={styles.list}>
-          {filteredProducts.map((product) => {
-            const macrosText = formatMacrosLine(normalizeProductNutrition(product.nutritionPerPortion));
-            return (
-              <article key={product.fileName} className={styles.card}>
-                <div className={styles.cardTitle}>{product.title}</div>
-                {macrosText !== "—" && (
-                  <div className={styles.cardMeta}>
-                    <span className={styles.cardMetaLabel}>{t("addToDay.perPortion")}</span>
-                    <span className={styles.cardMacros}>{macrosText}</span>
-                  </div>
-                )}
-                <div className={styles.cardActions}>
-                  <Button onClick={() => handleSelectProduct(product)}>{t("addToDay.addProduct")}</Button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      <section className={styles.selectionPanel}>
-        <div>
-          <label>{t("recipe.add.date")}</label>
-          <input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} />
-        </div>
-        <div>
-          <label>{t("recipe.add.section")}</label>
-          <select value={targetSection} onChange={(event) => setTargetSection(event.target.value)}>
-            <option value="breakfast">{t("mealTime.breakfast")}</option>
-            <option value="lunch">{t("mealTime.lunch")}</option>
-            <option value="dinner">{t("mealTime.dinner")}</option>
-            <option value="snack">{t("mealTime.snack")}</option>
-            <option value="flex">{t("mealTime.flex")}</option>
-          </select>
-        </div>
-
-        <div className={styles.selectionList}>
-          {selectedItems.map((item, index) => {
-            const macrosText =
-              item.kind === "recipe"
-                ? formatMacrosLine(scaleNutritionTotals(item.summary.nutritionPerServing, item.servings))
-                : formatMacrosLine(scaleProductMacros(item.summary, item.quantity));
-
-            return (
-              <div key={`${item.kind}-${item.summary.fileName}`} className={styles.selectionItem}>
-                <div className={styles.selectionInfo}>
-                  <span className={styles.selectionTitle}>{item.summary.title}</span>
-                  {macrosText !== "—" && (
-                    <div className={styles.selectionMacros}>
-                      <span className={styles.selectionMacroLabel}>{t("addToDay.selectionTotals")}</span>
-                      <span className={styles.selectionMacroValue}>{macrosText}</span>
+      <div className={styles.content}>
+        <section className={styles.available}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>{t("addToDay.availableTitle")}</h2>
+              <p className={styles.sectionSubtitle}>
+                {t("addToDay.itemsCount", { count: String(visibleItems.length) })}
+              </p>
+            </div>
+          </div>
+          <div className={styles.list}>
+            {visibleItems.length === 0 ? (
+              <div className={styles.emptyState}>{t("addToDay.emptyResults")}</div>
+            ) : (
+              visibleItems.map((item) => {
+                const badgeLabel = t(
+                  item.kind === "recipe" ? "addToDay.badge.recipe" : "addToDay.badge.product"
+                );
+                return (
+                  <article key={`${item.kind}-${item.id}`} className={styles.itemCard}>
+                    <div className={styles.itemContent}>
+                      <div className={styles.itemHeader}>
+                        <span
+                          className={`${styles.typeBadge} ${
+                            item.kind === "recipe" ? styles.typeRecipe : styles.typeProduct
+                          }`}
+                        >
+                          {badgeLabel}
+                        </span>
+                        {item.description && (
+                          <span className={styles.itemDescription}>{item.description}</span>
+                        )}
+                      </div>
+                      <h3 className={styles.itemTitle}>{item.title}</h3>
+                      {renderMacroBadges(item.macros)}
                     </div>
-                  )}
-                </div>
-                {item.kind === "recipe" ? (
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.servings}
-                    onChange={(event) =>
-                      handleUpdateSelected(index, {
-                        servings: Math.max(1, Number.parseInt(event.target.value, 10) || 1)
-                      } as SelectedRecipe)
-                    }
-                  />
-                ) : (
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(event) =>
-                      handleUpdateSelected(index, {
-                        quantity: Math.max(1, Number.parseFloat(event.target.value) || 1)
-                      } as SelectedProduct)
-                    }
-                  />
-                )}
-                <Button variant="ghost" onClick={() => handleRemoveSelected(index)}>
-                  {t("addToDay.remove")}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                    <div className={styles.itemActions}>
+                      <Button
+                        className={styles.addButton}
+                        leadingIcon={<span className={styles.plusIcon}>+</span>}
+                        onClick={() =>
+                          item.kind === "recipe"
+                            ? handleSelectRecipe(item.summary)
+                            : handleSelectProduct(item.summary)
+                        }
+                      >
+                        {t("addToDay.addButton")}
+                      </Button>
+                      {item.kind === "recipe" && (
+                        <Button
+                          variant="ghost"
+                          className={styles.secondaryAction}
+                          onClick={() => handleViewRecipe(item.summary)}
+                        >
+                          {t("addToDay.viewRecipe")}
+                        </Button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </section>
 
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={onNavigateBack}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleAddToDay} disabled={isSaving}>
-            {t("addToDay.confirm")}
-          </Button>
-        </div>
-      </section>
+        <aside className={styles.selectionPanel}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>{t("addToDay.selectionTitle")}</h2>
+              <p className={styles.sectionSubtitle}>{selectionSubtitle}</p>
+            </div>
+            {hasSelection && (
+              <button type="button" className={styles.clearSelection} onClick={handleClearSelection}>
+                {t("addToDay.clearSelection")}
+              </button>
+            )}
+          </div>
+
+          <div className={styles.selectionControls}>
+            <label className={styles.inputLabel}>
+              {t("recipe.add.date")}
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(event) => setTargetDate(event.target.value)}
+              />
+            </label>
+            <label className={styles.inputLabel}>
+              {t("recipe.add.section")}
+              <select value={targetSection} onChange={(event) => setTargetSection(event.target.value)}>
+                <option value="breakfast">{t("mealTime.breakfast")}</option>
+                <option value="lunch">{t("mealTime.lunch")}</option>
+                <option value="dinner">{t("mealTime.dinner")}</option>
+                <option value="snack">{t("mealTime.snack")}</option>
+                <option value="flex">{t("mealTime.flex")}</option>
+              </select>
+            </label>
+          </div>
+
+          <div className={styles.selectionList}>
+            {selectedItems.length === 0 ? (
+              <p className={styles.selectionPlaceholder}>{t("addToDay.selectionEmpty")}</p>
+            ) : (
+              selectedItems.map((item, index) => {
+                const macrosNode =
+                  item.kind === "recipe"
+                    ? renderMacroBadges(
+                        toMacroDisplay(
+                          scaleNutritionTotals(item.summary.nutritionPerServing, item.servings)
+                        ),
+                        "compact"
+                      )
+                    : renderMacroBadges(
+                        toMacroDisplay(scaleProductMacros(item.summary, item.quantity)),
+                        "compact"
+                      );
+                const quantityLabel =
+                  item.kind === "recipe"
+                    ? t("mealPlan.item.servingsLabel")
+                    : t("mealPlan.item.quantityLabel");
+                const unitLabel = item.kind === "recipe" ? t("addToDay.unitServings") : item.unit;
+
+                return (
+                  <div key={`${item.kind}-${item.summary.fileName}`} className={styles.selectionItem}>
+                    <div className={styles.selectionInfo}>
+                      <div className={styles.selectionTitleRow}>
+                        <span className={styles.selectionTitle}>{item.summary.title}</span>
+                        <span
+                          className={`${styles.typeBadge} ${
+                            item.kind === "recipe" ? styles.typeRecipe : styles.typeProduct
+                          }`}
+                        >
+                          {t(item.kind === "recipe" ? "addToDay.badge.recipe" : "addToDay.badge.product")}
+                        </span>
+                      </div>
+                      {macrosNode}
+                    </div>
+                    <div className={styles.selectionQuantity}>
+                      <span className={styles.quantityLabel}>{quantityLabel}</span>
+                      <div className={styles.quantityControl}>
+                        {item.kind === "recipe" ? (
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.servings}
+                            onChange={(event) =>
+                              handleUpdateSelected(index, {
+                                servings: Math.max(1, Number.parseInt(event.target.value, 10) || 1)
+                              } as SelectedRecipe)
+                            }
+                          />
+                        ) : (
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(event) =>
+                              handleUpdateSelected(index, {
+                                quantity: Math.max(1, Number.parseFloat(event.target.value) || 1)
+                              } as SelectedProduct)
+                            }
+                          />
+                        )}
+                        <span className={styles.quantityUnit}>{unitLabel}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className={styles.removeButton}
+                      onClick={() => handleRemoveSelected(index)}
+                    >
+                      {t("addToDay.remove")}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className={styles.selectionActions}>
+            <Button variant="ghost" onClick={onNavigateBack}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleAddToDay} disabled={isSaving || !hasSelection}>
+              {isSaving ? t("common.processing") : t("addToDay.confirm")}
+            </Button>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
