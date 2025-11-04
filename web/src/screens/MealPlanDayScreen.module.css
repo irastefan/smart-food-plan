@@ -345,6 +345,54 @@
   font-weight: 500;
 }
 
+.weightCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weightInputRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.weightInput {
+  flex: 1;
+  min-width: 140px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  padding: 8px 10px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 15px;
+}
+
+.weightHint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.weightCurrent {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.weightStatus {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.weightStatusSuccess {
+  color: var(--color-success-text, #0b7a44);
+}
+
+.weightStatusError {
+  color: var(--color-error-text, #d33838);
+}
+
 .wellnessRow {
   display: flex;
   gap: 12px;

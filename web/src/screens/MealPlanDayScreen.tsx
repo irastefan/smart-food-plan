@@ -6,6 +6,7 @@ import type { TranslationKey } from "@/i18n/messages";
 import {
   loadMealPlanDay,
   removeMealPlanItem,
+  updateMealPlanDayMeta,
   updateMealPlanItem,
   type MealPlanDay,
   type MealPlanItem,
@@ -108,6 +109,11 @@ export function MealPlanDayScreen({
   } | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const [weightInput, setWeightInput] = useState<string>("");
+  const [isSavingWeight, setIsSavingWeight] = useState<boolean>(false);
+  const [weightStatus, setWeightStatus] = useState<
+    { kind: "success" | "error"; message: TranslationKey } | null
+  >(null);
 
   const loadDayPlan = useCallback(
     async (handle: FileSystemDirectoryHandle | null, date: string) => {
@@ -200,15 +206,69 @@ export function MealPlanDayScreen({
   }, [selectedDate]);
 
   useEffect(() => {
+    setWeightStatus(null);
+  }, [selectedDate]);
+
+  useEffect(() => {
     if (!dayPlan) {
       setEditingItem(null);
       setEditValue("");
     }
   }, [dayPlan]);
 
+  useEffect(() => {
+    const weight = dayPlan?.meta?.weightKg;
+    if (weight === undefined || weight === null) {
+      setWeightInput("");
+    } else {
+      setWeightInput(String(weight));
+    }
+  }, [dayPlan?.meta?.weightKg]);
+
   const handleDateChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
   }, []);
+
+  const handleWeightInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setWeightInput(event.target.value);
+    setWeightStatus(null);
+  }, []);
+
+  const handleSaveWeight = useCallback(async () => {
+    if (!vaultHandle) {
+      setWeightStatus({ kind: "error", message: "mealPlan.state.noVault" });
+      return;
+    }
+
+    const trimmed = weightInput.trim();
+    let nextWeight: number | null;
+    if (!trimmed) {
+      nextWeight = null;
+    } else {
+      const parsed = Number.parseFloat(trimmed.replace(",", "."));
+      if (!Number.isFinite(parsed) || parsed < 20 || parsed > 400) {
+        setWeightStatus({ kind: "error", message: "mealPlan.weight.invalid" });
+        return;
+      }
+      nextWeight = Number.parseFloat(parsed.toFixed(1));
+    }
+
+    setIsSavingWeight(true);
+    setWeightStatus(null);
+    try {
+      const result = await updateMealPlanDayMeta(vaultHandle, selectedDate, { weightKg: nextWeight });
+      setDayPlan(result.day);
+      setWeightStatus({
+        kind: "success",
+        message: trimmed ? "mealPlan.weight.saved" : "mealPlan.weight.cleared"
+      });
+    } catch (error) {
+      console.error("Failed to save day weight", error);
+      setWeightStatus({ kind: "error", message: "mealPlan.weight.saveError" });
+    } finally {
+      setIsSavingWeight(false);
+    }
+  }, [selectedDate, vaultHandle, weightInput]);
 
   const handleAddFood = useCallback(
     (sectionId: string, sectionName?: string) => {
@@ -364,6 +424,7 @@ export function MealPlanDayScreen({
 
   const totals = dayPlan?.totals ?? EMPTY_TOTALS;
   const macroTargets = userSettings?.targets ?? null;
+  const currentWeight = dayPlan?.meta?.weightKg ?? null;
 
   const macroCards = useMemo(
     () =>
@@ -667,6 +728,41 @@ export function MealPlanDayScreen({
               </span>
             ))}
           </div>
+        </div>
+        <div className={styles.weightCard}>
+          <span className={styles.summaryLabel}>{t("mealPlan.weight.title")}</span>
+          <div className={styles.weightInputRow}>
+            <input
+              className={styles.weightInput}
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min="20"
+              max="400"
+              value={weightInput}
+              placeholder={t("mealPlan.weight.placeholder")}
+              onChange={handleWeightInputChange}
+              disabled={isSavingWeight}
+            />
+            <Button onClick={handleSaveWeight} disabled={isSavingWeight}>
+              {t("mealPlan.weight.save")}
+            </Button>
+          </div>
+          <span className={styles.weightHint}>{t("mealPlan.weight.hint")}</span>
+          {currentWeight !== null && currentWeight !== undefined ? (
+            <span className={styles.weightCurrent}>
+              {t("mealPlan.weight.current", { value: formatNumber(currentWeight) })}
+            </span>
+          ) : null}
+          {weightStatus ? (
+            <span
+              className={`${styles.weightStatus} ${
+                weightStatus.kind === "success" ? styles.weightStatusSuccess : styles.weightStatusError
+              }`}
+            >
+              {t(weightStatus.message)}
+            </span>
+          ) : null}
         </div>
         <div className={styles.wellnessRow}>
           <span className={styles.chip}>😌 {t("mealPlan.wellness.mood")}</span>

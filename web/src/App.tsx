@@ -12,6 +12,7 @@ import { RecipeScreen } from "@/screens/RecipeScreen";
 import { RecipesListScreen } from "@/screens/RecipesListScreen";
 import { ShoppingListScreen } from "@/screens/ShoppingListScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
+import { StatisticsScreen } from "@/screens/StatisticsScreen";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 function App(): JSX.Element {
@@ -30,6 +31,8 @@ function App(): JSX.Element {
             onNavigateToSettings={() => navigate("settings")}
           />
         );
+      case "statistics":
+        return <StatisticsScreen />;
       case "add-recipe-to-day":
         return (
           <AddRecipeToDayScreen

@@ -48,6 +48,10 @@ export type MealPlanSection = {
   totals: NutritionTotals;
 };
 
+export type MealPlanDayMeta = Record<string, unknown> & {
+  weightKg?: number | null;
+};
+
 export type MealPlanDay = {
   date: string;
   sections: MealPlanSection[];
@@ -60,7 +64,7 @@ export type MealPlanDay = {
     notes?: string | null;
   } | null;
   updatedAt?: string;
-  meta?: Record<string, unknown>;
+  meta?: MealPlanDayMeta;
 };
 
 export type MealPlanUpdateResult = {
@@ -249,6 +253,33 @@ function buildTargetsObject(targets?: NutritionTargetsSnapshot | null): Record<s
   return Object.keys(entries).length > 0 ? entries : null;
 }
 
+function serializeDayMeta(meta?: MealPlanDayMeta | null): Record<string, JsonValue> | null {
+  if (!meta) {
+    return null;
+  }
+
+  const entries: Record<string, JsonValue> = {};
+
+  for (const [key, value] of Object.entries(meta)) {
+    if (key === "weightKg") {
+      continue;
+    }
+    if (value !== undefined) {
+      entries[key] = value as JsonValue;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(meta, "weightKg")) {
+    const weight = meta.weightKg;
+    entries.weight_kg =
+      weight === null || weight === undefined
+        ? null
+        : Number.parseFloat(Number(weight).toFixed(1));
+  }
+
+  return Object.keys(entries).length > 0 ? entries : null;
+}
+
 function serializeDay(day: MealPlanDay): { frontMatter: Record<string, JsonValue>; body: string } {
   const sections = day.sections.map((section) => ({
     id: section.id,
@@ -304,8 +335,9 @@ function serializeDay(day: MealPlanDay): { frontMatter: Record<string, JsonValue
     }
   }
 
-  if (day.meta && Object.keys(day.meta).length > 0) {
-    frontMatter.meta = day.meta as JsonValue;
+  const serializedMeta = serializeDayMeta(day.meta);
+  if (serializedMeta) {
+    frontMatter.meta = serializedMeta;
   }
 
   const body = buildDayBody(day);
@@ -409,6 +441,28 @@ function parseTargetsSnapshot(source: unknown): NutritionTargetsSnapshot | null 
   };
 }
 
+function parseDayMeta(source: unknown): MealPlanDayMeta {
+  const meta: MealPlanDayMeta = {};
+  if (typeof source !== "object" || source === null) {
+    return meta;
+  }
+
+  const record = source as Record<string, unknown>;
+  const weightValue = readNumeric(record, "weight_kg", "weightKg");
+  if (weightValue !== undefined) {
+    meta.weightKg = normalizeOptionalNumber(weightValue);
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    if (key === "weight_kg" || key === "weightKg") {
+      continue;
+    }
+    meta[key] = value;
+  }
+
+  return meta;
+}
+
 function parseDay(data: Record<string, JsonValue>, body: string, fallbackDate: string): MealPlanDay {
   const date = typeof data.date === "string" ? ensureIsoDate(data.date) : ensureIsoDate(fallbackDate);
   const sectionsRaw = Array.isArray(data.sections) ? data.sections : [];
@@ -502,7 +556,7 @@ function parseDay(data: Record<string, JsonValue>, body: string, fallbackDate: s
       : null;
 
   const updatedAt = typeof data.updated_at === "string" ? data.updated_at : new Date().toISOString();
-  const meta = typeof data.meta === "object" && data.meta !== null ? (data.meta as Record<string, unknown>) : {};
+  const meta = parseDayMeta(data.meta);
 
   const day: MealPlanDay = {
     date,
@@ -657,6 +711,76 @@ export async function loadMealPlanDay(
   }
 
   return readDayFile(fileHandle, isoDate);
+}
+
+export async function updateMealPlanDayMeta(
+  vaultHandle: FileSystemDirectoryHandle,
+  date: string,
+  updates: { weightKg?: number | null }
+): Promise<MealPlanUpdateResult> {
+  const isoDate = ensureIsoDate(date);
+  const daysDir = await ensureDaysDirectory(vaultHandle);
+  const fileName = formatDateToFileName(isoDate);
+  const fileHandle = await daysDir.getFileHandle(fileName, { create: true });
+
+  let day: MealPlanDay;
+  try {
+    day = await readDayFile(fileHandle, isoDate);
+  } catch (error) {
+    console.error("Failed to read meal plan day for meta update, recreating", error);
+    day = createEmptyDay(isoDate);
+  }
+
+  const nextMeta: MealPlanDayMeta = { ...(day.meta ?? {}) };
+
+  if (Object.prototype.hasOwnProperty.call(updates, "weightKg")) {
+    const value = updates.weightKg;
+    if (value === null || value === undefined) {
+      delete nextMeta.weightKg;
+    } else if (Number.isFinite(value)) {
+      nextMeta.weightKg = Number.parseFloat(Number(value).toFixed(1));
+    }
+  }
+
+  day.meta = nextMeta;
+  day.updatedAt = new Date().toISOString();
+
+  await writeDayFile(fileHandle, day);
+  return { day };
+}
+
+export async function loadMealPlanHistory(
+  vaultHandle: FileSystemDirectoryHandle,
+  options?: { limit?: number }
+): Promise<MealPlanDay[]> {
+  const daysDir = await ensureDaysDirectory(vaultHandle);
+  const entries: { name: string; handle: FileSystemFileHandle }[] = [];
+
+  for await (const entry of daysDir.values()) {
+    if (entry.kind === "file") {
+      entries.push({ name: entry.name, handle: entry });
+    }
+  }
+
+  entries.sort((a, b) => a.name.localeCompare(b.name));
+
+  const limit = options?.limit ?? entries.length;
+  const startIndex = Math.max(0, entries.length - limit);
+  const selected = entries.slice(startIndex);
+
+  const days: MealPlanDay[] = [];
+  for (const entry of selected) {
+    const baseName = entry.name.replace(/\.md$/i, "");
+    const iso = ensureIsoDate(baseName);
+    try {
+      const day = await readDayFile(entry.handle, iso);
+      days.push(day);
+    } catch (error) {
+      console.error("Failed to read meal plan day while loading history", error);
+    }
+  }
+
+  return days;
 }
 
 export async function addProductToMealPlan(
