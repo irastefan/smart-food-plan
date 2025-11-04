@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type AppRoute =
   | "meal-plan"
+  | "statistics"
   | "add-recipe-to-day"
   | "recipes"
   | "add-recipe"
@@ -26,6 +27,8 @@ function hashToRoute(hash: string): AppRoute {
       return "products";
     case "meal-plan":
       return "meal-plan";
+    case "statistics":
+      return "statistics";
     case "recipes":
       return "recipes";
     case "add-recipe":
@@ -90,6 +93,7 @@ export function useHashNavigation(): { route: AppRoute; navigate: (route: AppRou
 
 export const appRoutes: { route: AppRoute; hash: string }[] = [
   { route: "meal-plan", hash: routeToHash("meal-plan") },
+  { route: "statistics", hash: routeToHash("statistics") },
   { route: "recipes", hash: routeToHash("recipes") },
   { route: "add-recipe", hash: routeToHash("add-recipe") },
   { route: "recipe", hash: routeToHash("recipe") },
