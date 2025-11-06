@@ -14,6 +14,12 @@
   gap: 12px;
 }
 
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .title {
   margin: 0;
   font-size: clamp(2rem, 3vw, 2.6rem);
@@ -73,6 +79,12 @@
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.cardCalories,
+.cardMacros,
+.cardWeight {
+  min-width: 0;
 }
 
 .chartCard {
@@ -264,6 +276,105 @@
   font-size: 13px;
   color: var(--color-text-secondary);
   font-weight: 600;
+}
+
+/* Desktop layout */
+@media (min-width: 1024px) {
+  .root {
+    padding: 40px;
+    gap: 32px;
+    max-width: 1400px;
+  }
+
+  .header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .headerText {
+    max-width: 720px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+  }
+
+  .rangeToggle {
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .rangeButton {
+    padding: 8px 18px;
+    font-size: 15px;
+  }
+
+  .cardsGrid {
+    gap: 24px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .chartCard {
+    padding: 28px;
+    gap: 24px;
+  }
+
+  .chartHeader {
+    align-items: center;
+  }
+
+  .chartTitle {
+    font-size: 22px;
+  }
+
+  .chartMeta {
+    font-size: 15px;
+  }
+
+  .rangeSummary {
+    font-size: 14px;
+  }
+
+  .macroLegend {
+    justify-content: flex-end;
+  }
+
+  .barChart {
+    min-height: 240px;
+    grid-auto-columns: minmax(64px, 1fr);
+  }
+
+  .cardCalories {
+    grid-column: span 7;
+  }
+
+  .cardMacros {
+    grid-column: span 5;
+  }
+
+  .cardWeight {
+    grid-column: 1 / -1;
+  }
+
+  .lineChart {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .lineSvg {
+    flex: 1;
+    height: 240px;
+  }
+
+  .lineLabels {
+    flex: 1;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
 }
 
 @media (max-width: 640px) {

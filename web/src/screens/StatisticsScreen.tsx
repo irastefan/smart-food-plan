@@ -272,8 +272,10 @@ export function StatisticsScreen(): JSX.Element {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("statistics.title")}</h1>
-        <p className={styles.subtitle}>{t("statistics.subtitle")}</p>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>{t("statistics.title")}</h1>
+          <p className={styles.subtitle}>{t("statistics.subtitle")}</p>
+        </div>
         <div className={styles.rangeToggle}>
           {RANGE_OPTIONS.map((option) => (
             <button
@@ -297,7 +299,7 @@ export function StatisticsScreen(): JSX.Element {
 
       {hasData && (
         <section className={styles.cardsGrid}>
-          <article className={styles.chartCard}>
+          <article className={clsx(styles.chartCard, styles.cardCalories)}>
             <header className={styles.chartHeader}>
               <div>
                 <h2 className={styles.chartTitle}>{t("statistics.section.calories")}</h2>
@@ -327,7 +329,7 @@ export function StatisticsScreen(): JSX.Element {
             </div>
           </article>
 
-          <article className={styles.chartCard}>
+          <article className={clsx(styles.chartCard, styles.cardMacros)}>
             <header className={styles.chartHeader}>
               <div>
                 <h2 className={styles.chartTitle}>{t("statistics.section.macros")}</h2>
@@ -378,7 +380,7 @@ export function StatisticsScreen(): JSX.Element {
             </div>
           </article>
 
-          <article className={styles.chartCard}>
+          <article className={clsx(styles.chartCard, styles.cardWeight)}>
             <header className={styles.chartHeader}>
               <div>
                 <h2 className={styles.chartTitle}>{t("statistics.section.weight")}</h2>
