@@ -70,7 +70,6 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
   const [servingsToAdd, setServingsToAdd] = useState<number>(1);
   const [targetSection, setTargetSection] = useState<string>("flex");
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [categories, setCategories] = useState<UserSettings["shopping"]["categories"]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -310,21 +309,6 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
       setIsAddingToShopping(false);
     }
   }, [recipe, t, vaultHandle]);
-
-
-
-  const toggleIngredientCheck = useCallback((ingredientId: string) => {
-    setCheckedIngredients(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ingredientId)) {
-        newSet.delete(ingredientId);
-      } else {
-        newSet.add(ingredientId);
-      }
-      return newSet;
-    });
-  }, []);
-
   const getNutritionPercentages = useCallback(() => {
     if (!recipe?.nutritionPerServing) return null;
 
@@ -477,50 +461,56 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
 
                 return (
                   <div key={ingredient.id ?? index} className={styles.ingredientItem}>
-                    <label className={styles.ingredientCheckbox}>
-                      <input
-                        type="checkbox"
-                        checked={checkedIngredients.has(ingredient.id)}
-                        onChange={() => toggleIngredientCheck(ingredient.id)}
-                      />
-                      <span className={styles.checkmark}></span>
-                    </label>
-                    <div className={styles.ingredientContent}>
-                      <span
-                        className={`${styles.ingredientTitle} ${checkedIngredients.has(ingredient.id) ? styles.checked : ""}`}
-                      >
-                        {ingredient.title}
-                      </span>
-                      <div className={styles.ingredientMeta}>
+                    <div className={styles.ingredientHeader}>
+                      <div className={styles.ingredientInfo}>
+                        <span className={styles.ingredientTitle}>{ingredient.title}</span>
                         <span className={styles.ingredientAmount}>
                           {`${formatNumber(ingredient.quantity)}${ingredient.unit ? ` ${ingredient.unit}` : ""}`}
                         </span>
-                        {hasNutrition && (
-                          <div className={styles.ingredientNutrition}>
-                            <span className={styles.macroChip}>
-                              {macros.calories} {t("mealPlan.units.kcal")}
-                            </span>
-                            <span className={styles.macroChip}>
-                              {t("mealPlan.totals.protein")} {macros.protein} {t("addProduct.form.nutrients.macrosUnit")}
-                            </span>
-                            <span className={styles.macroChip}>
-                              {t("mealPlan.totals.fat")} {macros.fat} {t("addProduct.form.nutrients.macrosUnit")}
-                            </span>
-                            <span className={styles.macroChip}>
-                              {t("mealPlan.totals.carbs")} {macros.carbs} {t("addProduct.form.nutrients.macrosUnit")}
-                            </span>
-                          </div>
-                        )}
                       </div>
+                      <button
+                        className={styles.addIngredientButton}
+                        onClick={() => handleAddIngredientToShopping(ingredient)}
+                        disabled={isAddingToShopping}
+                        title={t("recipe.ingredient.addToShopping")}
+                      >
+                        +
+                      </button>
                     </div>
-                    <button
-                      className={styles.addIngredientButton}
-                      onClick={() => handleAddIngredientToShopping(ingredient)}
-                      disabled={isAddingToShopping}
-                      title={t("recipe.ingredient.addToShopping")}
-                    >
-                      +
-                    </button>
+                    {hasNutrition && (
+                      <div className={styles.ingredientNutrition}>
+                        <span className={styles.nutritionCalories}>
+                          <span className={styles.nutritionCaloriesValue}>{macros.calories}</span>
+                          {macros.calories !== "—" && (
+                            <span className={styles.nutritionCaloriesUnit}>{t("mealPlan.units.kcal")}</span>
+                          )}
+                        </span>
+                        <span className={`${styles.nutritionMacro} ${styles.macroCarbs}`}>
+                          <span className={styles.nutritionMacroValue}>
+                            {macros.carbs === "—"
+                              ? macros.carbs
+                              : `${macros.carbs}${t("addProduct.form.nutrients.macrosUnit")}`}
+                          </span>
+                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.carbs")}</span>
+                        </span>
+                        <span className={`${styles.nutritionMacro} ${styles.macroFat}`}>
+                          <span className={styles.nutritionMacroValue}>
+                            {macros.fat === "—"
+                              ? macros.fat
+                              : `${macros.fat}${t("addProduct.form.nutrients.macrosUnit")}`}
+                          </span>
+                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.fat")}</span>
+                        </span>
+                        <span className={`${styles.nutritionMacro} ${styles.macroProtein}`}>
+                          <span className={styles.nutritionMacroValue}>
+                            {macros.protein === "—"
+                              ? macros.protein
+                              : `${macros.protein}${t("addProduct.form.nutrients.macrosUnit")}`}
+                          </span>
+                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.protein")}</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
