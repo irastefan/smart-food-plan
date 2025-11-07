@@ -306,6 +306,7 @@
 
 .ingredientItem {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -423,13 +424,25 @@
 
 @media (max-width: 560px) {
   .ingredientNutrition {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  .nutritionMacro {
+    font-size: 14px;
+    gap: 4px;
   }
 }
 
 @media (max-width: 400px) {
+  .nutritionCalories {
+    padding-right: 0;
+    margin-right: 0;
+    border-right: none;
+  }
+
   .ingredientNutrition {
-    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
