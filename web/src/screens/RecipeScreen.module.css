@@ -306,16 +306,18 @@
 
 .ingredientItem {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  gap: 18px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid var(--color-border);
   background-color: var(--color-surface-elevated);
-  background-image: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 65%);
+  background-image: linear-gradient(135deg, var(--color-accent-soft), transparent 70%);
   box-shadow: var(--shadow-elevated);
   overflow: hidden;
+  min-height: 160px;
 }
 
 .ingredientItem::after {
@@ -370,68 +372,44 @@
 .ingredientNutrition {
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.nutritionChip {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--color-surface-elevated) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--info-chip-background);
+  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  backdrop-filter: blur(8px);
 }
 
-.nutritionCalories {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding-right: 12px;
-  margin-right: 4px;
-  border-right: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
-}
-
-.nutritionCaloriesValue {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1;
-}
-
-.nutritionCaloriesUnit {
+.nutritionLabel {
   font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: var(--color-text-secondary);
 }
 
-.nutritionMacro {
+.nutritionValue {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  font-size: 18px;
   font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-}
-
-.nutritionMacroValue {
   color: var(--color-text-primary);
 }
 
-.nutritionMacroLabel {
+.nutritionUnit {
   font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.macroCarbs {
-  color: #4ecdc4;
-}
-
-.macroFat {
-  color: #45b7d1;
-}
-
-.macroProtein {
-  color: #ffa726;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 768px) {

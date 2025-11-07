@@ -479,36 +479,43 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
                     </div>
                     {hasNutrition && (
                       <div className={styles.ingredientNutrition}>
-                        <span className={styles.nutritionCalories}>
-                          <span className={styles.nutritionCaloriesValue}>{macros.calories}</span>
-                          {macros.calories !== "—" && (
-                            <span className={styles.nutritionCaloriesUnit}>{t("mealPlan.units.kcal")}</span>
-                          )}
-                        </span>
-                        <span className={`${styles.nutritionMacro} ${styles.macroCarbs}`}>
-                          <span className={styles.nutritionMacroValue}>
-                            {macros.carbs === "—"
-                              ? macros.carbs
-                              : `${macros.carbs}${t("addProduct.form.nutrients.macrosUnit")}`}
+                        <div className={styles.nutritionChip}>
+                          <span className={styles.nutritionLabel}>{t("mealPlan.totals.calories")}</span>
+                          <span className={styles.nutritionValue}>
+                            {macros.calories}
+                            <span className={styles.nutritionUnit}> {t("mealPlan.units.kcal")}</span>
                           </span>
-                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.carbs")}</span>
-                        </span>
-                        <span className={`${styles.nutritionMacro} ${styles.macroFat}`}>
-                          <span className={styles.nutritionMacroValue}>
-                            {macros.fat === "—"
-                              ? macros.fat
-                              : `${macros.fat}${t("addProduct.form.nutrients.macrosUnit")}`}
+                        </div>
+                        <div className={styles.nutritionChip}>
+                          <span className={styles.nutritionLabel}>{t("mealPlan.totals.protein")}</span>
+                          <span className={styles.nutritionValue}>
+                            {macros.protein}
+                            <span className={styles.nutritionUnit}>
+                              {" "}
+                              {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
                           </span>
-                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.fat")}</span>
-                        </span>
-                        <span className={`${styles.nutritionMacro} ${styles.macroProtein}`}>
-                          <span className={styles.nutritionMacroValue}>
-                            {macros.protein === "—"
-                              ? macros.protein
-                              : `${macros.protein}${t("addProduct.form.nutrients.macrosUnit")}`}
+                        </div>
+                        <div className={styles.nutritionChip}>
+                          <span className={styles.nutritionLabel}>{t("mealPlan.totals.fat")}</span>
+                          <span className={styles.nutritionValue}>
+                            {macros.fat}
+                            <span className={styles.nutritionUnit}>
+                              {" "}
+                              {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
                           </span>
-                          <span className={styles.nutritionMacroLabel}>{t("recipe.macros.protein")}</span>
-                        </span>
+                        </div>
+                        <div className={styles.nutritionChip}>
+                          <span className={styles.nutritionLabel}>{t("mealPlan.totals.carbs")}</span>
+                          <span className={styles.nutritionValue}>
+                            {macros.carbs}
+                            <span className={styles.nutritionUnit}>
+                              {" "}
+                              {t("addProduct.form.nutrients.macrosUnit")}
+                            </span>
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
