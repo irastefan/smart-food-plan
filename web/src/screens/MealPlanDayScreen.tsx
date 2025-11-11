@@ -47,6 +47,15 @@ const EMPTY_TOTALS: NutritionTotals = {
   carbsG: 0
 };
 
+type MacroCardKey = "kcal" | "protein" | "fat" | "carbs";
+
+const MACRO_CARD_VISUALS: Record<MacroCardKey, { icon: string; color: string }> = {
+  kcal: { icon: "🔥", color: "var(--color-warning)" },
+  protein: { icon: "🐟", color: "var(--color-success)" },
+  fat: { icon: "🥑", color: "var(--color-error)" },
+  carbs: { icon: "🌾", color: "var(--color-accent)" }
+};
+
 function formatNumber(value: number | null | undefined): string {
   if (!value) {
     return "0";
@@ -426,45 +435,51 @@ export function MealPlanDayScreen({
   const macroTargets = userSettings?.targets ?? null;
   const currentWeight = dayPlan?.meta?.weightKg ?? null;
 
-  const macroCards = useMemo(
-    () =>
-      [
-        {
-          key: "kcal",
-          label: t("mealPlan.totals.calories"),
-          unit: t("mealPlan.units.kcal"),
-          current: totals.caloriesKcal,
-          target: macroTargets?.kcal ?? null
-        },
-        {
-          key: "protein",
-          label: t("mealPlan.totals.protein"),
-          unit: t("mealPlan.units.grams"),
-          current: totals.proteinG,
-          target: macroTargets?.proteinG ?? null
-        },
-        {
-          key: "fat",
-          label: t("mealPlan.totals.fat"),
-          unit: t("mealPlan.units.grams"),
-          current: totals.fatG,
-          target: macroTargets?.fatG ?? null
-        },
-        {
-          key: "carbs",
-          label: t("mealPlan.totals.carbs"),
-          unit: t("mealPlan.units.grams"),
-          current: totals.carbsG,
-          target: macroTargets?.carbsG ?? null
-        }
-      ].map((card) => {
-        const target = card.target;
-        const progress = target && target > 0 ? Math.min(card.current / target, 1) : 0;
-        const percent = target && target > 0 ? Math.round((card.current / target) * 100) : null;
-        return { ...card, progress, percent };
-      }),
-    [macroTargets, t, totals]
-  );
+  const macroCards = useMemo(() => {
+    const descriptors: Array<{
+      key: MacroCardKey;
+      label: string;
+      unit: string;
+      current: number;
+      target: number | null;
+    }> = [
+      {
+        key: "kcal",
+        label: t("mealPlan.totals.calories"),
+        unit: t("mealPlan.units.kcal"),
+        current: totals.caloriesKcal,
+        target: macroTargets?.kcal ?? null
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        unit: t("mealPlan.units.grams"),
+        current: totals.proteinG,
+        target: macroTargets?.proteinG ?? null
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        unit: t("mealPlan.units.grams"),
+        current: totals.fatG,
+        target: macroTargets?.fatG ?? null
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        unit: t("mealPlan.units.grams"),
+        current: totals.carbsG,
+        target: macroTargets?.carbsG ?? null
+      }
+    ];
+    return descriptors.map((card) => {
+      const target = card.target;
+      const progress = target && target > 0 ? Math.min(card.current / target, 1) : 0;
+      const percent = target && target > 0 ? Math.round((card.current / target) * 100) : null;
+      const visuals = MACRO_CARD_VISUALS[card.key];
+      return { ...card, progress, percent, ...visuals };
+    });
+  }, [macroTargets, t, totals]);
 
   const showSectionTotals = userSettings?.meals.showSectionTotals ?? true;
 
@@ -565,27 +580,39 @@ export function MealPlanDayScreen({
 
       <section className={styles.macrosSection}>
         {macroCards.map((card) => (
-          <article key={card.key} className={styles.macroCard}>
-            <div
-              className={styles.macroRing}
-              style={{ ["--progress" as string]: String(card.progress) } as CSSProperties}
-            >
-              <div className={styles.macroValue}>
+          <article
+            key={card.key}
+            className={styles.macroCard}
+            style={{ ["--macro-color" as string]: card.color } as CSSProperties}
+          >
+            <div className={styles.macroIcon} aria-hidden="true">
+              {card.icon}
+            </div>
+            <div className={styles.macroContent}>
+              <div className={styles.macroHeader}>
+                <span className={styles.macroLabel}>{card.label}</span>
+                {card.percent !== null && (
+                  <span className={styles.macroPercent}>
+                    {t("mealPlan.metrics.ofTarget", { value: String(card.percent) })}
+                  </span>
+                )}
+              </div>
+              <div className={styles.macroStats}>
                 <span className={styles.macroNumber}>{formatNumber(card.current)}</span>
                 <span className={styles.macroUnit}>{card.unit}</span>
               </div>
-            </div>
-            <div className={styles.macroMeta}>
-              <span className={styles.macroLabel}>{card.label}</span>
               <span className={styles.macroTarget}>
                 {card.target !== null
                   ? `${t("mealPlan.metrics.target")}: ${formatNumber(card.target)} ${card.unit}`
                   : t("mealPlan.metrics.noTarget")}
               </span>
-              {card.percent !== null && (
-                <span className={styles.macroPercent}>
-                  {t("mealPlan.metrics.ofTarget", { value: String(card.percent) })}
-                </span>
+              {card.target !== null && card.target > 0 && (
+                <div className={styles.macroProgress} aria-hidden="true">
+                  <div
+                    className={styles.macroProgressFill}
+                    style={{ width: `${card.progress * 100}%` }}
+                  />
+                </div>
               )}
             </div>
           </article>
