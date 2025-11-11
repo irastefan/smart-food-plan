@@ -10,6 +10,7 @@ import {
   loadVaultDirectoryHandle,
   saveVaultDirectoryHandle
 } from "@/utils/vaultStorage";
+import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import styles from "./OnboardingVaultScreen.module.css";
 
 type StatusMessageKey =
@@ -34,26 +35,6 @@ type StatusState =
   | null;
 
 const REMEMBER_KEY = "smartFoodPlan.rememberVault";
-
-async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): Promise<boolean> {
-  if (!handle.queryPermission || !handle.requestPermission) {
-    return true;
-  }
-
-  const descriptor: FileSystemPermissionDescriptor = { mode: "readwrite" };
-  const permission = await handle.queryPermission(descriptor);
-
-  if (permission === "granted") {
-    return true;
-  }
-
-  if (permission === "denied") {
-    return false;
-  }
-
-  const requestResult = await handle.requestPermission(descriptor);
-  return requestResult === "granted";
-}
 
 export function OnboardingVaultScreen(): JSX.Element {
   const { t } = useTranslation();

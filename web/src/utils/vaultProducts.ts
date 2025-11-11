@@ -103,6 +103,8 @@ type ProductFrontMatter = {
   updated_at?: string;
 };
 
+const VAULT_PERMISSION_KEY = "smartFoodPlan.vaultPermission";
+
 export async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): Promise<boolean> {
   if (!handle.queryPermission || !handle.requestPermission) {
     return true;
@@ -112,14 +114,52 @@ export async function ensureDirectoryAccess(handle: FileSystemDirectoryHandle): 
   const permission = await handle.queryPermission(descriptor);
 
   if (permission === "granted") {
+    if (typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem(VAULT_PERMISSION_KEY, "granted");
+      } catch {
+        // Ignore storage errors – permission state is still granted for this handle.
+      }
+    }
     return true;
   }
 
   if (permission === "denied") {
+    if (typeof window !== "undefined") {
+      try {
+        window.sessionStorage.removeItem(VAULT_PERMISSION_KEY);
+      } catch {
+        // Ignore storage errors – the caller will treat the handle as inaccessible.
+      }
+    }
     return false;
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      const remembered = window.sessionStorage.getItem(VAULT_PERMISSION_KEY);
+      if (remembered === "granted") {
+        return true;
+      }
+    } catch {
+      // Ignore storage errors and fall back to requesting permission from the user.
+    }
+  }
+
   const requestResult = await handle.requestPermission(descriptor);
+
+  if (typeof window !== "undefined") {
+    try {
+      if (requestResult === "granted") {
+        window.sessionStorage.setItem(VAULT_PERMISSION_KEY, "granted");
+      } else {
+        window.sessionStorage.removeItem(VAULT_PERMISSION_KEY);
+      }
+    } catch {
+      // Ignore storage errors – the permission result is still returned to the caller.
+    }
+  }
+
   return requestResult === "granted";
 }
 
