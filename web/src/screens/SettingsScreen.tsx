@@ -523,9 +523,7 @@ export function SettingsScreen(): JSX.Element {
       return;
     }
 
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
-      setIsLoading(false);
-      hasRestoredRef.current = true;
+    if (typeof window === "undefined") {
       return;
     }
 

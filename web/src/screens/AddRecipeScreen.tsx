@@ -238,7 +238,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
   );
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
+    if (typeof window === "undefined") {
       return;
     }
 
