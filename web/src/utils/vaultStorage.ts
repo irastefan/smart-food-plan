@@ -2,6 +2,8 @@ const DB_NAME = "smartFoodPlan";
 const STORE_NAME = "vault";
 const HANDLE_KEY = "vaultDirectoryHandle";
 
+let sessionVaultHandle: DirectoryHandle | null = null;
+
 type DirectoryHandle = FileSystemDirectoryHandle;
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -41,20 +43,31 @@ function runTransaction<T>(
   });
 }
 
+export function setSessionVaultDirectoryHandle(handle: DirectoryHandle | null): void {
+  sessionVaultHandle = handle;
+}
+
 export async function saveVaultDirectoryHandle(handle: DirectoryHandle): Promise<void> {
+  sessionVaultHandle = handle;
   const db = await openDatabase();
   await runTransaction(db, "readwrite", (store) => store.put(handle, HANDLE_KEY));
 }
 
 export async function loadVaultDirectoryHandle(): Promise<DirectoryHandle | null> {
+  if (sessionVaultHandle) {
+    return sessionVaultHandle;
+  }
+
   const db = await openDatabase();
   const result = await runTransaction<DirectoryHandle | undefined>(db, "readonly", (store) =>
     store.get(HANDLE_KEY)
   );
-  return result ?? null;
+  sessionVaultHandle = result ?? null;
+  return sessionVaultHandle;
 }
 
 export async function clearVaultDirectoryHandle(): Promise<void> {
+  sessionVaultHandle = null;
   const db = await openDatabase();
   await runTransaction(db, "readwrite", (store) => store.delete(HANDLE_KEY));
 }
