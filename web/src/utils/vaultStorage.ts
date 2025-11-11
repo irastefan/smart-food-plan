@@ -6,7 +6,19 @@ let sessionVaultHandle: DirectoryHandle | null = null;
 
 type DirectoryHandle = FileSystemDirectoryHandle;
 
+function isIndexedDBAvailable(): boolean {
+  try {
+    return typeof indexedDB !== "undefined";
+  } catch {
+    return false;
+  }
+}
+
 function openDatabase(): Promise<IDBDatabase> {
+  if (!isIndexedDBAvailable()) {
+    return Promise.reject(new Error("IndexedDB is not available"));
+  }
+
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
 
@@ -49,6 +61,9 @@ export function setSessionVaultDirectoryHandle(handle: DirectoryHandle | null): 
 
 export async function saveVaultDirectoryHandle(handle: DirectoryHandle): Promise<void> {
   sessionVaultHandle = handle;
+  if (!isIndexedDBAvailable()) {
+    return;
+  }
   const db = await openDatabase();
   await runTransaction(db, "readwrite", (store) => store.put(handle, HANDLE_KEY));
 }
@@ -56,6 +71,10 @@ export async function saveVaultDirectoryHandle(handle: DirectoryHandle): Promise
 export async function loadVaultDirectoryHandle(): Promise<DirectoryHandle | null> {
   if (sessionVaultHandle) {
     return sessionVaultHandle;
+  }
+
+  if (!isIndexedDBAvailable()) {
+    return null;
   }
 
   const db = await openDatabase();
@@ -68,6 +87,9 @@ export async function loadVaultDirectoryHandle(): Promise<DirectoryHandle | null
 
 export async function clearVaultDirectoryHandle(): Promise<void> {
   sessionVaultHandle = null;
+  if (!isIndexedDBAvailable()) {
+    return;
+  }
   const db = await openDatabase();
   await runTransaction(db, "readwrite", (store) => store.delete(HANDLE_KEY));
 }

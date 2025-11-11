@@ -103,7 +103,7 @@ export function StatisticsScreen(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
+    if (typeof window === "undefined") {
       return;
     }
 

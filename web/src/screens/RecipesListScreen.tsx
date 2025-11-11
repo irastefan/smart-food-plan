@@ -81,7 +81,7 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   );
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
+    if (typeof window === "undefined") {
       return;
     }
 

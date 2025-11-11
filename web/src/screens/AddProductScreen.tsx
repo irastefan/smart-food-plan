@@ -116,7 +116,7 @@ export function AddProductScreen(): JSX.Element {
   }, [status]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
+    if (typeof window === "undefined") {
       return;
     }
 

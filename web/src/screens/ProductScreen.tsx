@@ -148,7 +148,7 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("indexedDB" in window)) {
+    if (typeof window === "undefined") {
       return;
     }
 
