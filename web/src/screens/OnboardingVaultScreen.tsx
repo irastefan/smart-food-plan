@@ -8,7 +8,8 @@ import { useTranslation } from "@/i18n/I18nProvider";
 import {
   clearVaultDirectoryHandle,
   loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  saveVaultDirectoryHandle,
+  setSessionVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import styles from "./OnboardingVaultScreen.module.css";
@@ -86,6 +87,7 @@ export function OnboardingVaultScreen(): JSX.Element {
         }
 
         if (!cancelled) {
+          setSessionVaultDirectoryHandle(handle);
           setSelectedHandle(handle);
           setSelectedFolderName(handle.name);
           setStatus({
@@ -138,6 +140,7 @@ export function OnboardingVaultScreen(): JSX.Element {
         return;
       }
 
+      setSessionVaultDirectoryHandle(handle);
       setSelectedHandle(handle);
       if (handle?.name) {
         setSelectedFolderName(handle.name);
@@ -172,6 +175,8 @@ export function OnboardingVaultScreen(): JSX.Element {
         }
         window.localStorage.setItem(REMEMBER_KEY, "false");
       }
+
+      setSessionVaultDirectoryHandle(handle);
     } catch (error) {
       if ((error as DOMException)?.name === "AbortError") {
         setStatus(null);
