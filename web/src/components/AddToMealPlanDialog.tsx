@@ -3,6 +3,7 @@ import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
 import type { ProductSummary } from "@/utils/vaultProducts";
 import { scaleNutritionTotals, type NutritionTotals } from "@/utils/vaultDays";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import styles from "./AddToMealPlanDialog.module.css";
 
 type AddToMealPlanDialogProps = {
@@ -16,10 +17,6 @@ const MEAL_SECTION_ORDER = ["breakfast", "lunch", "dinner", "snack", "flex"] as 
 function normalizeNumber(value: string): number {
   const parsed = Number.parseFloat(value.replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
 }
 
 function computeScaledMacros(product: ProductSummary, quantity: number): NutritionTotals {
@@ -49,6 +46,36 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
   }, [sectionId, t]);
 
   const macros = useMemo(() => computeScaledMacros(product, quantity), [product, quantity]);
+  const macroMetrics = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "calories",
+        label: t("mealPlan.totals.calories"),
+        value: macros.caloriesKcal,
+        unit: t("mealPlan.units.kcal"),
+        precision: 0
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: macros.proteinG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: macros.fatG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: macros.carbsG,
+        unit: t("mealPlan.units.grams")
+      }
+    ],
+    [macros, t]
+  );
 
   return (
     <div className={styles.backdrop} role="dialog" aria-modal="true">
@@ -97,22 +124,7 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
           </div>
 
           <div className={styles.macrosSummary}>
-            <div className={styles.macroItem}>
-              <span className={styles.macroLabel}>{t("mealPlan.totals.calories")}</span>
-              <span className={styles.macroValue}>{formatNumber(macros.caloriesKcal)}</span>
-            </div>
-            <div className={styles.macroItem}>
-              <span className={styles.macroLabel}>{t("mealPlan.totals.protein")}</span>
-              <span className={styles.macroValue}>{formatNumber(macros.proteinG)}</span>
-            </div>
-            <div className={styles.macroItem}>
-              <span className={styles.macroLabel}>{t("mealPlan.totals.fat")}</span>
-              <span className={styles.macroValue}>{formatNumber(macros.fatG)}</span>
-            </div>
-            <div className={styles.macroItem}>
-              <span className={styles.macroLabel}>{t("mealPlan.totals.carbs")}</span>
-              <span className={styles.macroValue}>{formatNumber(macros.carbsG)}</span>
-            </div>
+            <NutritionSummary metrics={macroMetrics} variant="inline" />
           </div>
         </div>
 

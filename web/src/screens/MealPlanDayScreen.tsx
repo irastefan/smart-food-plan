@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { ActionIconButton } from "@/components/ActionIconButton";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
 import {
@@ -45,15 +46,6 @@ const EMPTY_TOTALS: NutritionTotals = {
   proteinG: 0,
   fatG: 0,
   carbsG: 0
-};
-
-type MacroCardKey = "kcal" | "protein" | "fat" | "carbs";
-
-const MACRO_CARD_VISUALS: Record<MacroCardKey, { icon: string; color: string }> = {
-  kcal: { icon: "🔥", color: "var(--color-warning)" },
-  protein: { icon: "🐟", color: "var(--color-success)" },
-  fat: { icon: "🥑", color: "var(--color-error)" },
-  carbs: { icon: "🌾", color: "var(--color-accent)" }
 };
 
 function formatNumber(value: number | null | undefined): string {
@@ -435,50 +427,38 @@ export function MealPlanDayScreen({
   const macroTargets = userSettings?.targets ?? null;
   const currentWeight = dayPlan?.meta?.weightKg ?? null;
 
-  const macroCards = useMemo(() => {
-    const descriptors: Array<{
-      key: MacroCardKey;
-      label: string;
-      unit: string;
-      current: number;
-      target: number | null;
-    }> = [
+  const macroMetrics = useMemo<NutritionSummaryMetric[]>(() => {
+    return [
       {
-        key: "kcal",
+        key: "calories",
         label: t("mealPlan.totals.calories"),
         unit: t("mealPlan.units.kcal"),
-        current: totals.caloriesKcal,
-        target: macroTargets?.kcal ?? null
+        value: totals.caloriesKcal,
+        target: macroTargets?.kcal ?? null,
+        precision: 0
       },
       {
         key: "protein",
         label: t("mealPlan.totals.protein"),
         unit: t("mealPlan.units.grams"),
-        current: totals.proteinG,
+        value: totals.proteinG,
         target: macroTargets?.proteinG ?? null
       },
       {
         key: "fat",
         label: t("mealPlan.totals.fat"),
         unit: t("mealPlan.units.grams"),
-        current: totals.fatG,
+        value: totals.fatG,
         target: macroTargets?.fatG ?? null
       },
       {
         key: "carbs",
         label: t("mealPlan.totals.carbs"),
         unit: t("mealPlan.units.grams"),
-        current: totals.carbsG,
+        value: totals.carbsG,
         target: macroTargets?.carbsG ?? null
       }
     ];
-    return descriptors.map((card) => {
-      const target = card.target;
-      const progress = target && target > 0 ? Math.min(card.current / target, 1) : 0;
-      const percent = target && target > 0 ? Math.round((card.current / target) * 100) : null;
-      const visuals = MACRO_CARD_VISUALS[card.key];
-      return { ...card, progress, percent, ...visuals };
-    });
   }, [macroTargets, t, totals]);
 
   const showSectionTotals = userSettings?.meals.showSectionTotals ?? true;
@@ -537,23 +517,29 @@ export function MealPlanDayScreen({
     return ordered;
   }, [dayPlan, t, userSettings]);
 
-  const summaryMacros = [
-    {
-      label: t("mealPlan.totals.protein"),
-      value: totals.proteinG,
-      unit: t("mealPlan.units.grams")
-    },
-    {
-      label: t("mealPlan.totals.fat"),
-      value: totals.fatG,
-      unit: t("mealPlan.units.grams")
-    },
-    {
-      label: t("mealPlan.totals.carbs"),
-      value: totals.carbsG,
-      unit: t("mealPlan.units.grams")
-    }
-  ];
+  const summaryMacros = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: totals.proteinG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: totals.fatG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: totals.carbsG,
+        unit: t("mealPlan.units.grams")
+      }
+    ],
+    [t, totals]
+  );
 
   return (
     <div className={styles.root}>
@@ -578,45 +564,8 @@ export function MealPlanDayScreen({
         </div>
       </header>
 
-      <section className={styles.macrosSection}>
-        {macroCards.map((card) => (
-          <article
-            key={card.key}
-            className={styles.macroCard}
-            style={{ ["--macro-color" as string]: card.color } as CSSProperties}
-          >
-            <div className={styles.macroIcon} aria-hidden="true">
-              {card.icon}
-            </div>
-            <div className={styles.macroContent}>
-              <div className={styles.macroHeader}>
-                <span className={styles.macroLabel}>{card.label}</span>
-                {card.percent !== null && (
-                  <span className={styles.macroPercent}>
-                    {t("mealPlan.metrics.ofTarget", { value: String(card.percent) })}
-                  </span>
-                )}
-              </div>
-              <div className={styles.macroStats}>
-                <span className={styles.macroNumber}>{formatNumber(card.current)}</span>
-                <span className={styles.macroUnit}>{card.unit}</span>
-              </div>
-              <span className={styles.macroTarget}>
-                {card.target !== null
-                  ? `${t("mealPlan.metrics.target")}: ${formatNumber(card.target)} ${card.unit}`
-                  : t("mealPlan.metrics.noTarget")}
-              </span>
-              {card.target !== null && card.target > 0 && (
-                <div className={styles.macroProgress} aria-hidden="true">
-                  <div
-                    className={styles.macroProgressFill}
-                    style={{ width: `${card.progress * 100}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          </article>
-        ))}
+      <section className={styles.macrosSection} aria-label={t("mealPlan.totalMacros")}>
+        <NutritionSummary metrics={macroMetrics} variant="cards" className={styles.macrosGrid} />
       </section>
 
       <div className={styles.primaryActions}>
@@ -748,13 +697,7 @@ export function MealPlanDayScreen({
         </div>
         <div className={styles.summaryMacros}>
           <span className={styles.summaryLabel}>{t("mealPlan.totalMacros")}</span>
-          <div className={styles.summaryValues}>
-            {summaryMacros.map((macro) => (
-              <span key={macro.label}>
-                {formatNumber(macro.value)} {macro.unit}
-              </span>
-            ))}
-          </div>
+          <NutritionSummary metrics={summaryMacros} variant="inline" />
         </div>
         <div className={styles.weightCard}>
           <span className={styles.summaryLabel}>{t("mealPlan.weight.title")}</span>

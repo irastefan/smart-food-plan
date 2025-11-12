@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Button";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { EDIT_RECIPE_STORAGE_KEY } from "@/constants/storage";
 import { ensureDirectoryAccess, loadProductSummaries, persistProductMarkdown, type ProductSummary } from "@/utils/vaultProducts";
@@ -469,6 +470,37 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     fileInputRef.current?.click();
   }, []);
 
+  const summaryMetrics = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "calories",
+        label: t("mealPlan.totals.calories"),
+        value: totals.caloriesKcal,
+        unit: t("mealPlan.units.kcal"),
+        precision: 0
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: totals.proteinG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: totals.fatG,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: totals.carbsG,
+        unit: t("mealPlan.units.grams")
+      }
+    ],
+    [t, totals]
+  );
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -601,28 +633,13 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
           </div>
         </div>
 
-        <div>
-          <div className={styles.summaryBar}>
-            <div className={styles.summaryItem}>
-              <span>{t("mealPlan.totals.calories")}</span>
-              <strong>{totals.caloriesKcal.toFixed(0)}</strong>
-            </div>
-            <div className={styles.summaryItem}>
-              <span>{t("mealPlan.totals.protein")}</span>
-              <strong>{totals.proteinG.toFixed(1)}</strong>
-            </div>
-            <div className={styles.summaryItem}>
-              <span>{t("mealPlan.totals.fat")}</span>
-              <strong>{totals.fatG.toFixed(1)}</strong>
-            </div>
-            <div className={styles.summaryItem}>
-              <span>{t("mealPlan.totals.carbs")}</span>
-              <strong>{totals.carbsG.toFixed(1)}</strong>
-            </div>
-            <div className={styles.summaryItem}>
-              <span>{t("addRecipe.perServing")}</span>
-              <strong>{perServing.caloriesKcal.toFixed(0)} {t("mealPlan.units.kcal")}</strong>
-            </div>
+        <div className={styles.summaryBar}>
+          <NutritionSummary metrics={summaryMetrics} variant="inline" />
+          <div className={styles.perServingChip}>
+            <span>{t("addRecipe.perServing")}</span>
+            <strong>
+              {perServing.caloriesKcal.toFixed(0)} {t("mealPlan.units.kcal")}
+            </strong>
           </div>
         </div>
 

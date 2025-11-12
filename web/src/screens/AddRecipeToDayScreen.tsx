@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { useTranslation } from "@/i18n/I18nProvider";
 import { SELECT_RECIPE_FOR_PLAN_KEY, VIEW_RECIPE_STORAGE_KEY } from "@/constants/storage";
 import { ensureDirectoryAccess, loadProductSummaries, type ProductSummary } from "@/utils/vaultProducts";
@@ -453,30 +454,49 @@ export function AddRecipeToDayScreen({ onNavigateBack, onNavigateToRecipe }: Add
       if (!macros) {
         return null;
       }
+
+      const parse = (value: string): number | null => {
+        if (!value || value === "—") {
+          return null;
+        }
+        const parsed = Number.parseFloat(value.replace(",", "."));
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+
+      const metrics: NutritionSummaryMetric[] = [
+        {
+          key: "calories",
+          label: t("addToDay.macros.calories"),
+          value: parse(macros.calories),
+          unit: t("mealPlan.units.kcal"),
+          precision: 0
+        },
+        {
+          key: "protein",
+          label: t("addToDay.macros.protein"),
+          value: parse(macros.protein),
+          unit: t("addProduct.form.nutrients.macrosUnit")
+        },
+        {
+          key: "fat",
+          label: t("addToDay.macros.fat"),
+          value: parse(macros.fat),
+          unit: t("addProduct.form.nutrients.macrosUnit")
+        },
+        {
+          key: "carbs",
+          label: t("addToDay.macros.carbs"),
+          value: parse(macros.carbs),
+          unit: t("addProduct.form.nutrients.macrosUnit")
+        }
+      ];
+
       const className =
         variant === "compact"
           ? `${styles.macroRow} ${styles.macroRowCompact}`
           : styles.macroRow;
-      return (
-        <div className={className}>
-          <div className={styles.macroCell}>
-            <span className={styles.macroValue}>{macros.calories}</span>
-            <span className={styles.macroLabel}>{t("addToDay.macros.calories")}</span>
-          </div>
-          <div className={styles.macroCell}>
-            <span className={styles.macroValue}>{macros.protein}</span>
-            <span className={styles.macroLabel}>{t("addToDay.macros.protein")}</span>
-          </div>
-          <div className={styles.macroCell}>
-            <span className={styles.macroValue}>{macros.fat}</span>
-            <span className={styles.macroLabel}>{t("addToDay.macros.fat")}</span>
-          </div>
-          <div className={styles.macroCell}>
-            <span className={styles.macroValue}>{macros.carbs}</span>
-            <span className={styles.macroLabel}>{t("addToDay.macros.carbs")}</span>
-          </div>
-        </div>
-      );
+
+      return <NutritionSummary metrics={metrics} variant="inline" className={className} />;
     },
     [t]
   );

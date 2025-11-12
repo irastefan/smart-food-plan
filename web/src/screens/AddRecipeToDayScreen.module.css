@@ -252,35 +252,15 @@
 }
 
 .macroRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .macroRowCompact {
-  gap: 8px;
-}
-
-.macroCell {
-  min-width: 78px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--color-surface-elevated);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.macroValue {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.macroLabel {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-secondary);
+  padding: 8px 12px;
+  font-size: 13px;
 }
 
 .itemActions {

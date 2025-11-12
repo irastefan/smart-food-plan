@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { ActionIconButton } from "@/components/ActionIconButton";
 import { AddToMealPlanDialog } from "@/components/AddToMealPlanDialog";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { useTranslation } from "@/i18n/I18nProvider";
 import {
   EDIT_PRODUCT_STORAGE_KEY,
@@ -31,28 +32,6 @@ function formatNumber(value: number | null | undefined, fractionDigits = 1): str
     return "—";
   }
   return Number.isInteger(numeric) ? numeric.toString() : numeric.toFixed(fractionDigits);
-}
-
-function getMacroPercentages(
-  nutrition: ProductDetail["nutritionPerPortion"] | null | undefined
-):
-  | { protein: number; fat: number; carbs: number }
-  | null {
-  if (!nutrition) {
-    return null;
-  }
-  const protein = nutrition.proteinG ?? 0;
-  const fat = nutrition.fatG ?? 0;
-  const carbs = nutrition.carbsG ?? 0;
-  const total = protein + fat + carbs;
-  if (total <= 0) {
-    return null;
-  }
-  return {
-    protein: Math.round((protein / total) * 100),
-    fat: Math.round((fat / total) * 100),
-    carbs: Math.round((carbs / total) * 100)
-  };
 }
 
 type ProductScreenProps = {
@@ -183,7 +162,36 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
   }, [loadProduct, t]);
 
   const nutrition = useMemo(() => product?.nutritionPerPortion ?? null, [product]);
-  const macroPercentages = useMemo(() => getMacroPercentages(nutrition), [nutrition]);
+  const nutritionMetrics = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "calories",
+        label: t("mealPlan.totals.calories"),
+        value: nutrition?.caloriesKcal ?? null,
+        unit: t("mealPlan.units.kcal"),
+        precision: 0
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: nutrition?.carbsG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: nutrition?.fatG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: nutrition?.proteinG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      }
+    ],
+    [nutrition, t]
+  );
   const heroInitial = product?.title?.trim().charAt(0).toUpperCase() ?? "🍽";
 
   const handleEdit = useCallback(() => {
@@ -299,75 +307,13 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
         {isLoading && <div className={styles.loadingCard}>{t("productDetail.loading")}</div>}
         {product && (
           <div className={styles.nutritionCard}>
-            <div className={styles.nutritionChart}>
-              <div className={styles.calorieCenter}>
-                <div className={styles.calorieNumber}>{formatNumber(nutrition?.caloriesKcal, 0)}</div>
-                <div className={styles.calorieLabel}>{t("mealPlan.units.kcal")}</div>
-                <div className={styles.servingHint}>{t("productDetail.perPortion")}</div>
-              </div>
-              {macroPercentages && (
-                <svg className={styles.nutritionRing} viewBox="0 0 100 100" aria-hidden="true">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-border)" strokeWidth="8" />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#4ECDC4"
-                    strokeWidth="8"
-                    strokeDasharray={`${macroPercentages.carbs * 2.51} 251.2`}
-                    strokeDashoffset="0"
-                    transform="rotate(-90 50 50)"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#45B7D1"
-                    strokeWidth="8"
-                    strokeDasharray={`${macroPercentages.fat * 2.51} 251.2`}
-                    strokeDashoffset={`-${macroPercentages.carbs * 2.51}`}
-                    transform="rotate(-90 50 50)"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#FFA726"
-                    strokeWidth="8"
-                    strokeDasharray={`${macroPercentages.protein * 2.51} 251.2`}
-                    strokeDashoffset={`-${(macroPercentages.carbs + macroPercentages.fat) * 2.51}`}
-                    transform="rotate(-90 50 50)"
-                  />
-                </svg>
-              )}
-            </div>
-
-            <div className={styles.macroBreakdown}>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{macroPercentages?.carbs ?? 0}%</span>
-                <span className={styles.macroAmount}>
-                  {formatNumber(nutrition?.carbsG)} {t("addProduct.form.nutrients.macrosUnit")}
-                </span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.carbs")}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{macroPercentages?.fat ?? 0}%</span>
-                <span className={styles.macroAmount}>
-                  {formatNumber(nutrition?.fatG)} {t("addProduct.form.nutrients.macrosUnit")}
-                </span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.fat")}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{macroPercentages?.protein ?? 0}%</span>
-                <span className={styles.macroAmount}>
-                  {formatNumber(nutrition?.proteinG)} {t("addProduct.form.nutrients.macrosUnit")}
-                </span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.protein")}</span>
-              </div>
-            </div>
+            <NutritionSummary
+              metrics={nutritionMetrics}
+              variant="rings"
+              mainMetricKey="calories"
+              className={styles.nutritionSummary}
+            />
+            <div className={styles.servingHint}>{t("productDetail.perPortion")}</div>
           </div>
         )}
       </section>

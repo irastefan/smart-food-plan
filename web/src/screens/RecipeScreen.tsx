@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "@/components/Button";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { CategorySelectModal } from "@/components/CategorySelectModal";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
@@ -309,24 +310,38 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
       setIsAddingToShopping(false);
     }
   }, [recipe, t, vaultHandle]);
-  const getNutritionPercentages = useCallback(() => {
-    if (!recipe?.nutritionPerServing) return null;
-
-    const { proteinG = 0, fatG = 0, carbsG = 0 } = recipe.nutritionPerServing;
-    const total = proteinG + fatG + carbsG;
-
-    if (total === 0) return null;
-
-    return {
-      protein: Math.round((proteinG / total) * 100),
-      fat: Math.round((fatG / total) * 100),
-      carbs: Math.round((carbsG / total) * 100)
-    };
-  }, [recipe]);
-
   const macrosPerServing = recipe?.nutritionPerServing;
   const totals = recipe?.nutritionTotal;
-  const nutritionPercentages = getNutritionPercentages();
+  const macroRingMetrics = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "calories",
+        label: t("mealPlan.totals.calories"),
+        value: macrosPerServing?.caloriesKcal ?? null,
+        unit: t("mealPlan.units.kcal"),
+        precision: 0
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: macrosPerServing?.carbsG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: macrosPerServing?.fatG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: macrosPerServing?.proteinG ?? null,
+        unit: t("addProduct.form.nutrients.macrosUnit")
+      }
+    ],
+    [macrosPerServing, t]
+  );
 
   return (
     <div className={styles.root}>
@@ -360,78 +375,12 @@ export function RecipeScreen({ onNavigateEdit, onNavigateAddToDay, onNavigateBac
               <span className={styles.servingLabel}>1 {t("recipe.serving")}</span>
             </div>
 
-            <div className={styles.nutritionChart}>
-              <div className={styles.calorieCenter}>
-                <div className={styles.calorieNumber}>
-                  {macrosPerServing?.caloriesKcal?.toFixed(0) ?? "—"}
-                </div>
-                <div className={styles.calorieLabel}>{t("mealPlan.units.kcal")}</div>
-              </div>
-
-              {nutritionPercentages && (
-                <svg className={styles.nutritionRing} viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="var(--color-border)"
-                    strokeWidth="8"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#4ECDC4"
-                    strokeWidth="8"
-                    strokeDasharray={`${nutritionPercentages.carbs * 2.51} 251.2`}
-                    strokeDashoffset="0"
-                    transform="rotate(-90 50 50)"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#45B7D1"
-                    strokeWidth="8"
-                    strokeDasharray={`${nutritionPercentages.fat * 2.51} 251.2`}
-                    strokeDashoffset={`-${nutritionPercentages.carbs * 2.51}`}
-                    transform="rotate(-90 50 50)"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#FFA726"
-                    strokeWidth="8"
-                    strokeDasharray={`${nutritionPercentages.protein * 2.51} 251.2`}
-                    strokeDashoffset={`-${(nutritionPercentages.carbs + nutritionPercentages.fat) * 2.51}`}
-                    transform="rotate(-90 50 50)"
-                  />
-                </svg>
-              )}
-            </div>
-
-            <div className={styles.macroBreakdown}>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{nutritionPercentages?.carbs ?? 0}%</span>
-                <span className={styles.macroAmount}>{macrosPerServing?.carbsG?.toFixed(1) ?? "—"} г</span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.carbs")}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{nutritionPercentages?.fat ?? 0}%</span>
-                <span className={styles.macroAmount}>{macrosPerServing?.fatG?.toFixed(1) ?? "—"} г</span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.fat")}</span>
-              </div>
-              <div className={styles.macroItem}>
-                <span className={styles.macroPercent}>{nutritionPercentages?.protein ?? 0}%</span>
-                <span className={styles.macroAmount}>{macrosPerServing?.proteinG?.toFixed(1) ?? "—"} г</span>
-                <span className={styles.macroLabel}>{t("mealPlan.totals.protein")}</span>
-              </div>
-            </div>
+            <NutritionSummary
+              metrics={macroRingMetrics}
+              variant="rings"
+              mainMetricKey="calories"
+              className={styles.nutritionSummary}
+            />
 
             <div className={styles.recipeMetadata}>
               {(recipe as any).cookTimeMinutes && (

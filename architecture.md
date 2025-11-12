@@ -17,7 +17,7 @@ Surface	#121917	Фон карточек, немного теплее
 Border / Divider	#1F3B37	Бирюзово-зелёная обводка, низкий контраст
 Primary Text	#E8F3EE	Мягкий белый с лёгким зелёным подтоном
 Secondary Text	rgba(232,243,238,0.6)	Полупрозрачный текст для подзаголовков
-Accent / Icon Active	#35C2A1	Светлая мята (использовать дозированно)
+Accent / Icon Active	#4CE0B3	Глубокий бирюзово-зелёный акцент
 Disabled / Inactive	rgba(232,243,238,0.35)	Для неактивных элементов
 Button Hover / Press	#182421	Лёгкое затемнение поверхности
 Error	#E67C7C	Тёплый розово-красный
@@ -30,7 +30,7 @@ Surface	#FFFFFF	Белая карточка с лёгкой тенью
 Border / Divider	#C6D2CC	Светло-зелёно-серый контур
 Primary Text	#1A2522	Тёмный серо-зелёный
 Secondary Text	rgba(26,37,34,0.65)	Для описаний и подсказок
-Accent / Icon Active	#24957B	Глубокий зелёно-бирюзовый
+Accent / Icon Active	#0EBB7F	Насыщенный травяной зелёный (главный акцент)
 Disabled / Inactive	rgba(26,37,34,0.35)	Неактивные элементы
 Button Hover / Press	#EDF4F2	Лёгкий заливочный отклик
 Error	#D25555	Красноватый, но мягкий
@@ -75,7 +75,7 @@ export const theme = {
       border: '#C6D2CC',
       textPrimary: '#1A2522',
       textSecondary: 'rgba(26,37,34,0.65)',
-      accent: '#24957B',
+      accent: '#0EBB7F',
       disabled: 'rgba(26,37,34,0.35)',
       buttonHover: '#EDF4F2',
       error: '#D25555',
@@ -91,7 +91,7 @@ export const theme = {
       border: '#1F3B37',
       textPrimary: '#E8F3EE',
       textSecondary: 'rgba(232,243,238,0.6)',
-      accent: '#35C2A1',
+      accent: '#4CE0B3',
       disabled: 'rgba(232,243,238,0.35)',
       buttonHover: '#182421',
       error: '#E67C7C',

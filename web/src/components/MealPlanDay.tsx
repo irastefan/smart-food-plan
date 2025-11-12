@@ -1,6 +1,7 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useMemo } from "react";
 import clsx from "clsx";
 import { Card } from "@/components/Card";
+import { NutritionSummary, type NutritionSummaryMetric } from "@/components/NutritionSummary";
 import { useTranslation } from "@/i18n/I18nProvider";
 import type { TranslationKey } from "@/i18n/messages";
 import type { MealPlanDay } from "@/utils/vaultDays";
@@ -33,6 +34,36 @@ export function MealPlanDayCard({
 }: MealPlanDayProps): JSX.Element {
   const { t } = useTranslation();
   const total = day?.totals;
+  const summaryMetrics = useMemo<NutritionSummaryMetric[]>(
+    () => [
+      {
+        key: "calories",
+        label: t("mealPlan.totals.calories"),
+        value: total?.caloriesKcal ?? null,
+        unit: t("mealPlan.units.kcal"),
+        precision: 0
+      },
+      {
+        key: "protein",
+        label: t("mealPlan.totals.protein"),
+        value: total?.proteinG ?? null,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "fat",
+        label: t("mealPlan.totals.fat"),
+        value: total?.fatG ?? null,
+        unit: t("mealPlan.units.grams")
+      },
+      {
+        key: "carbs",
+        label: t("mealPlan.totals.carbs"),
+        value: total?.carbsG ?? null,
+        unit: t("mealPlan.units.grams")
+      }
+    ],
+    [t, total]
+  );
 
   const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
     onDateChange?.(event.target.value);
@@ -69,34 +100,7 @@ export function MealPlanDayCard({
       </div>
 
       <div className={styles.metrics}>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>{t("mealPlan.totals.calories")}</span>
-          <span className={styles.metricValue}>
-            {total ? formatNumber(total.caloriesKcal) : "—"}{" "}
-            <span className={styles.metricUnit}>{t("mealPlan.units.kcal")}</span>
-          </span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>{t("mealPlan.totals.protein")}</span>
-          <span className={styles.metricValue}>
-            {total ? formatNumber(total.proteinG) : "—"}{" "}
-            <span className={styles.metricUnit}>{t("mealPlan.units.grams")}</span>
-          </span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>{t("mealPlan.totals.fat")}</span>
-          <span className={styles.metricValue}>
-            {total ? formatNumber(total.fatG) : "—"}{" "}
-            <span className={styles.metricUnit}>{t("mealPlan.units.grams")}</span>
-          </span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>{t("mealPlan.totals.carbs")}</span>
-          <span className={styles.metricValue}>
-            {total ? formatNumber(total.carbsG) : "—"}{" "}
-            <span className={styles.metricUnit}>{t("mealPlan.units.grams")}</span>
-          </span>
-        </div>
+        <NutritionSummary metrics={summaryMetrics} variant="cards" />
       </div>
 
       <div
