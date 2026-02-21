@@ -82,6 +82,10 @@ type BackendRecipe = {
     amount?: number;
     unit?: string;
     name?: string;
+    kcal100?: number;
+    protein100?: number;
+    fat100?: number;
+    carbs100?: number;
     product?: {
       id?: string;
       name?: string;
@@ -91,13 +95,23 @@ type BackendRecipe = {
       carbs100?: number;
     };
   }>;
-  steps?: string[];
+  steps?: Array<string | { id?: string; order?: number; text?: string }>;
   createdAt?: string;
   updatedAt?: string;
   photoUrl?: string;
   cookTimeMinutes?: number;
-  nutritionTotal?: Partial<NutritionTotals>;
-  nutritionPerServing?: Partial<NutritionTotals>;
+  nutritionTotal?: Partial<NutritionTotals> & {
+    calories?: number;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+  };
+  nutritionPerServing?: Partial<NutritionTotals> & {
+    calories?: number;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+  };
 };
 
 function safeNumber(value: unknown): number {
@@ -111,12 +125,19 @@ function safeNumber(value: unknown): number {
   return 0;
 }
 
-function normalizeTotals(value?: Partial<NutritionTotals>): NutritionTotals {
+function normalizeTotals(
+  value?: Partial<NutritionTotals> & {
+    calories?: number;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+  }
+): NutritionTotals {
   return {
-    caloriesKcal: safeNumber(value?.caloriesKcal),
-    proteinG: safeNumber(value?.proteinG),
-    fatG: safeNumber(value?.fatG),
-    carbsG: safeNumber(value?.carbsG),
+    caloriesKcal: safeNumber(value?.caloriesKcal ?? value?.calories),
+    proteinG: safeNumber(value?.proteinG ?? value?.protein),
+    fatG: safeNumber(value?.fatG ?? value?.fat),
+    carbsG: safeNumber(value?.carbsG ?? value?.carbs),
     sugarG: safeNumber(value?.sugarG),
     fiberG: safeNumber(value?.fiberG)
   };
@@ -148,8 +169,15 @@ function scaleTotals(base: NutritionTotals, amount: number, referenceAmount = 10
   };
 }
 
-function stepsToMarkdown(steps?: string[]): string {
-  const normalized = (steps ?? []).map((step) => step.trim()).filter(Boolean);
+function stepsToMarkdown(steps?: Array<string | { id?: string; order?: number; text?: string }>): string {
+  const normalized = (steps ?? [])
+    .map((step) => {
+      if (typeof step === "string") {
+        return step.trim();
+      }
+      return (step?.text ?? "").trim();
+    })
+    .filter(Boolean);
   if (normalized.length === 0) {
     return "";
   }
@@ -166,10 +194,10 @@ function markdownToSteps(markdown: string): string[] {
 function ingredientFromBackend(item: NonNullable<BackendRecipe["ingredients"]>[number]): RecipeIngredient {
   const amount = safeNumber(item.amount);
   const per100 = {
-    caloriesKcal: safeNumber(item.product?.kcal100),
-    proteinG: safeNumber(item.product?.protein100),
-    fatG: safeNumber(item.product?.fat100),
-    carbsG: safeNumber(item.product?.carbs100),
+    caloriesKcal: safeNumber(item.kcal100 ?? item.product?.kcal100),
+    proteinG: safeNumber(item.protein100 ?? item.product?.protein100),
+    fatG: safeNumber(item.fat100 ?? item.product?.fat100),
+    carbsG: safeNumber(item.carbs100 ?? item.product?.carbs100),
     sugarG: 0,
     fiberG: 0
   } satisfies NutritionTotals;
@@ -271,7 +299,7 @@ export async function loadRecipeDetail(
   _vaultHandle: FileSystemDirectoryHandle,
   fileName: string
 ): Promise<RecipeDetail & { fileName: string }> {
-  const item = await apiRequest<BackendRecipe>(`/v1/recipes/${fileName}`, undefined, { auth: false });
+  const item = await apiRequest<BackendRecipe>(`/v1/recipes/${fileName}`);
   return toDetail(item);
 }
 
