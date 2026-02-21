@@ -64,45 +64,47 @@ export function AppShell({ currentRoute, onNavigate, children }: AppShellProps):
   return (
     <div className={styles.layout}>
       <header className={styles.topBar}>
-        <div className={styles.brand} role="banner">
-          {t("nav.brand")}
-        </div>
-        
-        {/* Desktop Navigation */}
-        <nav className={styles.nav} aria-label="Main navigation">
-          {NAV_SECTIONS.map((item) => (
-            <button
-              key={item.route}
-              type="button"
-              className={clsx(
-                styles.navLink,
-                ROUTE_TO_SECTION[currentRoute] === item.route && styles.navLinkActive
-              )}
-              onClick={() => onNavigate(item.route)}
-            >
-              {t(item.translationKey)}
-            </button>
-          ))}
-        </nav>
+        <div className={styles.topBarInner}>
+          <div className={styles.brand} role="banner">
+            {t("nav.brand")}
+          </div>
 
-        <div className={styles.actions}>
-          <LanguageToggle />
-          <ThemeToggle />
-          
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className={styles.mobileMenuButton}
-            onClick={toggleMobileMenu}
-            aria-label="Toggle mobile menu"
-            aria-expanded={isMobileMenuOpen}
-          >
-            <span className={clsx(styles.hamburger, isMobileMenuOpen && styles.hamburgerOpen)}>
-              <span className={styles.hamburgerLine}></span>
-              <span className={styles.hamburgerLine}></span>
-              <span className={styles.hamburgerLine}></span>
-            </span>
-          </button>
+          {/* Desktop Navigation */}
+          <nav className={styles.nav} aria-label="Main navigation">
+            {NAV_SECTIONS.map((item) => (
+              <button
+                key={item.route}
+                type="button"
+                className={clsx(
+                  styles.navLink,
+                  ROUTE_TO_SECTION[currentRoute] === item.route && styles.navLinkActive
+                )}
+                onClick={() => onNavigate(item.route)}
+              >
+                {t(item.translationKey)}
+              </button>
+            ))}
+          </nav>
+
+          <div className={styles.actions}>
+            <LanguageToggle />
+            <ThemeToggle />
+
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              className={styles.mobileMenuButton}
+              onClick={toggleMobileMenu}
+              aria-label="Toggle mobile menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span className={clsx(styles.hamburger, isMobileMenuOpen && styles.hamburgerOpen)}>
+                <span className={styles.hamburgerLine}></span>
+                <span className={styles.hamburgerLine}></span>
+                <span className={styles.hamburgerLine}></span>
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -127,7 +129,9 @@ export function AppShell({ currentRoute, onNavigate, children }: AppShellProps):
         </div>
       )}
 
-      <main className={styles.content}>{children}</main>
+      <main className={styles.content}>
+        <div className={styles.contentInner}>{children}</div>
+      </main>
     </div>
   );
 }

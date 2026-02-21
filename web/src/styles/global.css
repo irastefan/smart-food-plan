@@ -5,6 +5,8 @@
   --radius-button: 14px;
   --radius-card: 16px;
   --radius-control: 10px;
+  --page-max-width: 1160px;
+  --page-gutter: clamp(12px, 3vw, 24px);
   background-color: var(--color-background);
   color: var(--color-text-primary);
 }

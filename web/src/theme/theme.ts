@@ -116,7 +116,8 @@ export const themeVariables: Record<ThemeName, ThemeCSSVariables> = {
     "--body-background":
       "radial-gradient(circle at top, rgba(46, 195, 141, 0.2), transparent 58%), #F3F7F4",
     "--body-text-color": theme.light.colors.textPrimary,
-    "--shadow-elevated": "0 18px 45px rgba(21, 52, 43, 0.1)"
+    "--shadow-elevated": "0 18px 45px rgba(21, 52, 43, 0.1)",
+    "--color-overlay-backdrop": "rgba(8, 16, 13, 0.45)"
   },
   dark: {
     "--color-background": theme.dark.colors.background,
@@ -150,7 +151,8 @@ export const themeVariables: Record<ThemeName, ThemeCSSVariables> = {
     "--body-background":
       "radial-gradient(circle at top, rgba(48, 118, 105, 0.25), transparent 60%), #011714",
     "--body-text-color": theme.dark.colors.textPrimary,
-    "--shadow-elevated": "0 22px 55px rgba(1, 12, 10, 0.65)"
+    "--shadow-elevated": "0 22px 55px rgba(1, 12, 10, 0.65)",
+    "--color-overlay-backdrop": "rgba(0, 0, 0, 0.6)"
   }
 };
 
