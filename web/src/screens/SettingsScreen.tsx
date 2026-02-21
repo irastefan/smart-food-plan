@@ -19,8 +19,7 @@ import {
 import { createSlug } from "@/utils/vaultProducts";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./SettingsScreen.module.css";
 
@@ -30,8 +29,7 @@ type SettingsTab =
   | "meals"
   | "shopping"
   | "interface"
-  | "ai"
-  | "vault";
+  | "ai";
 
 type StatusState =
   | {
@@ -80,7 +78,7 @@ type MacroComputation = {
 
 const AUTO_SAVE_DELAY_MS = 650;
 
-const TAB_ORDER: SettingsTab[] = ["profile", "macros", "meals", "shopping", "interface", "ai", "vault"];
+const TAB_ORDER: SettingsTab[] = ["profile", "macros", "meals", "shopping", "interface", "ai"];
 
 const PAL_FACTORS: Record<ActivityLevel, number> = {
   sedentary: 1.2,
@@ -444,7 +442,7 @@ export function SettingsScreen(): JSX.Element {
 
   const handleSave = useCallback(async () => {
     if (!vaultHandle) {
-      setStatus({ type: "error", message: t("settings.status.noVault") });
+      setStatus({ type: "error", message: t("settings.status.saveError") });
       return;
     }
     if (!dirtyRef.current) {
@@ -629,36 +627,6 @@ export function SettingsScreen(): JSX.Element {
     setMealsErrors(validateMeals(settings));
     setShoppingErrors(validateShopping(settings));
   }, [profile, settings, validateMacros, validateMeals, validateShopping]);
-
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("settings.status.browserUnsupported") });
-      return;
-    }
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("settings.status.permissionError") });
-        return;
-      }
-      setVaultHandle(handle);
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-      setStatus({ type: "success", message: t("settings.status.connected", { folder: handle.name }) });
-      void loadVaultData(handle);
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("settings.status.genericError") });
-    }
-  }, [loadVaultData, t]);
 
   const updateProfile = useCallback(
     (updater: (prev: UserProfile) => UserProfile) => {
@@ -1721,36 +1689,6 @@ export function SettingsScreen(): JSX.Element {
     </div>
   );
 
-  const renderVaultTab = () => (
-    <div className={styles.tabStack}>
-      <section className={styles.cardLarge}>
-        <h2>{t("settings.vault.title")}</h2>
-        <p className={styles.muted}>{t("settings.vault.description")}</p>
-        <div className={styles.vaultInfoCard}>
-          <span className={styles.vaultLabel}>
-            {vaultHandle ? t("settings.vault.current", { folder: vaultHandle.name }) : t("settings.vault.empty")}
-          </span>
-          <div className={styles.vaultActions}>
-            <Button variant="outlined" onClick={handleSelectVault}>
-              {t("settings.vault.select")}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={async () => {
-                await clearVaultDirectoryHandle();
-                setVaultHandle(null);
-                setProfile(DEFAULT_USER_PROFILE);
-                setSettings(DEFAULT_USER_SETTINGS);
-              }}
-            >
-              {t("settings.vault.clear")}
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-
   const renderTab = () => {
     switch (activeTab) {
       case "profile":
@@ -1765,8 +1703,6 @@ export function SettingsScreen(): JSX.Element {
         return renderInterfaceTab();
       case "ai":
         return renderAiTab();
-      case "vault":
-        return renderVaultTab();
       default:
         return null;
     }

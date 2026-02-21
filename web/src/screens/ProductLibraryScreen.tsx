@@ -14,8 +14,7 @@ import {
 import { addProductToMealPlan } from "@/utils/vaultDays";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./ProductLibraryScreen.module.css";
 
@@ -43,14 +42,6 @@ export function ProductLibraryScreen({
   const [hasError, setHasError] = useState<boolean>(false);
   const [pendingPlanDate, setPendingPlanDate] = useState<string | null>(null);
   const [planProduct, setPlanProduct] = useState<ProductSummary | null>(null);
-
-  const vaultFolderLabel = vaultHandle?.name
-    ? t("addProduct.vault.label", { folder: vaultHandle.name })
-    : t("addProduct.vault.label.unselected");
-
-  const vaultHint = vaultHandle
-    ? t("addProduct.vault.hint.selected")
-    : t("addProduct.vault.hint.missing");
 
   const refreshProducts = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
@@ -114,10 +105,6 @@ export function ProductLibraryScreen({
 
         if (!cancelled) {
           setVaultHandle(handle);
-          setStatus({
-            type: "success",
-            message: t("addProduct.status.connected", { folder: handle.name })
-          });
           void refreshProducts(handle);
         }
       } catch (error) {
@@ -135,40 +122,6 @@ export function ProductLibraryScreen({
     };
   }, [refreshProducts, t]);
 
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("addProduct.status.browserUnsupported") });
-      return;
-    }
-
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("addProduct.status.permissionError") });
-        return;
-      }
-
-      setVaultHandle(handle);
-      setStatus({ type: "success", message: t("addProduct.status.connected", { folder: handle.name }) });
-
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-
-      void refreshProducts(handle);
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("addProduct.status.genericError") });
-    }
-  }, [refreshProducts, t]);
-
   const handleAddProduct = useCallback(() => {
     if (pendingPlanDate && typeof window !== "undefined") {
       window.sessionStorage.removeItem(SELECT_PRODUCT_FOR_PLAN_KEY);
@@ -180,7 +133,7 @@ export function ProductLibraryScreen({
   const handleAddToMealPlan = useCallback(
     (product: ProductSummary) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("addProduct.status.noVault") });
+        setStatus({ type: "error", message: t("addProduct.status.genericError") });
         return;
       }
       setPlanProduct(product);
@@ -201,7 +154,7 @@ export function ProductLibraryScreen({
       unit: string;
     }) => {
       if (!vaultHandle || !planProduct) {
-        setStatus({ type: "error", message: t("addProduct.status.noVault") });
+        setStatus({ type: "error", message: t("addProduct.status.genericError") });
         return;
       }
 
@@ -239,7 +192,7 @@ export function ProductLibraryScreen({
   const handleEditProduct = useCallback(
     (product: ProductSummary) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("addProduct.status.noVault") });
+        setStatus({ type: "error", message: t("addProduct.status.genericError") });
         return;
       }
 
@@ -299,9 +252,6 @@ export function ProductLibraryScreen({
           <p className={styles.subtitle}>{t("addProduct.subtitle")}</p>
         </div>
         <div className={styles.headerActions}>
-          <Button variant="outlined" onClick={handleSelectVault}>
-            {vaultHandle ? t("addProduct.vault.button.change") : t("addProduct.vault.button.choose")}
-          </Button>
           <Button onClick={handleAddProduct}>{t("nav.addProduct")}</Button>
         </div>
       </header>
@@ -309,11 +259,6 @@ export function ProductLibraryScreen({
       {status && <div className={styles.statusMessage}>{status.message}</div>}
 
       <Card className={styles.listCard}>
-        <div className={styles.vaultBlock}>
-          <span className={styles.vaultLabel}>{vaultFolderLabel}</span>
-          <p className={styles.vaultHint}>{vaultHint}</p>
-        </div>
-
         <ProductList
           products={products}
           isLoading={isLoading}
@@ -325,8 +270,8 @@ export function ProductLibraryScreen({
           onEditProduct={handleEditProduct}
           onAddToMealPlan={handleAddToMealPlan}
           onDeleteProduct={handleDeleteProduct}
-          disableManageActions={!vaultHandle}
-          disableAddActions={!vaultHandle}
+          disableManageActions={false}
+          disableAddActions={false}
         />
       </Card>
       {planProduct && (

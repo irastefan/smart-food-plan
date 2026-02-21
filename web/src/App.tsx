@@ -14,11 +14,17 @@ import { ShoppingListScreen } from "@/screens/ShoppingListScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
 import { StatisticsScreen } from "@/screens/StatisticsScreen";
 import { ThemeProvider } from "@/theme/ThemeProvider";
+import { isAuthenticated } from "@/utils/apiClient";
 
 function App(): JSX.Element {
   const { route, navigate } = useHashNavigation();
+  const isLoggedIn = isAuthenticated();
 
   const content = (() => {
+    if (!isLoggedIn && route !== "onboarding") {
+      return <OnboardingVaultScreen />;
+    }
+
     switch (route) {
       case "meal-plan":
         return (

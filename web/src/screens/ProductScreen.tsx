@@ -18,8 +18,7 @@ import {
 import { addProductToMealPlan } from "@/utils/vaultDays";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./ProductScreen.module.css";
 
@@ -207,7 +206,7 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
   const handleAddToPlanConfirm = useCallback(
     async ({ sectionId, sectionName, quantity, unit }: { sectionId: string; sectionName: string; quantity: number; unit: string }) => {
       if (!vaultHandle || !product) {
-        setStatus({ type: "error", message: t("productDetail.status.noVault") });
+        setStatus({ type: "error", message: t("productDetail.status.addError") });
         return;
       }
 
@@ -233,37 +232,6 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
     },
     [onNavigateBackToPlan, planDate, product, t, vaultHandle]
   );
-
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("productDetail.status.browserUnsupported") });
-      return;
-    }
-
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("productDetail.status.permissionError") });
-        return;
-      }
-
-      setVaultHandle(handle);
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-      void loadProduct(handle);
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("productDetail.status.genericError") });
-    }
-  }, [loadProduct, t]);
 
   return (
     <div className={styles.root}>
@@ -295,9 +263,6 @@ export function ProductScreen({ onNavigateEdit, onNavigateBackToPlan }: ProductS
             onClick={handleEdit}
             disabled={!product}
           />
-          <Button variant="ghost" onClick={handleSelectVault}>
-            {t("productDetail.changeVault")}
-          </Button>
         </div>
       </section>
 

@@ -11,8 +11,7 @@ import {
 } from "@/utils/vaultRecipes";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import { getImageFromVault } from "@/utils/vaultImages";
 import styles from "./RecipesListScreen.module.css";
@@ -101,7 +100,6 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
         if (!cancelled) {
           setVaultHandle(handle);
           void refreshRecipes(handle);
-          setStatus({ type: "success", message: t("recipes.status.connected", { folder: handle.name }) });
         }
       } catch (error) {
         console.error("Failed to restore handle", error);
@@ -114,40 +112,6 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
     return () => {
       cancelled = true;
     };
-  }, [refreshRecipes, t]);
-
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("recipes.status.browserUnsupported") });
-      return;
-    }
-
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("recipes.status.permissionError") });
-        return;
-      }
-
-      setVaultHandle(handle);
-      setStatus({ type: "success", message: t("recipes.status.connected", { folder: handle.name }) });
-
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-
-      void refreshRecipes(handle);
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("recipes.status.genericError") });
-    }
   }, [refreshRecipes, t]);
 
   const filteredRecipes = useMemo(() => {
@@ -225,7 +189,7 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
   const handleDeleteRecipe = useCallback(
     async (recipe: RecipeSummary) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("recipes.status.noVault") });
+        setStatus({ type: "error", message: t("recipes.status.genericError") });
         return;
       }
       const confirmed = window.confirm(t("recipes.deleteConfirm", { title: recipe.title }));
@@ -420,9 +384,6 @@ export function RecipesListScreen({ onNavigateAddRecipe, onNavigateViewRecipe }:
             <option value="name">{t("recipes.sort.name")}</option>
             <option value="calories">{t("recipes.sort.calories")}</option>
           </select>
-          <Button variant="outlined" onClick={handleSelectVault}>
-            {vaultHandle ? t("recipes.changeVault") : t("recipes.chooseVault")}
-          </Button>
           <Button onClick={onNavigateAddRecipe}>{t("recipes.add")}</Button>
         </div>
       </header>

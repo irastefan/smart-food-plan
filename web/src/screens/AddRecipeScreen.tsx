@@ -16,8 +16,7 @@ import {
 import { scaleNutritionTotals, type NutritionTotals } from "@/utils/vaultDays";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./AddRecipeScreen.module.css";
 
@@ -274,37 +273,6 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
     };
   }, [loadProducts, loadRecipeForEditing, t]);
 
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("addRecipe.status.browserUnsupported") });
-      return;
-    }
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("addRecipe.status.permissionError") });
-        return;
-      }
-      setVaultHandle(handle);
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-      await loadProducts(handle);
-      await loadRecipeForEditing(handle);
-      setStatus({ type: "success", message: t("addRecipe.status.connected", { folder: handle.name }) });
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("addRecipe.status.genericError") });
-    }
-  }, [loadProducts, loadRecipeForEditing, t]);
-
   const updateIngredient = useCallback((id: string, patch: Partial<IngredientDraft>) => {
     setIngredients((current) => current.map((ingredient) => (ingredient.id === id ? { ...ingredient, ...patch } : ingredient)));
   }, []);
@@ -409,7 +377,7 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
 
   const handleSave = useCallback(async () => {
     if (!vaultHandle) {
-      setStatus({ type: "error", message: t("addRecipe.status.noVault") });
+      setStatus({ type: "error", message: t("addRecipe.status.error") });
       return;
     }
     if (!title.trim()) {
@@ -518,9 +486,6 @@ export function AddRecipeScreen({ onSaved }: { onSaved?: () => void } = {}): JSX
               {t("addRecipe.newRecipe")}
             </Button>
           )}
-          <Button variant="outlined" onClick={handleSelectVault}>
-            {t("addRecipe.selectVault")}
-          </Button>
         </div>
       </header>
 

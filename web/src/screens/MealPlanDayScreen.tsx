@@ -176,22 +176,18 @@ export function MealPlanDayScreen({
 
         if (!cancelled) {
           setVaultHandle(handle);
-          setTimeout(() => {
-            void loadDayPlan(handle, selectedDate);
-            void loadSettings(handle);
-          }, 0);
+        }
+      } catch (error) {
+        console.error("Failed to restore vault handle", error);
       }
-    } catch (error) {
-      console.error("Failed to restore vault handle", error);
-    }
-  };
+    };
 
     void restoreHandle();
 
     return () => {
       cancelled = true;
     };
-  }, [loadDayPlan, loadSettings, selectedDate]);
+  }, []);
 
   useEffect(() => {
     void loadDayPlan(vaultHandle, selectedDate);

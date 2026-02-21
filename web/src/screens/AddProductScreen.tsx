@@ -15,8 +15,7 @@ import {
 } from "@/utils/vaultProducts";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./AddProductScreen.module.css";
 
@@ -58,7 +57,6 @@ export function AddProductScreen(): JSX.Element {
   const [vaultHandle, setVaultHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [status, setStatus] = useState<StatusState>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isSelectingVault, setIsSelectingVault] = useState<boolean>(false);
   const [defaultValues, setDefaultValues] = useState<ProductFormValues | null>(null);
   const [formKey, setFormKey] = useState<string>("new");
   const [editing, setEditing] = useState<EditingState | null>(null);
@@ -82,14 +80,6 @@ export function AddProductScreen(): JSX.Element {
     }),
     [t]
   );
-
-  const vaultLabel = vaultHandle?.name
-    ? t("addProduct.vault.label", { folder: vaultHandle.name })
-    : t("addProduct.vault.label.unselected");
-
-  const vaultHint = vaultHandle
-    ? t("addProduct.vault.hint.selected")
-    : t("addProduct.vault.hint.missing");
 
   const clearEditing = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -140,10 +130,6 @@ export function AddProductScreen(): JSX.Element {
 
         if (!cancelled) {
           setVaultHandle(handle);
-          setStatus({
-            type: "success",
-            message: t("addProduct.status.connected", { folder: handle.name })
-          });
         }
       } catch (error) {
         console.error("Failed to restore vault handle", error);
@@ -213,46 +199,10 @@ export function AddProductScreen(): JSX.Element {
     };
   }, [vaultHandle, t]);
 
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("addProduct.status.browserUnsupported") });
-      return;
-    }
-
-    try {
-      setIsSelectingVault(true);
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("addProduct.status.permissionError") });
-        return;
-      }
-
-      setVaultHandle(handle);
-      setStatus({ type: "success", message: t("addProduct.status.connected", { folder: handle.name }) });
-
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("addProduct.status.genericError") });
-    } finally {
-      setIsSelectingVault(false);
-    }
-  }, [t]);
-
   const handleSubmit = useCallback(
     async (data: Record<string, string>) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("addProduct.status.noVault") });
+        setStatus({ type: "error", message: t("addProduct.status.genericError") });
         return;
       }
 
@@ -319,36 +269,22 @@ export function AddProductScreen(): JSX.Element {
       </header>
 
       <Card className={styles.card}>
-        <div className={styles.vaultControls}>
-          <div>
-            <span className={styles.vaultLabel}>{vaultLabel}</span>
-            <p className={styles.vaultHint}>{vaultHint}</p>
-          </div>
-          <Button variant="outlined" onClick={handleSelectVault} disabled={isSelectingVault || isSaving}>
-            {vaultHandle ? t("addProduct.vault.button.change") : t("addProduct.vault.button.choose")}
-          </Button>
-        </div>
-
         {status && <div className={clsx(styles.status, styles[`status-${status.type}`])}>{status.message}</div>}
 
-        {vaultHandle ? (
-          <AddProductForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSaving}
-            defaultValues={defaultValues}
-            submitLabel={editing ? t("addProduct.form.submitEdit") : undefined}
-            formKey={formKey}
-            footerSlot={
-              editing ? (
-                <Button type="button" variant="ghost" onClick={handleCancelEdit} disabled={isSaving}>
-                  {t("addProduct.cancelEdit")}
-                </Button>
-              ) : null
-            }
-          />
-        ) : (
-          <div className={styles.placeholder}>{t("addProduct.status.noVault")}</div>
-        )}
+        <AddProductForm
+          onSubmit={handleSubmit}
+          isSubmitting={isSaving}
+          defaultValues={defaultValues}
+          submitLabel={editing ? t("addProduct.form.submitEdit") : undefined}
+          formKey={formKey}
+          footerSlot={
+            editing ? (
+              <Button type="button" variant="ghost" onClick={handleCancelEdit} disabled={isSaving}>
+                {t("addProduct.cancelEdit")}
+              </Button>
+            ) : null
+          }
+        />
       </Card>
     </div>
   );

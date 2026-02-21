@@ -1,4 +1,5 @@
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
+import { apiRequest } from "@/utils/apiClient";
 
 const USER_DIRECTORY_NAME = "user";
 const PROFILE_FILE_NAME = "profile.md";
@@ -447,79 +448,221 @@ function buildSettingsContent(settings: UserSettings): string {
   return `---\nformat: "json"\n---\n${payload}\n`;
 }
 
-export async function loadUserProfile(
-  vaultHandle: FileSystemDirectoryHandle
-): Promise<UserProfile> {
-  await ensureDirectoryAccess(vaultHandle);
-  const directory = await ensureUserDirectory(vaultHandle);
-  let fileHandle: FileSystemFileHandle;
+const PROFILE_KEY = "smartFoodPlan.userProfile";
+const SETTINGS_KEY = "smartFoodPlan.userSettings";
+
+function readLocalJson<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+  const raw = window.localStorage.getItem(key);
+  if (!raw) {
+    return fallback;
+  }
   try {
-    fileHandle = await directory.getFileHandle(PROFILE_FILE_NAME, { create: false });
-  } catch (error) {
-    if ((error as DOMException)?.name !== "NotFoundError") {
-      throw error;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLocalJson<T>(key: string, value: T): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function mergeProfileWithDefaults(profile: Partial<UserProfile>): UserProfile {
+  return {
+    ...DEFAULT_USER_PROFILE,
+    ...profile
+  };
+}
+
+function mergeSettingsWithDefaults(settings: Partial<UserSettings>): UserSettings {
+  return {
+    ...DEFAULT_USER_SETTINGS,
+    ...settings,
+    meals: {
+      ...DEFAULT_USER_SETTINGS.meals,
+      ...(settings.meals ?? {})
+    },
+    calc: {
+      ...DEFAULT_USER_SETTINGS.calc,
+      ...(settings.calc ?? {})
+    },
+    targets: {
+      ...DEFAULT_USER_SETTINGS.targets,
+      ...(settings.targets ?? {}),
+      manual: {
+        ...DEFAULT_USER_SETTINGS.targets.manual,
+        ...(settings.targets?.manual ?? {})
+      },
+      autoPerKg: {
+        ...DEFAULT_USER_SETTINGS.targets.autoPerKg,
+        ...(settings.targets?.autoPerKg ?? {})
+      },
+      autoPresets: {
+        ...DEFAULT_USER_SETTINGS.targets.autoPresets,
+        ...(settings.targets?.autoPresets ?? {})
+      }
+    },
+    shopping: {
+      ...DEFAULT_USER_SETTINGS.shopping,
+      ...(settings.shopping ?? {}),
+      categories:
+        settings.shopping?.categories && settings.shopping.categories.length > 0
+          ? settings.shopping.categories
+          : DEFAULT_USER_SETTINGS.shopping.categories
+    },
+    ui: {
+      ...DEFAULT_USER_SETTINGS.ui,
+      ...(settings.ui ?? {}),
+      units: {
+        ...DEFAULT_USER_SETTINGS.ui.units,
+        ...(settings.ui?.units ?? {})
+      }
+    },
+    ai: {
+      ...DEFAULT_USER_SETTINGS.ai,
+      ...(settings.ai ?? {})
     }
-    fileHandle = await directory.getFileHandle(PROFILE_FILE_NAME, { create: true });
-    const content = buildProfileContent(DEFAULT_USER_PROFILE);
-    await writeFile(fileHandle, content);
-    return DEFAULT_USER_PROFILE;
+  };
+}
+
+function mapProfileToBackend(profile: UserProfile): Record<string, unknown> {
+  const sex = profile.sex === "female" ? "FEMALE" : profile.sex === "male" ? "MALE" : undefined;
+  const activityMap: Record<ActivityLevel, string> = {
+    sedentary: "SEDENTARY",
+    light: "LIGHT",
+    moderate: "MODERATE",
+    active: "VERY_ACTIVE",
+    very_active: "VERY_ACTIVE"
+  };
+  const goalMap: Record<GoalMode, string> = {
+    maintain: "MAINTAIN",
+    cut: "LOSE",
+    bulk: "GAIN"
+  };
+
+  return {
+    firstName: profile.name?.trim() || undefined,
+    lastName: undefined,
+    sex,
+    birthDate: profile.birthdate ?? undefined,
+    heightCm: profile.heightCm ?? undefined,
+    weightKg: profile.weightKg ?? undefined,
+    activityLevel: activityMap[profile.activityLevel] ?? "MODERATE",
+    goal: goalMap[profile.goal.mode] ?? "MAINTAIN",
+    calorieDelta: profile.goal.deltaPercent ?? undefined
+  };
+}
+
+function mapBackendToProfile(payload: Record<string, unknown> | null | undefined): Partial<UserProfile> {
+  if (!payload) {
+    return {};
   }
 
-  const file = await fileHandle.getFile();
-  const text = await file.text();
-  const { data } = parseYamlFrontMatter(text);
-  return normalizeProfileFromData(data);
+  const sexRaw = String(payload.sex ?? "").toUpperCase();
+  const sex: Sex =
+    sexRaw === "FEMALE" ? "female" : sexRaw === "MALE" ? "male" : "unspecified";
+
+  const activityRaw = String(payload.activityLevel ?? "").toUpperCase();
+  const activity: ActivityLevel =
+    activityRaw === "SEDENTARY"
+      ? "sedentary"
+      : activityRaw === "LIGHT"
+      ? "light"
+      : activityRaw === "VERY_ACTIVE"
+      ? "active"
+      : "moderate";
+
+  const goalRaw = String(payload.goal ?? "").toUpperCase();
+  const goalMode: GoalMode =
+    goalRaw === "LOSE" ? "cut" : goalRaw === "GAIN" ? "bulk" : "maintain";
+
+  return {
+    name: [toNullableString(payload.firstName), toNullableString(payload.lastName)]
+      .filter((part) => Boolean(part))
+      .join(" ")
+      .trim(),
+    sex,
+    birthdate: toDateOnlyString(payload.birthDate),
+    heightCm: toNullableNumber(payload.heightCm),
+    weightKg: toNullableNumber(payload.weightKg),
+    activityLevel: activity,
+    goal: {
+      mode: goalMode,
+      deltaPercent: toNullableNumber(payload.calorieDelta) ?? 0
+    }
+  };
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number.parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toNullableString(value: unknown): string | null {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
+  }
+  return null;
+}
+
+function toDateOnlyString(value: unknown): string | null {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+  return value.slice(0, 10);
+}
+
+export async function loadUserProfile(
+  _vaultHandle: FileSystemDirectoryHandle
+): Promise<UserProfile> {
+  const localProfile = mergeProfileWithDefaults(readLocalJson<Partial<UserProfile>>(PROFILE_KEY, {}));
+  try {
+    const me = await apiRequest<{ profile?: Record<string, unknown> }>("/v1/me");
+    const merged = mergeProfileWithDefaults({ ...localProfile, ...mapBackendToProfile(me.profile) });
+    writeLocalJson(PROFILE_KEY, merged);
+    return merged;
+  } catch {
+    return localProfile;
+  }
 }
 
 export async function saveUserProfile(
-  vaultHandle: FileSystemDirectoryHandle,
+  _vaultHandle: FileSystemDirectoryHandle,
   profile: UserProfile
 ): Promise<void> {
-  const directory = await ensureUserDirectory(vaultHandle);
-  const fileHandle = await directory.getFileHandle(PROFILE_FILE_NAME, { create: true });
-  const content = buildProfileContent(profile);
-  await writeFile(fileHandle, content);
+  writeLocalJson(PROFILE_KEY, profile);
+  try {
+    await apiRequest("/v1/profile", {
+      method: "PUT",
+      body: JSON.stringify(mapProfileToBackend(profile))
+    });
+  } catch {
+    // Keep local data as fallback when backend profile endpoint is unavailable.
+  }
 }
 
 export async function loadUserSettings(
-  vaultHandle: FileSystemDirectoryHandle
+  _vaultHandle: FileSystemDirectoryHandle
 ): Promise<UserSettings> {
-  await ensureDirectoryAccess(vaultHandle);
-  const directory = await ensureUserDirectory(vaultHandle);
-  let fileHandle: FileSystemFileHandle;
-  try {
-    fileHandle = await directory.getFileHandle(SETTINGS_FILE_NAME, { create: false });
-  } catch (error) {
-    if ((error as DOMException)?.name !== "NotFoundError") {
-      throw error;
-    }
-    fileHandle = await directory.getFileHandle(SETTINGS_FILE_NAME, { create: true });
-    const content = buildSettingsContent(DEFAULT_USER_SETTINGS);
-    await writeFile(fileHandle, content);
-    return DEFAULT_USER_SETTINGS;
-  }
-
-  const file = await fileHandle.getFile();
-  const text = await file.text();
-  const { body } = parseYamlFrontMatter(text);
-  return normalizeSettingsFromData(body);
+  const localSettings = mergeSettingsWithDefaults(readLocalJson<Partial<UserSettings>>(SETTINGS_KEY, {}));
+  return localSettings;
 }
 
 export async function saveUserSettings(
-  vaultHandle: FileSystemDirectoryHandle,
+  _vaultHandle: FileSystemDirectoryHandle,
   settings: UserSettings
 ): Promise<void> {
-  const directory = await ensureUserDirectory(vaultHandle);
-  const fileHandle = await directory.getFileHandle(SETTINGS_FILE_NAME, { create: true });
-  const content = buildSettingsContent(settings);
-  await writeFile(fileHandle, content);
-}
-
-async function writeFile(fileHandle: FileSystemFileHandle, content: string): Promise<void> {
-  const writable = await fileHandle.createWritable({ keepExistingData: false });
-  try {
-    await writable.write(content);
-  } finally {
-    await writable.close();
-  }
+  writeLocalJson(SETTINGS_KEY, settings);
 }

@@ -18,8 +18,7 @@ import { loadUserSettings, type UserSettings } from "@/utils/vaultUser";
 import { ensureDirectoryAccess } from "@/utils/vaultProducts";
 import {
   clearVaultDirectoryHandle,
-  loadVaultDirectoryHandle,
-  saveVaultDirectoryHandle
+  loadVaultDirectoryHandle
 } from "@/utils/vaultStorage";
 import styles from "./ShoppingListScreen.module.css";
 
@@ -101,13 +100,6 @@ export function ShoppingListScreen(): JSX.Element {
     [localizedCategories, t]
   );
 
-  const vaultLabel = useMemo(() => {
-    if (!vaultHandle) {
-      return t("shopping.vault.empty");
-    }
-    return t("shopping.vault.selected", { folder: vaultHandle.name });
-  }, [t, vaultHandle]);
-
   const loadList = useCallback(
     async (handle: FileSystemDirectoryHandle | null) => {
       if (!handle) {
@@ -167,40 +159,10 @@ export function ShoppingListScreen(): JSX.Element {
     };
   }, [loadList]);
 
-  const handleSelectVault = useCallback(async () => {
-    if (typeof window === "undefined" || !window.showDirectoryPicker) {
-      setStatus({ type: "error", message: t("shopping.status.browserUnsupported") });
-      return;
-    }
-    try {
-      const handle = await window.showDirectoryPicker();
-      if (!handle) {
-        return;
-      }
-      const hasAccess = await ensureDirectoryAccess(handle);
-      if (!hasAccess) {
-        setStatus({ type: "error", message: t("shopping.status.permissionError") });
-        return;
-      }
-      setVaultHandle(handle);
-      if ("indexedDB" in window) {
-        await saveVaultDirectoryHandle(handle);
-      }
-      setStatus({ type: "success", message: t("shopping.status.connected", { folder: handle.name }) });
-      void loadList(handle);
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to select vault", error);
-      setStatus({ type: "error", message: t("shopping.status.genericError") });
-    }
-  }, [loadList, t]);
-
   const handleToggleItem = useCallback(
     async (item: ShoppingListItem, checked: boolean) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("shopping.status.noVault") });
+        setStatus({ type: "error", message: t("shopping.status.updateError") });
         return;
       }
       setIsMutating(true);
@@ -220,7 +182,7 @@ export function ShoppingListScreen(): JSX.Element {
   const handleRemoveItem = useCallback(
     async (item: ShoppingListItem) => {
       if (!vaultHandle) {
-        setStatus({ type: "error", message: t("shopping.status.noVault") });
+        setStatus({ type: "error", message: t("shopping.status.updateError") });
         return;
       }
       setIsMutating(true);
@@ -240,7 +202,7 @@ export function ShoppingListScreen(): JSX.Element {
 
   const handleClear = useCallback(async () => {
     if (!vaultHandle) {
-      setStatus({ type: "error", message: t("shopping.status.noVault") });
+      setStatus({ type: "error", message: t("shopping.status.updateError") });
       return;
     }
     setIsMutating(true);
@@ -258,7 +220,7 @@ export function ShoppingListScreen(): JSX.Element {
 
   const handleAddItem = useCallback(async (itemData: Omit<ShoppingListItem, "id">) => {
     if (!vaultHandle) {
-      setStatus({ type: "error", message: t("shopping.status.noVault") });
+      setStatus({ type: "error", message: t("shopping.status.updateError") });
       return;
     }
     setIsMutating(true);
@@ -292,9 +254,6 @@ export function ShoppingListScreen(): JSX.Element {
           </p>
         </div>
         <div className={styles.headerActions}>
-          <Button variant="outlined" onClick={handleSelectVault} disabled={isMutating}>
-            {vaultHandle ? t("shopping.changeVault") : t("shopping.chooseVault")}
-          </Button>
           <Button onClick={() => setShowAddModal(true)} disabled={!vaultHandle}>
             + {t("shopping.addItem")}
           </Button>

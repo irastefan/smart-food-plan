@@ -12,6 +12,8 @@ type AddToMealPlanDialogProps = {
   onConfirm: (options: { sectionId: string; sectionName: string; quantity: number; unit: string }) => void;
 };
 
+type UnitCode = "g" | "portion";
+
 const MEAL_SECTION_ORDER = ["breakfast", "lunch", "dinner", "snack", "flex"] as const;
 
 function normalizeNumber(value: string): number {
@@ -36,7 +38,7 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
   const { t } = useTranslation();
   const defaultQuantity = product.portionGrams && product.portionGrams > 0 ? product.portionGrams : 1;
   const [quantity, setQuantity] = useState<number>(defaultQuantity);
-  const [unit, setUnit] = useState<string>(product.portionGrams ? t("units.grams") : t("units.portion"));
+  const [unit, setUnit] = useState<UnitCode>(product.portionGrams ? "g" : "portion");
   const [sectionId, setSectionId] = useState<string>(product.mealTime ?? "breakfast");
 
   const sectionName = useMemo(() => {
@@ -116,9 +118,9 @@ export function AddToMealPlanDialog({ product, onCancel, onConfirm }: AddToMealP
 
             <div className={styles.field}>
               <label htmlFor="unit">{t("mealPlan.unitLabel")}</label>
-              <select id="unit" value={unit} onChange={(event) => setUnit(event.target.value)}>
-                <option value={t("units.grams")}>{t("units.grams")}</option>
-                <option value={t("units.portion")}>{t("units.portion")}</option>
+              <select id="unit" value={unit} onChange={(event) => setUnit(event.target.value as UnitCode)}>
+                <option value="g">{t("units.grams")}</option>
+                <option value="portion">{t("units.portion")}</option>
               </select>
             </div>
           </div>

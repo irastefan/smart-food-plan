@@ -46,8 +46,9 @@ function hashToRoute(hash: string): AppRoute {
     case "onboarding":
       return "onboarding";
     case "add-product":
-    default:
       return "add-product";
+    default:
+      return DEFAULT_ROUTE;
   }
 }
 

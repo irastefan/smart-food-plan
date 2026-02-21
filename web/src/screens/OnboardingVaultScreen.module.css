@@ -1,170 +1,46 @@
 .root {
-  position: relative;
-  min-height: 100vh;
-  padding: 64px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
 }
 
-.glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--background-glow);
-  opacity: 0.85;
-}
-
-.inner {
-  position: relative;
+.content {
   width: min(560px, 100%);
+}
+
+.statusRow {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
-  z-index: 1;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.hero {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.form {
+  display: grid;
+  gap: 14px;
 }
 
-.title {
-  font-size: clamp(2.4rem, 4vw, 3rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0;
+.field {
+  display: grid;
+  gap: 6px;
 }
 
-.subtitle {
-  font-size: 1.2rem;
-  color: var(--color-text-secondary);
-  margin: 0;
+.input {
+  min-height: 40px;
+  border: 1px solid var(--color-border, #c9ccd1);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: var(--color-surface, #fff);
+  color: inherit;
 }
 
-.folderCard {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.folderHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.folderNameRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.folderName {
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin: 0;
-}
-
-.folderEmpty {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.folderHint {
-  font-size: 0.95rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.infoRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.infoIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--color-icon-container);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.helperBadge {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--color-icon-container);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-accent);
+.status {
+  font-size: 14px;
 }
 
 .actions {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.rememberRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.statusMessage {
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-.statusInfo {
-  color: var(--color-text-secondary);
-}
-
-.statusSuccess {
-  color: var(--color-success);
-}
-
-.statusError {
-  color: var(--color-error);
-}
-
-.helperLink {
-  font-size: 0.9rem;
-  color: var(--color-accent);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.topBar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-@media (max-width: 600px) {
-  .root {
-    padding-top: 48px;
-    padding-bottom: 48px;
-  }
-
-  .inner {
-    gap: 24px;
-  }
-
-  .folderCard {
-    gap: 14px;
-  }
 }
