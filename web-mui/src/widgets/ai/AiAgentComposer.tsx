@@ -1,6 +1,27 @@
+import MicRoundedIcon from "@mui/icons-material/MicRounded";
+import StopRoundedIcon from "@mui/icons-material/StopRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import { Button, InputAdornment, Paper, Stack, TextField } from "@mui/material";
-import { useState } from "react";
+import { Button, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip } from "@mui/material";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "../../app/providers/LanguageProvider";
+
+type SpeechRecognitionConstructor = new () => {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
 
 type AiAgentComposerProps = {
   isSubmitting: boolean;
@@ -10,7 +31,21 @@ type AiAgentComposerProps = {
 };
 
 export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubmit }: AiAgentComposerProps) {
+  const { language, t } = useLanguage();
   const [value, setValue] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
+  const SpeechRecognitionApi = useMemo(
+    () => (typeof window !== "undefined" ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null : null),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+    };
+  }, []);
 
   function handleSubmit() {
     const text = value.trim();
@@ -19,6 +54,44 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     }
     onSubmit(text);
     setValue("");
+  }
+
+  function handleVoiceToggle() {
+    if (!SpeechRecognitionApi) {
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionApi();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = language === "ru" ? "ru-RU" : "en-US";
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript ?? "")
+        .join(" ")
+        .trim();
+      setValue(transcript);
+    };
+
+    recognition.onerror = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.start();
+    setIsRecording(true);
   }
 
   return (
@@ -46,13 +119,29 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
           maxRows={8}
           fullWidth
           InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Tooltip title={SpeechRecognitionApi ? (isRecording ? t("aiAgent.voice.stop") : t("aiAgent.voice.start")) : t("aiAgent.voice.unsupported")}>
+                  <span>
+                    <IconButton
+                      onClick={handleVoiceToggle}
+                      disabled={!SpeechRecognitionApi}
+                      color={isRecording ? "error" : "default"}
+                      sx={{ bgcolor: isRecording ? "rgba(239,68,68,0.12)" : "transparent" }}
+                    >
+                      {isRecording ? <StopRoundedIcon /> : <MicRoundedIcon />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </InputAdornment>
+            ),
             endAdornment: (
               <InputAdornment position="end">
                 <Button
                   onClick={handleSubmit}
                   variant="contained"
                   endIcon={<SendRoundedIcon />}
-                  disabled={isSubmitting || value.trim().length === 0}
+                  disabled={isSubmitting || value.trim().length === 0 || isRecording}
                   sx={{ minWidth: 124 }}
                 >
                   {submitLabel}
@@ -60,6 +149,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
               </InputAdornment>
             )
           }}
+          helperText={isRecording ? t("aiAgent.voice.listening") : " "}
         />
       </Stack>
     </Paper>
