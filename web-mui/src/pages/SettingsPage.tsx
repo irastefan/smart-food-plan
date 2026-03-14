@@ -8,8 +8,12 @@ import {
   saveUserProfile,
   type UserProfile
 } from "../features/settings/api/settingsApi";
+import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
+import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
 import { ProfilePreviewCard } from "../widgets/settings/ProfilePreviewCard";
+import { SettingsSectionCard } from "../widgets/settings/SettingsSectionCard";
+import { SettingsSectionNav, type SettingsSectionId } from "../widgets/settings/SettingsSectionNav";
 import { UserProfileForm } from "../widgets/settings/UserProfileForm";
 
 type LayoutContext = {
@@ -21,6 +25,8 @@ export function SettingsPage() {
   const { t } = useLanguage();
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [openAiApiKey, setOpenAiApiKeyState] = useState("");
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "success" | "info"; message: string } | null>(null);
@@ -35,6 +41,7 @@ export function SettingsPage() {
         const current = await getCurrentUserSettings();
         if (!cancelled) {
           setProfile(current.profile);
+          setOpenAiApiKeyState(getOpenAiApiKey());
         }
       } catch (error) {
         console.error("Failed to load settings", error);
@@ -86,6 +93,12 @@ export function SettingsPage() {
     }
   }
 
+  function handleSaveOpenAiApiKey(value: string) {
+    setOpenAiApiKey(value);
+    setOpenAiApiKeyState(value.trim());
+    setStatus({ type: "success", message: t("settings.openai.saved") });
+  }
+
   if (isLoading) {
     return (
       <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
@@ -102,18 +115,45 @@ export function SettingsPage() {
 
       {profile ? (
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, xl: 8 }}>
-            <UserProfileForm
-              value={profile}
-              isSubmitting={isSubmitting}
-              status={null}
-              onChange={setProfile}
-              onSave={handleSave}
-              onRecalculate={handleRecalculate}
-            />
+          <Grid size={{ xs: 12, xl: 3 }}>
+            <SettingsSectionNav value={activeSection} onChange={setActiveSection} />
           </Grid>
-          <Grid size={{ xs: 12, xl: 4 }}>
-            <ProfilePreviewCard profile={profile} />
+          <Grid size={{ xs: 12, xl: 9 }}>
+            <Stack spacing={3}>
+              {activeSection === "profile" ? (
+                <SettingsSectionCard
+                  title={t("settings.sections.profile.title")}
+                  subtitle={t("settings.sections.profile.subtitle")}
+                >
+                  <UserProfileForm
+                    value={profile}
+                    isSubmitting={isSubmitting}
+                    status={null}
+                    onChange={setProfile}
+                    onSave={handleSave}
+                    onRecalculate={handleRecalculate}
+                  />
+                </SettingsSectionCard>
+              ) : null}
+
+              {activeSection === "targets" ? (
+                <SettingsSectionCard
+                  title={t("settings.sections.targets.title")}
+                  subtitle={t("settings.sections.targets.subtitle")}
+                >
+                  <ProfilePreviewCard profile={profile} />
+                </SettingsSectionCard>
+              ) : null}
+
+              {activeSection === "openai" ? (
+                <SettingsSectionCard
+                  title={t("settings.sections.openai.title")}
+                  subtitle={t("settings.sections.openai.subtitle")}
+                >
+                  <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
+                </SettingsSectionCard>
+              ) : null}
+            </Stack>
           </Grid>
         </Grid>
       ) : null}

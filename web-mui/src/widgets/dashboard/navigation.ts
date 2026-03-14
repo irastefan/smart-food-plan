@@ -3,6 +3,7 @@ import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 
 export const dashboardNavigation = [
   {
@@ -28,6 +29,12 @@ export const dashboardNavigation = [
     labelKey: "nav.shopping",
     path: "/shopping",
     icon: ShoppingCartRoundedIcon
+  },
+  {
+    id: "ai-agent",
+    labelKey: "nav.aiAgent",
+    path: "/ai-agent",
+    icon: SmartToyRoundedIcon
   },
   {
     id: "settings",

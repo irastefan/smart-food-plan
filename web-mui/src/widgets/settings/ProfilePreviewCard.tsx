@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import type { UserProfile } from "../../features/settings/api/settingsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -17,16 +17,14 @@ export function ProfilePreviewCard({ profile }: ProfilePreviewCardProps) {
   ];
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-      <Stack spacing={2}>
-        <Typography variant="h5" fontWeight={800}>{t("settings.profile.preview.title")}</Typography>
-        {items.map((item) => (
-          <Stack key={item.label} direction="row" justifyContent="space-between" spacing={2}>
-            <Typography color="text.secondary">{item.label}</Typography>
-            <Typography fontWeight={700} textAlign="right">{item.value}</Typography>
-          </Stack>
-        ))}
-      </Stack>
-    </Paper>
+    <Stack spacing={2}>
+      <Typography variant="h6" fontWeight={800}>{t("settings.profile.preview.title")}</Typography>
+      {items.map((item) => (
+        <Stack key={item.label} direction="row" justifyContent="space-between" spacing={2}>
+          <Typography color="text.secondary">{item.label}</Typography>
+          <Typography fontWeight={700} textAlign="right">{item.value}</Typography>
+        </Stack>
+      ))}
+    </Stack>
   );
 }
