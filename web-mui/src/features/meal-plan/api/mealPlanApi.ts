@@ -1,0 +1,265 @@
+import { apiRequest } from "../../../shared/api/http";
+import type { ProductSummary } from "../../products/api/productsApi";
+import type { RecipeSummary } from "../../recipes/model/recipeTypes";
+
+export type NutritionTotals = {
+  caloriesKcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+};
+
+export type MealPlanItem = {
+  id: string;
+  slot: string;
+  type: "product" | "recipe";
+  title: string;
+  refId?: string | null;
+  entryId?: string | null;
+  amount?: number | null;
+  unit?: string | null;
+  servings?: number | null;
+  nutrition: NutritionTotals;
+};
+
+export type MealPlanSection = {
+  id: string;
+  title: string;
+  items: MealPlanItem[];
+  totals: NutritionTotals;
+};
+
+export type MealPlanDay = {
+  date: string;
+  sections: MealPlanSection[];
+  totals: NutritionTotals;
+};
+
+type BackendEntry = {
+  id?: string;
+  productId?: string;
+  recipeId?: string;
+  slot?: string;
+  type?: string;
+  amount?: number;
+  unit?: string;
+  servings?: number;
+  nutrition?: Record<string, unknown>;
+  nutritionTotal?: Record<string, unknown>;
+  product?: {
+    id?: string;
+    name?: string;
+  } | null;
+  recipe?: {
+    id?: string;
+    title?: string;
+    name?: string;
+  } | null;
+};
+
+type BackendDay = {
+  date: string;
+  slots?: Record<string, BackendEntry[]>;
+  nutritionBySlot?: Record<string, Record<string, unknown>>;
+  nutritionTotal?: Record<string, unknown>;
+};
+
+const SLOT_LABELS: Record<string, string> = {
+  BREAKFAST: "Breakfast",
+  LUNCH: "Lunch",
+  DINNER: "Dinner",
+  SNACK: "Snack"
+};
+
+function toNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number.parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function normalizeTotals(input?: Record<string, unknown>): NutritionTotals {
+  const source = input ?? {};
+  return {
+    caloriesKcal: toNumber(source.caloriesKcal ?? source.calories ?? source.kcal),
+    proteinG: toNumber(source.proteinG ?? source.protein),
+    fatG: toNumber(source.fatG ?? source.fat),
+    carbsG: toNumber(source.carbsG ?? source.carbs)
+  };
+}
+
+function slotTitle(slot: string): string {
+  return SLOT_LABELS[slot] ?? slot;
+}
+
+function mapEntry(slot: string, entry: BackendEntry): MealPlanItem {
+  const type = String(entry.type ?? "").toUpperCase() === "RECIPE" || entry.recipe ? "recipe" : "product";
+  const title = entry.product?.name ?? entry.recipe?.title ?? entry.recipe?.name ?? "Item";
+  const refId = type === "recipe" ? entry.recipeId ?? entry.recipe?.id : entry.productId ?? entry.product?.id;
+
+  return {
+    id: entry.id ?? `${slot}-${title}`,
+    slot,
+    type,
+    title,
+    refId: refId ?? null,
+    entryId: entry.id ?? null,
+    amount: type === "product" ? toNumber(entry.amount) || null : null,
+    unit: type === "product" ? entry.unit ?? "g" : null,
+    servings: type === "recipe" ? toNumber(entry.servings) || 1 : null,
+    nutrition: normalizeTotals((entry.nutrition ?? entry.nutritionTotal) as Record<string, unknown> | undefined)
+  };
+}
+
+function mapDay(day: BackendDay): MealPlanDay {
+  const sectionsOrder = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
+
+  const sections = sectionsOrder.map((slot) => {
+    const entries = day.slots?.[slot] ?? [];
+    return {
+      id: slot.toLowerCase(),
+      title: slotTitle(slot),
+      items: entries.map((entry) => mapEntry(slot, entry)),
+      totals: normalizeTotals(day.nutritionBySlot?.[slot])
+    };
+  });
+
+  return {
+    date: day.date,
+    sections,
+    totals: normalizeTotals(day.nutritionTotal)
+  };
+}
+
+export async function getMealPlanDay(date: string): Promise<MealPlanDay> {
+  const response = await apiRequest<BackendDay>(`/v1/meal-plans/day?date=${encodeURIComponent(date)}`);
+  return mapDay(response);
+}
+
+function normalizeProductAmountAndUnit(
+  amount: number | undefined,
+  unit: string | undefined
+): { amount: number; unit: string } {
+  const safeAmount = Number.isFinite(amount) && (amount as number) > 0 ? (amount as number) : 100;
+  const rawUnit = (unit ?? "").trim().toLowerCase();
+
+  if (rawUnit === "" || rawUnit === "g" || rawUnit === "gr" || rawUnit === "gram" || rawUnit === "grams") {
+    return { amount: safeAmount, unit: "g" };
+  }
+
+  return { amount: safeAmount, unit: "g" };
+}
+
+function sectionToSlot(sectionId: string): string {
+  const normalized = sectionId.toLowerCase();
+  if (normalized === "breakfast") return "BREAKFAST";
+  if (normalized === "lunch") return "LUNCH";
+  if (normalized === "dinner") return "DINNER";
+  return "SNACK";
+}
+
+export async function addProductToMealPlan(
+  date: string,
+  sectionId: string,
+  product: ProductSummary,
+  options?: { quantity?: number; unit?: string }
+): Promise<MealPlanDay> {
+  const normalized = normalizeProductAmountAndUnit(options?.quantity, options?.unit);
+  await apiRequest("/v1/meal-plans/day/entries", {
+    method: "POST",
+    body: JSON.stringify({
+      date,
+      slot: sectionToSlot(sectionId),
+      productId: product.id,
+      amount: normalized.amount,
+      unit: normalized.unit
+    })
+  });
+
+  return getMealPlanDay(date);
+}
+
+export async function addRecipeToMealPlan(
+  date: string,
+  sectionId: string,
+  recipe: RecipeSummary,
+  options?: { servings?: number }
+): Promise<MealPlanDay> {
+  await apiRequest("/v1/meal-plans/day/entries", {
+    method: "POST",
+    body: JSON.stringify({
+      date,
+      slot: sectionToSlot(sectionId),
+      recipeId: recipe.id,
+      servings: options?.servings ?? 1
+    })
+  });
+
+  return getMealPlanDay(date);
+}
+
+export async function removeMealPlanItem(date: string, item: MealPlanItem): Promise<MealPlanDay> {
+  if (!item.entryId) {
+    return getMealPlanDay(date);
+  }
+
+  await apiRequest(`/v1/meal-plans/day/entries/${item.entryId}`, { method: "DELETE" });
+  return getMealPlanDay(date);
+}
+
+export async function updateMealPlanItem(
+  date: string,
+  sectionId: string,
+  item: MealPlanItem,
+  updates: { quantity?: number; unit?: string; servings?: number }
+): Promise<MealPlanDay> {
+  if (item.entryId) {
+    await apiRequest(`/v1/meal-plans/day/entries/${item.entryId}`, { method: "DELETE" });
+  }
+
+  if (item.type === "product") {
+    await apiRequest("/v1/meal-plans/day/entries", {
+      method: "POST",
+      body: JSON.stringify({
+        date,
+        slot: sectionToSlot(sectionId),
+        productId: item.refId,
+        amount: updates.quantity ?? item.amount ?? 100,
+        unit: updates.unit ?? item.unit ?? "g"
+      })
+    });
+  } else {
+    await apiRequest("/v1/meal-plans/day/entries", {
+      method: "POST",
+      body: JSON.stringify({
+        date,
+        slot: sectionToSlot(sectionId),
+        recipeId: item.refId,
+        servings: updates.servings ?? item.servings ?? 1
+      })
+    });
+  }
+
+  return getMealPlanDay(date);
+}
+
+export function getTodayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function getMealCompletion(day: MealPlanDay): number {
+  const totalItems = day.sections.reduce((acc, section) => acc + section.items.length, 0);
+  return Math.min(100, totalItems * 12);
+}
+
+export function getMacroDistribution(day: MealPlanDay): Array<{ key: string; label: string; value: number; color: string }> {
+  return [
+    { key: "protein", label: "Protein", value: day.totals.proteinG, color: "#22c55e" },
+    { key: "fat", label: "Fat", value: day.totals.fatG, color: "#f59e0b" },
+    { key: "carbs", label: "Carbs", value: day.totals.carbsG, color: "#0ea5e9" }
+  ];
+}
