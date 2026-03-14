@@ -9,7 +9,15 @@ type AiAgentToolsCardProps = {
 
 export function AiAgentToolsCard({ title, subtitle, tools }: AiAgentToolsCardProps) {
   return (
-    <Paper sx={{ p: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper
+      sx={{
+        p: 2.5,
+        borderRadius: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper"
+      }}
+    >
       <Stack spacing={2}>
         <div>
           <Typography variant="h6" fontWeight={800}>{title}</Typography>
@@ -17,7 +25,7 @@ export function AiAgentToolsCard({ title, subtitle, tools }: AiAgentToolsCardPro
         </div>
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
           {tools.map((tool) => (
-            <Chip key={tool.name} label={tool.name} size="small" />
+            <Chip key={tool.name} label={tool.name} size="small" variant="outlined" />
           ))}
         </Stack>
       </Stack>

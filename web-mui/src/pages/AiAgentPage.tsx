@@ -1,5 +1,5 @@
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, CircularProgress, Grid, Stack } from "@mui/material";
+import { Alert, CircularProgress, Grid, Paper, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -113,19 +113,34 @@ export function AiAgentPage() {
       ) : (
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, xl: 8 }}>
-            <Stack spacing={2.5}>
-              <AiAgentConversation
-                messages={messages}
-                emptyTitle={t("aiAgent.emptyTitle")}
-                emptySubtitle={t("aiAgent.emptySubtitle")}
-              />
-              <AiAgentComposer
-                isSubmitting={isSubmitting}
-                placeholder={t("aiAgent.placeholder")}
-                submitLabel={t("aiAgent.send")}
-                onSubmit={handleSend}
-              />
-            </Stack>
+            <Paper
+              sx={{
+                p: { xs: 2, md: 2.5 },
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+                minHeight: "70vh",
+                background: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(180deg, rgba(17,26,39,0.98), rgba(13,20,31,0.98))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))"
+              }}
+            >
+              <Stack spacing={2.5} sx={{ maxWidth: 920, mx: "auto" }}>
+                <AiAgentConversation
+                  messages={messages}
+                  emptyTitle={t("aiAgent.emptyTitle")}
+                  emptySubtitle={t("aiAgent.emptySubtitle")}
+                  isSubmitting={isSubmitting}
+                />
+                <AiAgentComposer
+                  isSubmitting={isSubmitting}
+                  placeholder={t("aiAgent.placeholder")}
+                  submitLabel={t("aiAgent.send")}
+                  onSubmit={handleSend}
+                />
+              </Stack>
+            </Paper>
           </Grid>
           <Grid size={{ xs: 12, xl: 4 }}>
             <Stack spacing={2.5}>
