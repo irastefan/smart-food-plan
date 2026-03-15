@@ -20,22 +20,22 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: 'web/package-lock.json'
+        cache-dependency-path: 'web-mui/package-lock.json'
         
     - name: Install dependencies
-      working-directory: ./web
+      working-directory: ./web-mui
       run: npm ci
       
     - name: Build
-      working-directory: ./web
+      working-directory: ./web-mui
       run: npm run build
       
     - name: Add .nojekyll file
-      run: touch ./web/dist/.nojekyll
+      run: touch ./web-mui/dist/.nojekyll
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./web/dist
+        publish_dir: ./web-mui/dist
