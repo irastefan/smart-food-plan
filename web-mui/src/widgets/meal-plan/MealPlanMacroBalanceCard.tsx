@@ -30,11 +30,11 @@ export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }:
             : "linear-gradient(180deg, #ffffff, #f5f7fb)"
       }}
     >
-      <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
+      <CardContent sx={{ p: { xs: 1.5, sm: 3 } }}>
         <Typography variant="h5" mb={{ xs: 1.75, sm: 2.5 }} sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
           {title}
         </Typography>
-        <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="stretch" justifyContent="space-between">
+        <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} alignItems="stretch" justifyContent="space-between">
           {items.map((macro) => (
             <MealPlanMacroRing
               key={macro.key}
@@ -82,31 +82,29 @@ function MealPlanMacroRing({
       sx={{
         flex: 1,
         minWidth: 0,
-        px: { xs: 1.25, sm: 1.5 },
-        py: { xs: 0.875, sm: 1 },
-        borderRadius: 4,
-        backgroundColor: (theme) =>
-          theme.palette.mode === "dark" ? "rgba(9, 14, 25, 0.22)" : "rgba(241, 245, 249, 0.75)"
+        px: { xs: 0.2, sm: 1.5 },
+        py: { xs: 0.15, sm: 1 },
+        borderRadius: 4
       }}
     >
       <Typography
         variant="h6"
         fontWeight={700}
         textAlign="center"
-        sx={{ color, mb: 1, fontSize: { xs: "0.92rem", sm: "1.25rem" } }}
+        sx={{ color, mb: { xs: 0.45, sm: 1 }, fontSize: { xs: "0.74rem", sm: "1.25rem" } }}
       >
         {label}
       </Typography>
-      <Stack alignItems="center" spacing={{ xs: 1, sm: 1.5 }}>
+      <Stack alignItems="center" spacing={{ xs: 0.45, sm: 1.5 }}>
         <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
           <CircularProgress
             variant="determinate"
             value={100}
             size={104}
-            thickness={3.6}
+            thickness={3}
             sx={{
-              width: { xs: 84, sm: 104 },
-              height: { xs: 84, sm: 104 },
+              width: { xs: 64, sm: 104 },
+              height: { xs: 64, sm: 104 },
               color: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.14)" : "rgba(15, 23, 42, 0.08)"
             }}
@@ -115,10 +113,10 @@ function MealPlanMacroRing({
             variant="determinate"
             value={percent}
             size={104}
-            thickness={3.6}
+            thickness={3}
             sx={{
-              width: { xs: 84, sm: 104 },
-              height: { xs: 84, sm: 104 },
+              width: { xs: 64, sm: 104 },
+              height: { xs: 64, sm: 104 },
               color,
               position: "absolute",
               left: 0,
@@ -137,10 +135,10 @@ function MealPlanMacroRing({
             }}
           >
             <Box textAlign="center">
-              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1.3rem", sm: "2.125rem" } }}>
+              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1rem", sm: "2.125rem" } }}>
                 {formatNumber(value)}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.72rem", sm: "1rem" } }}>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.58rem", sm: "1rem" } }}>
                 /{formatNumber(target)}
                 {unit}
               </Typography>
@@ -148,7 +146,7 @@ function MealPlanMacroRing({
           </Box>
         </Box>
 
-        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.72rem", sm: "1rem" } }}>
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.6rem", sm: "1rem" } }}>
           {formatNumber(statusValue)}
           {unit} {statusLabel}
         </Typography>
