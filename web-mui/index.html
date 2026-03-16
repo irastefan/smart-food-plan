@@ -11,7 +11,15 @@
         if (!redirect) return;
 
         var target = decodeURIComponent(redirect[1]);
-        window.history.replaceState(null, "", target);
+        var basePath = window.location.pathname.replace(/\/$/, "");
+        var resolved =
+          target.indexOf(basePath + "/") === 0
+            ? target
+            : target.charAt(0) === "/"
+              ? basePath + target
+              : basePath + "/" + target;
+
+        window.history.replaceState(null, "", resolved);
       })();
     </script>
   </head>
