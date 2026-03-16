@@ -3,14 +3,11 @@ import LanguageRoundedIcon from "@mui/icons-material/LanguageRounded";
 import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import {
   Avatar,
   Box,
   IconButton,
-  InputBase,
   MenuItem,
-  Paper,
   Select,
   Stack,
   Typography,
@@ -37,28 +34,33 @@ export function DashboardTopbar({ onOpenSidebar, title, subtitle }: DashboardTop
   }
 
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} flexWrap="wrap">
-      <Stack direction="row" spacing={1.5} alignItems="center">
-        <IconButton onClick={onOpenSidebar} sx={{ display: { lg: "none" } }}>
-          <MenuRoundedIcon />
-        </IconButton>
-        <Box>
-          <Typography variant="h5">{title}</Typography>
-          {subtitle ? (
-            <Typography variant="body2" color="text.secondary">
-              {subtitle}
-            </Typography>
-          ) : null}
-        </Box>
-      </Stack>
+    <Stack spacing={{ xs: 1.25, md: 1.75 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+          <IconButton onClick={onOpenSidebar} sx={{ display: { lg: "none" }, flexShrink: 0 }}>
+            <MenuRoundedIcon />
+          </IconButton>
+          <Typography
+            variant="h5"
+            sx={{
+              fontSize: { xs: 24, md: undefined },
+              lineHeight: 1.1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {title}
+          </Typography>
+        </Stack>
 
-      <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+        <Stack direction="row" spacing={{ xs: 0.75, md: 1.25 }} alignItems="center" justifyContent="flex-end" sx={{ flexShrink: 0 }}>
         <Stack
           direction="row"
           spacing={0.75}
           alignItems="center"
           sx={{
-            px: 1.25,
+            px: { xs: 1, md: 1.25 },
             py: 0.75,
             borderRadius: 999,
             border: "1px solid",
@@ -74,7 +76,7 @@ export function DashboardTopbar({ onOpenSidebar, title, subtitle }: DashboardTop
             onChange={handleLanguageChange}
             size="small"
             sx={{
-              minWidth: 56,
+              minWidth: { xs: 44, md: 56 },
               fontSize: 13,
               fontWeight: 700,
               color: "text.primary"
@@ -98,22 +100,7 @@ export function DashboardTopbar({ onOpenSidebar, title, subtitle }: DashboardTop
           {isDark ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
         </IconButton>
 
-        <Paper
-          sx={{
-            px: 1.5,
-            py: 0.75,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            minWidth: 220,
-            backgroundColor: isDark ? "rgba(20,31,45,0.94)" : "#ffffff"
-          }}
-        >
-          <SearchRoundedIcon fontSize="small" color="action" />
-          <InputBase placeholder={t("common.search")} sx={{ flex: 1 }} />
-        </Paper>
-
-        <IconButton>
+        <IconButton sx={{ display: { xs: "none", sm: "inline-flex" } }}>
           <NotificationsRoundedIcon />
         </IconButton>
 
@@ -121,7 +108,7 @@ export function DashboardTopbar({ onOpenSidebar, title, subtitle }: DashboardTop
           <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>
             {(user?.email?.[0] ?? "U").toUpperCase()}
           </Avatar>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
+          <Box sx={{ display: { xs: "none", lg: "block" } }}>
             <Typography variant="body2" fontWeight={800}>
               {user?.email ?? "User"}
             </Typography>
@@ -131,6 +118,13 @@ export function DashboardTopbar({ onOpenSidebar, title, subtitle }: DashboardTop
           </Box>
         </Stack>
       </Stack>
+      </Stack>
+
+      {subtitle ? (
+        <Typography variant="body2" color="text.secondary" sx={{ pl: { xs: 0, md: 0 } }}>
+          {subtitle}
+        </Typography>
+      ) : null}
     </Stack>
   );
 }
