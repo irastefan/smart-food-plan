@@ -1,5 +1,5 @@
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, CircularProgress, Grid, Paper, Stack } from "@mui/material";
+import { Alert, Chip, CircularProgress, Grid, Paper, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -56,17 +56,25 @@ export function AiAgentPage() {
     };
   }, [t]);
 
-  async function handleSend(text: string) {
+  async function handleSend(payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) {
     const apiKey = getOpenAiApiKey();
     if (!apiKey) {
       setStatus({ type: "info", message: t("aiAgent.status.missingApiKey") });
       return;
     }
 
+    const normalizedText = payload.text.trim();
+    const messageText =
+      normalizedText.length > 0
+        ? payload.images.length > 0
+          ? `${normalizedText}\n\n[${t("aiAgent.imagesAttached", { count: payload.images.length })}]`
+          : normalizedText
+        : `[${t("aiAgent.imagesAttached", { count: payload.images.length })}]`;
+
     const userMessage: AgentMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      text
+      text: messageText
     };
 
     const nextHistory = [...messages, userMessage];
@@ -79,7 +87,8 @@ export function AiAgentPage() {
         apiKey,
         tools,
         history: messages,
-        userText: text
+        userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
+        images: payload.images
       });
       setMessages([...nextHistory, ...result.toolMessages, result.assistantMessage]);
     } catch (error) {
@@ -112,21 +121,35 @@ export function AiAgentPage() {
         </Stack>
       ) : (
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, xl: 8 }}>
+          <Grid size={{ xs: 12, xl: 8.5 }}>
             <Paper
               sx={{
-                p: { xs: 2, md: 2.5 },
+                p: { xs: 1.25, md: 2.5 },
                 borderRadius: 1,
                 border: "1px solid",
                 borderColor: "divider",
-                minHeight: "70vh",
+                minHeight: { xs: "calc(100vh - 220px)", xl: "70vh" },
                 background: (theme) =>
                   theme.palette.mode === "dark"
                     ? "linear-gradient(180deg, rgba(17,26,39,0.98), rgba(13,20,31,0.98))"
                     : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))"
               }}
             >
-              <Stack spacing={2.5} sx={{ maxWidth: 920, mx: "auto" }}>
+              <Stack spacing={{ xs: 1.5, md: 2.5 }} sx={{ maxWidth: 920, mx: "auto" }}>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <Chip
+                    icon={<SmartToyRoundedIcon />}
+                    label={t("aiAgent.mcpReady")}
+                    color="success"
+                    variant="outlined"
+                    sx={{ height: 32 }}
+                  />
+                  <Chip
+                    label={t("aiAgent.tools.subtitle", { count: tools.length })}
+                    variant="outlined"
+                    sx={{ height: 32 }}
+                  />
+                </Stack>
                 <AiAgentConversation
                   messages={messages}
                   emptyTitle={t("aiAgent.emptyTitle")}
@@ -142,16 +165,13 @@ export function AiAgentPage() {
               </Stack>
             </Paper>
           </Grid>
-          <Grid size={{ xs: 12, xl: 4 }}>
+          <Grid size={{ xs: 12, xl: 3.5 }}>
             <Stack spacing={2.5}>
               <AiAgentToolsCard
                 title={t("aiAgent.tools.title")}
                 subtitle={t("aiAgent.tools.subtitle", { count: tools.length })}
                 tools={tools}
               />
-              <Alert icon={<SmartToyRoundedIcon fontSize="inherit" />} severity="success">
-                {t("aiAgent.mcpReady")}
-              </Alert>
             </Stack>
           </Grid>
         </Grid>

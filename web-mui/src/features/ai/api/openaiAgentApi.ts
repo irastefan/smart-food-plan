@@ -7,6 +7,11 @@ export type AgentMessage = {
   toolName?: string;
 };
 
+export type AgentImageInput = {
+  name: string;
+  dataUrl: string;
+};
+
 type OpenAiResponse = {
   id?: string;
   output_text?: string;
@@ -94,6 +99,7 @@ export async function runAgentTurn(input: {
   tools: McpTool[];
   history: AgentMessage[];
   userText: string;
+  images?: AgentImageInput[];
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);
   const openAiTools = toOpenAiTools(input.tools);
@@ -114,7 +120,17 @@ export async function runAgentTurn(input: {
     ...input.history
       .filter((message) => message.role !== "tool")
       .map((message) => ({ role: message.role, content: message.text })),
-    { role: "user", content: input.userText }
+    {
+      role: "user",
+      content: [
+        { type: "input_text", text: input.userText },
+        ...(input.images ?? []).map((image) => ({
+          type: "input_image" as const,
+          image_url: image.dataUrl,
+          detail: "auto" as const
+        }))
+      ]
+    }
   ];
   const toolMessages: AgentMessage[] = [];
   let previousResponseId: string | undefined;
