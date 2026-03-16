@@ -1,7 +1,3 @@
-import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
-import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import { Alert, CircularProgress, Grid, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
@@ -9,6 +5,7 @@ import { useLanguage } from "../app/providers/LanguageProvider";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { getRecipe, getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeSummary } from "../features/recipes/model/recipeTypes";
+import { getCurrentUserSettings } from "../features/settings/api/settingsApi";
 import {
   addMealPlanItemToShoppingList,
   addRecipeToShoppingList
@@ -16,8 +13,6 @@ import {
 import {
   addProductToMealPlan,
   addRecipeToMealPlan,
-  getMealCompletion,
-  getMacroDistribution,
   removeMealPlanItem,
   type MealPlanItem,
   updateMealPlanItem
@@ -27,7 +22,6 @@ import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
 import { MealPlanItemDialog } from "../widgets/meal-plan/MealPlanItemDialog";
 import { MealPlanMacroBalanceCard } from "../widgets/meal-plan/MealPlanMacroBalanceCard";
-import { MealPlanMetricCard } from "../widgets/meal-plan/MealPlanMetricCard";
 import { MealPlanSectionsCard } from "../widgets/meal-plan/MealPlanSectionsCard";
 import { MealPlanSummaryCard } from "../widgets/meal-plan/MealPlanSummaryCard";
 
@@ -35,10 +29,6 @@ type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
 };
-
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
 
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
@@ -55,6 +45,8 @@ export function MealPlanDashboardPage() {
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isMutating, setIsMutating] = useState(false);
+  const [targetCalories, setTargetCalories] = useState<number>(0);
+  const [targetMacros, setTargetMacros] = useState({ protein: 0, fat: 0, carbs: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +70,32 @@ export function MealPlanDashboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUserTargets() {
+      try {
+        const settings = await getCurrentUserSettings();
+        if (!cancelled) {
+          setTargetCalories(settings.profile.targetCalories ?? 0);
+          setTargetMacros({
+            protein: settings.profile.targetProteinG ?? 0,
+            fat: settings.profile.targetFatG ?? 0,
+            carbs: settings.profile.targetCarbsG ?? 0
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load user targets", error);
+      }
+    }
+
+    void loadUserTargets();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <Stack flex={1} alignItems="center" justifyContent="center" spacing={2}>
@@ -87,11 +105,31 @@ export function MealPlanDashboardPage() {
     );
   }
 
-  const macroDistribution = day ? getMacroDistribution(day) : [];
-  const completion = day ? getMealCompletion(day) : 0;
-  const totalMeals = day?.sections.reduce((acc, section) => acc + section.items.length, 0) ?? 0;
-  const activeSlots = day?.sections.filter((section) => section.items.length > 0).length ?? 0;
-  const macroTotal = (day?.totals.proteinG ?? 0) + (day?.totals.fatG ?? 0) + (day?.totals.carbsG ?? 0);
+  const macroDistribution = [
+    {
+      key: "carbs",
+      label: t("mealPlan.macro.carbs"),
+      value: day?.totals.carbsG ?? 0,
+      target: targetMacros.carbs,
+      color: "#4dd6e3"
+    },
+    {
+      key: "fat",
+      label: t("mealPlan.macro.fat"),
+      value: day?.totals.fatG ?? 0,
+      target: targetMacros.fat,
+      color: "#d58bff"
+    },
+    {
+      key: "protein",
+      label: t("mealPlan.macro.protein"),
+      value: day?.totals.proteinG ?? 0,
+      target: targetMacros.protein,
+      color: "#ffb547"
+    }
+  ];
+  const usedCalories = day?.totals.caloriesKcal ?? 0;
+  const remainingCalories = targetCalories - usedCalories;
 
   async function handleSubmitDialog(payload: {
     type: "product" | "recipe";
@@ -188,44 +226,26 @@ export function MealPlanDashboardPage() {
       {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
-          <MealPlanMetricCard
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <MealPlanSummaryCard
             title={t("mealPlan.cards.totalCalories")}
-            value={`${formatNumber(day?.totals.caloriesKcal ?? 0)}`}
-            unit="kcal"
-            icon={<LocalFireDepartmentRoundedIcon />}
-            accent="linear-gradient(135deg, rgba(16,185,129,0.22), rgba(14,165,233,0.10))"
+            goalValue={targetCalories}
+            usedValue={usedCalories}
+            remainingValue={remainingCalories}
+            goalLabel={t("mealPlan.cards.goal")}
+            usedLabel={t("mealPlan.cards.used")}
+            remainingLabel={t("mealPlan.cards.remaining")}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
-          <MealPlanMetricCard
-            title={t("mealPlan.cards.totalMeals")}
-            value={`${totalMeals}`}
-            unit={t("mealPlan.cards.items")}
-            icon={<RestaurantRoundedIcon />}
-            accent="linear-gradient(135deg, rgba(14,165,233,0.20), rgba(59,130,246,0.12))"
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <MealPlanMacroBalanceCard
+            title={t("mealPlan.section.macroBalance")}
+            items={macroDistribution}
+            leftLabel={t("mealPlan.macro.left")}
+            overLabel={t("mealPlan.macro.over")}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
-          <MealPlanMetricCard
-            title={t("mealPlan.cards.completion")}
-            value={`${completion}`}
-            unit="%"
-            icon={<AccessTimeRoundedIcon />}
-            accent="linear-gradient(135deg, rgba(245,158,11,0.22), rgba(249,115,22,0.10))"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
-          <MealPlanMetricCard
-            title={t("mealPlan.cards.activeSlots")}
-            value={`${activeSlots}`}
-            unit={t("mealPlan.cards.slots")}
-            icon={<MonitorWeightRoundedIcon />}
-            accent="linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.10))"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, xl: 8 }}>
+        <Grid size={{ xs: 12 }}>
           <MealPlanSectionsCard
             day={day}
             title={t("mealPlan.section.dailyFlow")}
@@ -242,28 +262,6 @@ export function MealPlanDashboardPage() {
             onDeleteItem={handleDelete}
             onAddToShoppingItem={handleAddMealPlanItemToShopping}
           />
-        </Grid>
-
-        <Grid size={{ xs: 12, xl: 4 }}>
-          <Stack spacing={2.5}>
-            <MealPlanMacroBalanceCard
-              title={t("mealPlan.section.macroBalance")}
-              items={macroDistribution}
-              total={macroTotal}
-            />
-
-            <MealPlanSummaryCard
-              title={t("mealPlan.section.summary")}
-              completion={completion}
-              completionLabel={t("mealPlan.cards.completion")}
-              proteinLabel={t("mealPlan.macro.protein")}
-              fatLabel={t("mealPlan.macro.fat")}
-              carbsLabel={t("mealPlan.macro.carbs")}
-              proteinValue={day?.totals.proteinG ?? 0}
-              fatValue={day?.totals.fatG ?? 0}
-              carbsValue={day?.totals.carbsG ?? 0}
-            />
-          </Stack>
         </Grid>
       </Grid>
 

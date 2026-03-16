@@ -2,7 +2,8 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
-import { Box, Card, CardContent, Chip, Grid, IconButton, LinearProgress, Stack, Typography, Button } from "@mui/material";
+import { Box, Button, Card, Divider, IconButton, Stack, Typography } from "@mui/material";
+import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { MealPlanDay, MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 
 type MealPlanSectionsCardProps = {
@@ -28,7 +29,6 @@ function formatNumber(value: number): string {
 
 export function MealPlanSectionsCard({
   day,
-  itemsLabel,
   servingsLabel,
   emptyLabel,
   title,
@@ -42,93 +42,113 @@ export function MealPlanSectionsCard({
   onDeleteItem,
   onAddToShoppingItem
 }: MealPlanSectionsCardProps) {
-  return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box>
-            <Typography variant="h6">{title}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {subtitle}
-            </Typography>
-          </Box>
-        </Stack>
+  const { t } = useLanguage();
 
-        <Grid container spacing={2}>
-          {day?.sections.map((section) => (
-            <Grid key={section.id} size={{ xs: 12, md: 6 }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: "100%",
-                  background: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? "linear-gradient(180deg, rgba(19,30,45,0.95), rgba(16,25,39,0.95))"
-                      : "#ffffff"
-                }}
-              >
-                <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
-                    <Typography fontWeight={800}>{section.title}</Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip size="small" label={`${section.items.length} ${itemsLabel}`} />
-                      <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
-                        {addLabel}
-                      </Button>
+  return (
+    <Stack spacing={2}>
+      <Box sx={{ px: { xs: 0.5, md: 0 } }}>
+        <Typography variant="h5" mb={0.5}>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {subtitle}
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", xl: "repeat(2, minmax(0, 1fr))" },
+          gap: 2
+        }}
+      >
+        {day?.sections.map((section) => (
+          <Card
+            key={section.id}
+            sx={{
+              overflow: "hidden",
+              height: "100%",
+              background: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))"
+                  : "linear-gradient(180deg, #ffffff, #f8fafc)"
+            }}
+          >
+            <Box sx={{ px: 3, py: 2.5 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h4" mb={0.5} sx={{ fontSize: { xs: "1.55rem", sm: "1.75rem" } }}>
+                    {section.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {`${t("mealPlan.macro.carbs")} ${formatNumber(section.totals.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(section.totals.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(section.totals.proteinG)}g`}
+                  </Typography>
+                </Box>
+                <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: "1.45rem", sm: "1.65rem" } }}>
+                  {formatNumber(section.totals.caloriesKcal)}
+                </Typography>
+              </Stack>
+            </Box>
+
+            <Divider />
+
+            <Stack divider={<Divider />}>
+              {section.items.length > 0 ? (
+                section.items.map((item) => (
+                  <Stack
+                    key={item.id}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    spacing={2}
+                    sx={{ px: 3, py: 2 }}
+                  >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="h6" sx={{ wordBreak: "break-word" }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.77rem", sm: "0.82rem" } }}>
+                      <Box component="span">
+                        {item.type === "recipe"
+                          ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
+                          : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`}
+                      </Box>
+                      <Box component="span" sx={{ ml: 1.25 }}>
+                        {`· ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g`}
+                      </Box>
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
+                    <Typography fontWeight={800}>{formatNumber(item.nutrition.caloriesKcal)}</Typography>
+                      <IconButton size="small" onClick={() => onAddToShoppingItem(section.id, item)} title={addToShoppingLabel}>
+                        <AddShoppingCartRoundedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => onEditItem(section.id, section.title, item)} title={editLabel}>
+                        <EditRoundedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </IconButton>
                     </Stack>
                   </Stack>
+                ))
+              ) : (
+                <Typography color="text.secondary" sx={{ px: 3, py: 2.5 }}>
+                  {emptyLabel}
+                </Typography>
+              )}
+            </Stack>
 
-                  <Typography variant="h5" mb={1}>
-                    {formatNumber(section.totals.caloriesKcal)} kcal
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(100, section.totals.caloriesKcal / 8)}
-                    sx={{ mb: 2, height: 8, borderRadius: 999 }}
-                  />
+            <Divider />
 
-                  <Stack spacing={1.25}>
-                    {section.items.length > 0 ? (
-                      section.items.map((item) => (
-                        <Stack
-                          key={item.id}
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ py: 0.75 }}
-                        >
-                          <Box>
-                            <Typography fontWeight={700}>{item.title}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {item.type === "recipe"
-                                ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
-                                : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`}
-                            </Typography>
-                          </Box>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Typography fontWeight={800}>{formatNumber(item.nutrition.caloriesKcal)} kcal</Typography>
-                            <IconButton size="small" onClick={() => onAddToShoppingItem(section.id, item)} title={addToShoppingLabel}>
-                              <AddShoppingCartRoundedIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => onEditItem(section.id, section.title, item)} title={editLabel}>
-                              <EditRoundedIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
-                              <DeleteOutlineRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Stack>
-                        </Stack>
-                      ))
-                    ) : (
-                      <Typography color="text.secondary">{emptyLabel}</Typography>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </CardContent>
-    </Card>
+            <Box sx={{ px: 3, py: 1.5 }}>
+              <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
+                {addLabel}
+              </Button>
+            </Box>
+          </Card>
+        ))}
+      </Box>
+    </Stack>
   );
 }

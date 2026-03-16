@@ -1,15 +1,17 @@
-import { Box, Card, CardContent, CircularProgress, Divider, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
+import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
+import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import { Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
+import type { ReactNode } from "react";
 
 type MealPlanSummaryCardProps = {
   title: string;
-  completion: number;
-  completionLabel: string;
-  proteinLabel: string;
-  fatLabel: string;
-  carbsLabel: string;
-  proteinValue: number;
-  fatValue: number;
-  carbsValue: number;
+  goalValue: number;
+  usedValue: number;
+  remainingValue: number;
+  goalLabel: string;
+  usedLabel: string;
+  remainingLabel: string;
 };
 
 function formatNumber(value: number): string {
@@ -18,30 +20,58 @@ function formatNumber(value: number): string {
 
 export function MealPlanSummaryCard({
   title,
-  completion,
-  completionLabel,
-  proteinLabel,
-  fatLabel,
-  carbsLabel,
-  proteinValue,
-  fatValue,
-  carbsValue
+  goalValue,
+  usedValue,
+  remainingValue,
+  goalLabel,
+  usedLabel,
+  remainingLabel
 }: MealPlanSummaryCardProps) {
+  const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
+
   return (
-    <Card>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" mb={2}>
+    <Card
+      sx={{
+        height: "100%",
+        background: (theme) =>
+          theme.palette.mode === "dark"
+            ? "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))"
+            : "linear-gradient(180deg, #ffffff, #f5f7fb)"
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
+        <Typography variant="h5" mb={0.75} sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
           {title}
         </Typography>
-        <Stack alignItems="center" spacing={2}>
-          <Box sx={{ position: "relative", display: "inline-flex" }}>
+        <Typography variant="body2" color="text.secondary" mb={{ xs: 2, sm: 3 }} sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+          {`${remainingLabel} = ${goalLabel} - ${usedLabel}`}
+        </Typography>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 2, sm: 3 }} alignItems={{ xs: "flex-start", sm: "center" }}>
+          <Box sx={{ position: "relative", display: "inline-flex", alignSelf: { xs: "center", sm: "stretch" } }}>
             <CircularProgress
               variant="determinate"
-              value={completion}
-              size={160}
-              thickness={4}
+              value={100}
+              size={168}
+              thickness={3.2}
               sx={{
-                color: "primary.main",
+                width: { xs: 132, sm: 168 },
+                height: { xs: 132, sm: 168 },
+                color: (theme) =>
+                  theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.12)" : "rgba(15, 23, 42, 0.08)"
+              }}
+            />
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={168}
+              thickness={3.2}
+              sx={{
+                width: { xs: 132, sm: 168 },
+                height: { xs: 132, sm: 168 },
+                color: "#62b4ff",
+                position: "absolute",
+                left: 0,
                 "& .MuiCircularProgress-circle": {
                   strokeLinecap: "round"
                 }
@@ -57,29 +87,62 @@ export function MealPlanSummaryCard({
               }}
             >
               <Box textAlign="center">
-                <Typography variant="h4">{completion}%</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {completionLabel}
+                <Typography variant="h2" lineHeight={1} mb={0.5} sx={{ fontSize: { xs: "2rem", sm: "3rem" } }}>
+                  {formatNumber(remainingValue)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.78rem", sm: "0.875rem" } }}>
+                  {remainingLabel}
                 </Typography>
               </Box>
             </Box>
           </Box>
 
-          <Divider flexItem />
-
-          <List disablePadding sx={{ width: "100%" }}>
-            <ListItem disableGutters secondaryAction={<Typography fontWeight={800}>{formatNumber(proteinValue)} g</Typography>}>
-              <ListItemText primary={proteinLabel} />
-            </ListItem>
-            <ListItem disableGutters secondaryAction={<Typography fontWeight={800}>{formatNumber(fatValue)} g</Typography>}>
-              <ListItemText primary={fatLabel} />
-            </ListItem>
-            <ListItem disableGutters secondaryAction={<Typography fontWeight={800}>{formatNumber(carbsValue)} g</Typography>}>
-              <ListItemText primary={carbsLabel} />
-            </ListItem>
-          </List>
+          <Stack spacing={{ xs: 1.25, sm: 2 }} sx={{ flex: 1, width: "100%" }}>
+            <SummaryStat
+              icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#fb923c" }} />}
+              label={goalLabel}
+              value={`${formatNumber(goalValue)} kcal`}
+            />
+            <SummaryStat
+              icon={<ChecklistRoundedIcon sx={{ color: "#62b4ff" }} />}
+              label={usedLabel}
+              value={`${formatNumber(usedValue)} kcal`}
+            />
+            <SummaryStat
+              icon={<ScheduleRoundedIcon sx={{ color: "#a78bfa" }} />}
+              label={remainingLabel}
+              value={`${formatNumber(remainingValue)} kcal`}
+            />
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
+  );
+}
+
+function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <Stack direction="row" spacing={1.5} alignItems="center">
+      <Box
+        sx={{
+          width: { xs: 34, sm: 40 },
+          height: { xs: 34, sm: 40 },
+          borderRadius: 2.5,
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "rgba(255,255,255,0.05)"
+        }}
+      >
+        {icon}
+      </Box>
+      <Box>
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.78rem", sm: "0.875rem" } }}>
+          {label}
+        </Typography>
+        <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}>
+          {value}
+        </Typography>
+      </Box>
+    </Stack>
   );
 }
