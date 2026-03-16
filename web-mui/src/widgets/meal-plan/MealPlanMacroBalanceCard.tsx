@@ -34,7 +34,13 @@ export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }:
         <Typography variant="h5" mb={{ xs: 1.75, sm: 2.5 }} sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
           {title}
         </Typography>
-        <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} alignItems="stretch" justifyContent="space-between">
+        <Stack
+          direction="row"
+          spacing={{ xs: 0.9, sm: 2 }}
+          alignItems="stretch"
+          justifyContent="space-between"
+          sx={{ px: { xs: 0.35, sm: 0 } }}
+        >
           {items.map((macro) => (
             <MealPlanMacroRing
               key={macro.key}
@@ -82,7 +88,7 @@ function MealPlanMacroRing({
       sx={{
         flex: 1,
         minWidth: 0,
-        px: { xs: 0.2, sm: 1.5 },
+        px: { xs: 0.1, sm: 1.5 },
         py: { xs: 0.15, sm: 1 },
         borderRadius: 4
       }}
