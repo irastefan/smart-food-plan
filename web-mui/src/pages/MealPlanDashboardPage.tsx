@@ -107,11 +107,11 @@ export function MealPlanDashboardPage() {
 
   const macroDistribution = [
     {
-      key: "carbs",
-      label: t("mealPlan.macro.carbs"),
-      value: day?.totals.carbsG ?? 0,
-      target: targetMacros.carbs,
-      color: "#4dd6e3"
+      key: "protein",
+      label: t("mealPlan.macro.protein"),
+      value: day?.totals.proteinG ?? 0,
+      target: targetMacros.protein,
+      color: "#ffb547"
     },
     {
       key: "fat",
@@ -121,11 +121,11 @@ export function MealPlanDashboardPage() {
       color: "#d58bff"
     },
     {
-      key: "protein",
-      label: t("mealPlan.macro.protein"),
-      value: day?.totals.proteinG ?? 0,
-      target: targetMacros.protein,
-      color: "#ffb547"
+      key: "carbs",
+      label: t("mealPlan.macro.carbs"),
+      value: day?.totals.carbsG ?? 0,
+      target: targetMacros.carbs,
+      color: "#4dd6e3"
     }
   ];
   const usedCalories = day?.totals.caloriesKcal ?? 0;

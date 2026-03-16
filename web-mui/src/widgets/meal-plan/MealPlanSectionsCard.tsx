@@ -81,7 +81,7 @@ export function MealPlanSectionsCard({
                     {section.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {`${t("mealPlan.macro.carbs")} ${formatNumber(section.totals.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(section.totals.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(section.totals.proteinG)}g`}
+                    {`${t("mealPlan.macro.protein")} ${formatNumber(section.totals.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(section.totals.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(section.totals.carbsG)}g`}
                   </Typography>
                 </Box>
                 <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: "1.45rem", sm: "1.65rem" } }}>
@@ -118,7 +118,7 @@ export function MealPlanSectionsCard({
                           item.type === "recipe"
                             ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
                             : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`
-                        } · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g`}
+                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g`}
                       </Typography>
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
                       <IconButton size="small" onClick={() => onAddToShoppingItem(section.id, item)} title={addToShoppingLabel}>
