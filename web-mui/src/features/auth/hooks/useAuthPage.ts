@@ -2,16 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
 import { ApiError } from "../../../shared/api/http";
+import { saveUserProfile, type UserProfile } from "../../settings/api/settingsApi";
 import type { AuthUser } from "../api/authApi";
 import { getMe, login, register } from "../api/authApi";
 
 type Mode = "login" | "register";
+type AuthSubmitValues = {
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  profile?: UserProfile;
+};
 
 export function useAuthPage(mode: Mode): {
   currentUser: AuthUser | null;
   errorMessage: string | null;
   isSubmitting: boolean;
-  submit: (values: { email: string; password: string }) => Promise<void>;
+  submit: (values: AuthSubmitValues) => Promise<void>;
 } {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -43,17 +50,55 @@ export function useAuthPage(mode: Mode): {
     };
   }, []);
 
-  async function submit(values: { email: string; password: string }): Promise<void> {
+  function hasProfileData(profile?: UserProfile): boolean {
+    if (!profile) {
+      return false;
+    }
+
+    return Boolean(
+      profile.firstName ||
+        profile.lastName ||
+        profile.sex ||
+        profile.birthDate ||
+        profile.heightCm ||
+        profile.weightKg ||
+        profile.activityLevel ||
+        profile.goal ||
+        profile.calorieDelta
+    );
+  }
+
+  async function submit(values: AuthSubmitValues): Promise<void> {
     if (!values.email || !values.password) {
       setErrorMessage(t("auth.error.required"));
       return;
+    }
+
+    if (mode === "register") {
+      if (!values.confirmPassword) {
+        setErrorMessage(t("auth.error.confirmRequired"));
+        return;
+      }
+
+      if (values.password !== values.confirmPassword) {
+        setErrorMessage(t("auth.error.passwordMismatch"));
+        return;
+      }
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
-      const response = mode === "login" ? await login(values) : await register(values);
+      const response =
+        mode === "login"
+          ? await login({ email: values.email, password: values.password })
+          : await register({ email: values.email, password: values.password });
+
+      if (mode === "register" && hasProfileData(values.profile)) {
+        await saveUserProfile(values.profile!);
+      }
+
       setCurrentUser(response.user);
       navigate("/meal-plan", { replace: true });
     } catch (error) {

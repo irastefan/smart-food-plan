@@ -16,6 +16,11 @@ export type MeResponse = {
   profile?: unknown | null;
 };
 
+export type RegisterPayload = {
+  email: string;
+  password: string;
+};
+
 export async function login(payload: { email: string; password: string }): Promise<AuthResponse> {
   const response = await apiRequest<AuthResponse>(
     "/v1/auth/login",
@@ -30,7 +35,7 @@ export async function login(payload: { email: string; password: string }): Promi
   return response;
 }
 
-export async function register(payload: { email: string; password: string }): Promise<AuthResponse> {
+export async function register(payload: RegisterPayload): Promise<AuthResponse> {
   const response = await apiRequest<AuthResponse>(
     "/v1/auth/register",
     {

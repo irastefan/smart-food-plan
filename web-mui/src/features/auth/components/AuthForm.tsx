@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Alert, Button, Link, Stack, TextField, Typography, useTheme } from "@mui/material";
+import { Alert, Button, Link, MenuItem, Stack, TextField, Typography, useTheme } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
 import type { AuthUser } from "../api/authApi";
+import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../settings/api/settingsApi";
 import { AuthCard } from "./AuthCard";
 import { BrandMark } from "./BrandMark";
 import { PasswordField } from "./PasswordField";
@@ -15,7 +16,7 @@ type AuthFormProps = {
   isSubmitting: boolean;
   errorMessage: string | null;
   currentUser: AuthUser | null;
-  onSubmit: (values: { email: string; password: string }) => Promise<void>;
+  onSubmit: (values: { email: string; password: string; confirmPassword?: string; profile?: UserProfile }) => Promise<void>;
 };
 
 export function AuthForm({
@@ -30,6 +31,22 @@ export function AuthForm({
   const isDark = theme.palette.mode === "dark";
   const [email, setEmail] = useState("ira@example.com");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [profile, setProfile] = useState<UserProfile>({
+    firstName: "",
+    lastName: "",
+    sex: "",
+    birthDate: "",
+    heightCm: null,
+    weightKg: null,
+    activityLevel: "",
+    goal: "",
+    calorieDelta: null,
+    targetCalories: null,
+    targetProteinG: null,
+    targetFatG: null,
+    targetCarbsG: null
+  });
 
   const isLogin = mode === "login";
   const title = isLogin ? t("auth.login.title") : t("auth.register.title");
@@ -38,9 +55,18 @@ export function AuthForm({
   const subtitleHref = isLogin ? "/register" : "/login";
   const submitLabel = isLogin ? t("auth.login.submit") : t("auth.register.submit");
 
+  function updateProfile<K extends keyof UserProfile>(key: K, nextValue: UserProfile[K]) {
+    setProfile((current) => ({ ...current, [key]: nextValue }));
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    await onSubmit({ email: email.trim(), password });
+    await onSubmit({
+      email: email.trim(),
+      password,
+      confirmPassword: isLogin ? undefined : confirmPassword,
+      profile: isLogin ? undefined : profile
+    });
   }
 
   return (
@@ -116,6 +142,64 @@ export function AuthForm({
             autoComplete={isLogin ? "current-password" : "new-password"}
           />
         </Stack>
+
+        {!isLogin ? (
+          <>
+            <Stack spacing={0.75}>
+              <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                {t("auth.confirmPassword")}
+              </Typography>
+              <PasswordField
+                label=""
+                placeholder={t("auth.confirmPasswordPlaceholder")}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+              />
+            </Stack>
+
+            <Stack spacing={1.5} sx={{ pt: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={800} color="text.secondary">
+                {t("auth.profile.title")}
+              </Typography>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField label={t("settings.profile.firstName")} value={profile.firstName} onChange={(event) => updateProfile("firstName", event.target.value)} fullWidth />
+                <TextField label={t("settings.profile.lastName")} value={profile.lastName} onChange={(event) => updateProfile("lastName", event.target.value)} fullWidth />
+              </Stack>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField select label={t("settings.profile.sex")} value={profile.sex} onChange={(event) => updateProfile("sex", event.target.value as UserSex)} fullWidth>
+                  <MenuItem value="">{t("settings.profile.sex.unspecified")}</MenuItem>
+                  <MenuItem value="FEMALE">{t("settings.profile.sex.female")}</MenuItem>
+                  <MenuItem value="MALE">{t("settings.profile.sex.male")}</MenuItem>
+                </TextField>
+                <TextField label={t("settings.profile.birthDate")} type="date" InputLabelProps={{ shrink: true }} value={profile.birthDate} onChange={(event) => updateProfile("birthDate", event.target.value)} fullWidth />
+              </Stack>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField label={t("settings.profile.heightCm")} type="number" value={profile.heightCm ?? ""} onChange={(event) => updateProfile("heightCm", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
+                <TextField label={t("settings.profile.weightKg")} type="number" value={profile.weightKg ?? ""} onChange={(event) => updateProfile("weightKg", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
+              </Stack>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField select label={t("settings.profile.activityLevel")} value={profile.activityLevel} onChange={(event) => updateProfile("activityLevel", event.target.value as UserActivityLevel)} fullWidth>
+                  <MenuItem value="">{t("settings.profile.activity.unspecified")}</MenuItem>
+                  <MenuItem value="SEDENTARY">{t("settings.profile.activity.sedentary")}</MenuItem>
+                  <MenuItem value="LIGHT">{t("settings.profile.activity.light")}</MenuItem>
+                  <MenuItem value="MODERATE">{t("settings.profile.activity.moderate")}</MenuItem>
+                  <MenuItem value="VERY_ACTIVE">{t("settings.profile.activity.veryActive")}</MenuItem>
+                </TextField>
+                <TextField select label={t("settings.profile.goal")} value={profile.goal} onChange={(event) => updateProfile("goal", event.target.value as UserGoal)} fullWidth>
+                  <MenuItem value="">{t("settings.profile.goal.unspecified")}</MenuItem>
+                  <MenuItem value="MAINTAIN">{t("settings.profile.goal.maintain")}</MenuItem>
+                  <MenuItem value="LOSE">{t("settings.profile.goal.lose")}</MenuItem>
+                  <MenuItem value="GAIN">{t("settings.profile.goal.gain")}</MenuItem>
+                </TextField>
+              </Stack>
+            </Stack>
+          </>
+        ) : null}
 
         <Button
           type="submit"
