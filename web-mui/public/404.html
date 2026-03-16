@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var base = "/smart-food-plan/";
+        var path = window.location.pathname + window.location.search + window.location.hash;
+        var normalized = path.indexOf(base) === 0 ? path.slice(base.length - 1) : path;
+        var target = base + "?p=" + encodeURIComponent(normalized);
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
