@@ -91,7 +91,7 @@ function MealPlanMacroRing({
         variant="h6"
         fontWeight={700}
         textAlign="center"
-        sx={{ color, mb: { xs: 0.45, sm: 1 }, fontSize: { xs: "0.74rem", sm: "1.25rem" } }}
+        sx={{ color, mb: { xs: 0.45, sm: 1 }, fontSize: { xs: "0.8rem", sm: "1.25rem" } }}
       >
         {label}
       </Typography>
@@ -103,8 +103,8 @@ function MealPlanMacroRing({
             size={104}
             thickness={3}
             sx={{
-              width: { xs: 64, sm: 104 },
-              height: { xs: 64, sm: 104 },
+              width: { xs: 58, sm: 104 },
+              height: { xs: 58, sm: 104 },
               color: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.14)" : "rgba(15, 23, 42, 0.08)"
             }}
@@ -115,8 +115,8 @@ function MealPlanMacroRing({
             size={104}
             thickness={3}
             sx={{
-              width: { xs: 64, sm: 104 },
-              height: { xs: 64, sm: 104 },
+              width: { xs: 58, sm: 104 },
+              height: { xs: 58, sm: 104 },
               color,
               position: "absolute",
               left: 0,
@@ -135,10 +135,10 @@ function MealPlanMacroRing({
             }}
           >
             <Box textAlign="center">
-              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1rem", sm: "2.125rem" } }}>
+              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1.08rem", sm: "2.125rem" } }}>
                 {formatNumber(value)}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.58rem", sm: "1rem" } }}>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.64rem", sm: "1rem" } }}>
                 /{formatNumber(target)}
                 {unit}
               </Typography>
@@ -146,7 +146,7 @@ function MealPlanMacroRing({
           </Box>
         </Box>
 
-        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.6rem", sm: "1rem" } }}>
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.66rem", sm: "1rem" } }}>
           {formatNumber(statusValue)}
           {unit} {statusLabel}
         </Typography>
