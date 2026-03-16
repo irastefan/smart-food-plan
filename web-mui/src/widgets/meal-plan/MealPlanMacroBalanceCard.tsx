@@ -103,8 +103,8 @@ function MealPlanMacroRing({
             size={104}
             thickness={3}
             sx={{
-              width: { xs: 58, sm: 104 },
-              height: { xs: 58, sm: 104 },
+              width: { xs: 50, sm: 104 },
+              height: { xs: 50, sm: 104 },
               color: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.14)" : "rgba(15, 23, 42, 0.08)"
             }}
@@ -115,8 +115,8 @@ function MealPlanMacroRing({
             size={104}
             thickness={3}
             sx={{
-              width: { xs: 58, sm: 104 },
-              height: { xs: 58, sm: 104 },
+              width: { xs: 50, sm: 104 },
+              height: { xs: 50, sm: 104 },
               color,
               position: "absolute",
               left: 0,
