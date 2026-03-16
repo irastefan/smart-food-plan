@@ -95,31 +95,32 @@ export function MealPlanSectionsCard({
             <Stack divider={<Divider />}>
               {section.items.length > 0 ? (
                 section.items.map((item) => (
-                  <Stack
-                    key={item.id}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ px: 3, py: 2 }}
-                  >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h6" sx={{ wordBreak: "break-word" }}>
-                      {item.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.77rem", sm: "0.82rem" } }}>
-                      <Box component="span">
-                        {item.type === "recipe"
-                          ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
-                          : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`}
-                      </Box>
-                      <Box component="span" sx={{ ml: 1.25 }}>
-                        {`· ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g`}
-                      </Box>
-                    </Typography>
-                  </Box>
-                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
-                    <Typography fontWeight={800}>{formatNumber(item.nutrition.caloriesKcal)}</Typography>
+                  <Stack key={item.id} spacing={1.1} sx={{ px: 3, py: 2 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                      <Typography
+                        variant="h6"
+                        sx={{ wordBreak: "break-word", minWidth: 0, fontSize: { xs: "0.98rem", sm: "1.25rem" } }}
+                      >
+                        {item.title}
+                      </Typography>
+                      <Typography fontWeight={800} sx={{ flexShrink: 0 }}>
+                        {formatNumber(item.nutrition.caloriesKcal)}
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: "0.72rem", sm: "0.82rem" }, minWidth: 0 }}
+                      >
+                        {`${
+                          item.type === "recipe"
+                            ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
+                            : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`
+                        } · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g`}
+                      </Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
                       <IconButton size="small" onClick={() => onAddToShoppingItem(section.id, item)} title={addToShoppingLabel}>
                         <AddShoppingCartRoundedIcon fontSize="small" />
                       </IconButton>
@@ -129,6 +130,7 @@ export function MealPlanSectionsCard({
                       <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
                         <DeleteOutlineRoundedIcon fontSize="small" />
                       </IconButton>
+                      </Stack>
                     </Stack>
                   </Stack>
                 ))
