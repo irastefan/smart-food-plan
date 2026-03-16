@@ -46,6 +46,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
   const [images, setImages] = useState<ComposerImage[]>([]);
   const imagesRef = useRef<ComposerImage[]>([]);
   const speechFinalTextRef = useRef("");
+  const processedResultIndexRef = useRef(0);
   const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -53,6 +54,13 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     () => (typeof window !== "undefined" ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null : null),
     []
   );
+  const isMobileSpeechMode = useMemo(() => {
+    if (typeof navigator === "undefined") {
+      return false;
+    }
+
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }, []);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -132,17 +140,20 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     }
 
     speechFinalTextRef.current = value.trim();
+    processedResultIndexRef.current = 0;
     const recognition = new SpeechRecognitionApi();
     recognitionRef.current = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.continuous = !isMobileSpeechMode;
+    recognition.interimResults = !isMobileSpeechMode;
     recognition.lang = language === "ru" ? "ru-RU" : "en-US";
 
     recognition.onresult = (event) => {
       let finalChunk = "";
       let interimChunk = "";
 
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const startIndex = isMobileSpeechMode ? processedResultIndexRef.current : event.resultIndex;
+
+      for (let index = startIndex; index < event.results.length; index += 1) {
         const result = event.results[index];
         const transcript = result?.[0]?.transcript?.trim() ?? "";
         if (!transcript) {
@@ -153,6 +164,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
         // Only append newly finalized chunks, and keep the latest interim chunk separate.
         if ("isFinal" in result && (result as { isFinal?: boolean }).isFinal) {
           finalChunk += `${transcript} `;
+          processedResultIndexRef.current = index + 1;
         } else {
           interimChunk += `${transcript} `;
         }
@@ -163,7 +175,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
         speechFinalTextRef.current = nextFinal;
       }
 
-      const nextValue = `${speechFinalTextRef.current} ${interimChunk}`.trim();
+      const nextValue = `${speechFinalTextRef.current} ${isMobileSpeechMode ? "" : interimChunk}`.trim();
       setValue(nextValue);
     };
 
