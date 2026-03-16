@@ -31,7 +31,7 @@ export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }:
       }}
     >
       <CardContent sx={{ p: { xs: 1.5, sm: 3 } }}>
-        <Typography variant="h5" mb={{ xs: 1.75, sm: 2.5 }} sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
+        <Typography variant="h5" mb={{ xs: 1.75, sm: 2.5 }} sx={{ fontSize: { xs: "1.14rem", sm: "1.32rem" } }}>
           {title}
         </Typography>
         <Stack
@@ -97,7 +97,7 @@ function MealPlanMacroRing({
         variant="h6"
         fontWeight={700}
         textAlign="center"
-        sx={{ color, mb: { xs: 0.45, sm: 1 }, fontSize: { xs: "0.8rem", sm: "1.25rem" } }}
+        sx={{ color, mb: { xs: 0.45, sm: 0.8 }, fontSize: { xs: "0.7rem", sm: "0.96rem" } }}
       >
         {label}
       </Typography>
@@ -141,10 +141,10 @@ function MealPlanMacroRing({
             }}
           >
             <Box textAlign="center">
-              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1.48rem", sm: "2.125rem" } }}>
+              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "0.92rem", sm: "1.42rem" } }}>
                 {formatNumber(value)}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", sm: "1.3rem" } }}>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.56rem", sm: "0.74rem" } }}>
                 /{formatNumber(target)}
                 {unit}
               </Typography>
@@ -152,7 +152,7 @@ function MealPlanMacroRing({
           </Box>
         </Box>
 
-        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.8rem", sm: "1rem" } }}>
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.56rem", sm: "0.78rem" } }}>
           {formatNumber(statusValue)}
           {unit} {statusLabel}
         </Typography>
