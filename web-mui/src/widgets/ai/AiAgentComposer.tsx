@@ -12,7 +12,7 @@ type SpeechRecognitionConstructor = new () => {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
   start: () => void;
@@ -45,6 +45,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
   const [isRecording, setIsRecording] = useState(false);
   const [images, setImages] = useState<ComposerImage[]>([]);
   const imagesRef = useRef<ComposerImage[]>([]);
+  const speechFinalTextRef = useRef("");
   const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -130,6 +131,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
       return;
     }
 
+    speechFinalTextRef.current = value.trim();
     const recognition = new SpeechRecognitionApi();
     recognitionRef.current = recognition;
     recognition.continuous = true;
@@ -137,11 +139,32 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     recognition.lang = language === "ru" ? "ru-RU" : "en-US";
 
     recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0]?.transcript ?? "")
-        .join(" ")
-        .trim();
-      setValue(transcript);
+      let finalChunk = "";
+      let interimChunk = "";
+
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result?.[0]?.transcript?.trim() ?? "";
+        if (!transcript) {
+          continue;
+        }
+
+        // Mobile browsers may replay older interim fragments in subsequent events.
+        // Only append newly finalized chunks, and keep the latest interim chunk separate.
+        if ("isFinal" in result && (result as { isFinal?: boolean }).isFinal) {
+          finalChunk += `${transcript} `;
+        } else {
+          interimChunk += `${transcript} `;
+        }
+      }
+
+      if (finalChunk.trim().length > 0) {
+        const nextFinal = `${speechFinalTextRef.current} ${finalChunk}`.trim();
+        speechFinalTextRef.current = nextFinal;
+      }
+
+      const nextValue = `${speechFinalTextRef.current} ${interimChunk}`.trim();
+      setValue(nextValue);
     };
 
     recognition.onerror = () => {
@@ -151,6 +174,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     recognition.onend = () => {
       setIsRecording(false);
       recognitionRef.current = null;
+      setValue(speechFinalTextRef.current.trim());
     };
 
     recognition.start();
