@@ -1,7 +1,8 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
-import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
-import { Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import { Box, Button, IconButton, Paper, Popover, Stack, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 import { getTodayIsoDateLocal, shiftIsoDate } from "../dayNavigation";
 
 type DayNavigatorHeaderProps = {
@@ -13,6 +14,7 @@ type DayNavigatorHeaderProps = {
   weekNumber: number;
   todayLabel: string;
   weekLabel: string;
+  selectDayLabel: string;
   onDateChange: (date: string) => void;
 };
 
@@ -25,107 +27,156 @@ export function DayNavigatorHeader({
   weekNumber,
   todayLabel,
   weekLabel,
+  selectDayLabel,
   onDateChange
 }: DayNavigatorHeaderProps) {
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
+
+  const selectedDateLabel = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "long"
+  }).format(selectedLabel);
+
   return (
     <Stack
       direction="row"
       justifyContent="space-between"
-      alignItems={{ xs: "stretch", md: "center" }}
+      alignItems={{ xs: "center", md: "center" }}
       flexWrap="wrap"
-      spacing={1.5}
+      spacing={1}
+      sx={{ overflow: "visible" }}
     >
-      <Paper
-        elevation={0}
-        sx={{
-          px: { xs: 1.5, md: 2 },
-          py: { xs: 1.25, md: 1.5 },
-          borderRadius: 4,
-          border: "1px solid",
-          borderColor: "divider",
-          background: (theme) =>
-            theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.74)"
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2.5,
-              display: "grid",
-              placeItems: "center",
-              background: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(14,165,233,0.12))",
-              color: "primary.main"
-            }}
-          >
-            <CalendarMonthRoundedIcon />
-          </Box>
-          <Stack spacing={0.25}>
-            <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 28 } }}>
-              {new Intl.DateTimeFormat(locale, {
-                month: "long",
-                year: "numeric"
-              }).format(selectedLabel)}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {weekLabel} {weekNumber} •{" "}
-              {new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(weekStart)} -{" "}
-              {new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(weekEnd)}
-            </Typography>
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
+        <IconButton
+          onClick={() => onDateChange(shiftIsoDate(selectedDate, -1))}
+          sx={{
+            width: { xs: 40, md: 42 },
+            height: { xs: 40, md: 42 },
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2.5,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
+          }}
+        >
+          <ChevronLeftRoundedIcon />
+        </IconButton>
+
+        <Paper
+          elevation={0}
+          onClick={(event) => setCalendarAnchor(event.currentTarget)}
+          sx={{
+            px: { xs: 1.25, md: 1.5 },
+            py: { xs: 0.9, md: 1 },
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            background: (theme) =>
+              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.74)",
+            cursor: "pointer",
+            flex: 1,
+            minWidth: 0
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.25}>
+            <Box
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: 2,
+                display: "grid",
+                placeItems: "center",
+                background: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(14,165,233,0.12))",
+                color: "primary.main",
+                flexShrink: 0
+              }}
+            >
+              <CalendarMonthRoundedIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Stack spacing={0.15} sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: { xs: 14, md: 15 }, fontWeight: 800, lineHeight: 1.2 }} noWrap>
+                {selectedDateLabel}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 11, md: 12 } }} noWrap>
+                {weekLabel} {weekNumber} •{" "}
+                {new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(weekStart)} -{" "}
+                {new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(weekEnd)}
+              </Typography>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
+
+        <IconButton
+          onClick={() => onDateChange(shiftIsoDate(selectedDate, 1))}
+          sx={{
+            width: { xs: 40, md: 42 },
+            height: { xs: 40, md: 42 },
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2.5,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
+          }}
+        >
+          <ChevronRightRoundedIcon />
+        </IconButton>
+      </Stack>
 
       <Paper
         elevation={0}
         sx={{
           display: "flex",
           alignItems: "center",
-          borderRadius: 4,
-          overflow: "hidden",
+          overflow: "visible",
+          borderRadius: 3,
           border: "1px solid",
           borderColor: "divider",
+          px: 0.5,
+          py: 0.5,
           backgroundColor: (theme) =>
             theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
         }}
       >
-        <IconButton
-          onClick={() => onDateChange(shiftIsoDate(selectedDate, -1))}
-          sx={{ borderRadius: 0, width: { xs: 58, md: 68 }, height: { xs: 56, md: 62 } }}
-        >
-          <ChevronLeftRoundedIcon />
-        </IconButton>
-        <Stack
-          alignItems="center"
-          justifyContent="center"
-          sx={{
-            minWidth: { xs: 98, md: 128 },
-            height: { xs: 56, md: 62 },
-            borderLeft: "1px solid",
-            borderRight: "1px solid",
-            borderColor: "divider"
-          }}
-        >
-          <Typography variant="h4" sx={{ fontSize: { xs: 18, md: 22 } }}>
-            {todayLabel}
-          </Typography>
-        </Stack>
         <Button
-          variant="contained"
-          startIcon={<RemoveRoundedIcon />}
+          variant="text"
           onClick={() => onDateChange(getTodayIsoDateLocal())}
           sx={{
-            minWidth: { xs: 110, md: 142 },
-            height: { xs: 56, md: 62 },
-            borderRadius: 0,
-            px: 2.25,
-            background: "linear-gradient(135deg, #60d5b0 0%, #10b981 55%, #0ea5e9 100%)"
+            minWidth: "auto",
+            minHeight: 32,
+            px: 1.1,
+            py: 0.45,
+            borderRadius: 999,
+            color: "text.primary",
+            fontSize: 12,
+            fontWeight: 700
           }}
         >
           {todayLabel}
         </Button>
       </Paper>
+
+      <Popover
+        open={Boolean(calendarAnchor)}
+        anchorEl={calendarAnchor}
+        onClose={() => setCalendarAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <Stack spacing={1.25} sx={{ p: 1.5, minWidth: 220 }}>
+          <Typography fontWeight={800}>{selectDayLabel}</Typography>
+          <TextField
+            type="date"
+            size="small"
+            value={selectedDate}
+            onChange={(event) => {
+              onDateChange(event.target.value);
+              setCalendarAnchor(null);
+            }}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
+      </Popover>
     </Stack>
   );
 }

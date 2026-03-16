@@ -3,7 +3,6 @@ import { useLanguage } from "../../../app/providers/LanguageProvider";
 import { buildDayWindow, getTodayIsoDateLocal, getWeekNumber, getWeekRange, parseIsoDate } from "../dayNavigation";
 import { DayNavigatorDayCard } from "./DayNavigatorDayCard";
 import { DayNavigatorHeader } from "./DayNavigatorHeader";
-import { DayNavigatorTimeline } from "./DayNavigatorTimeline";
 import type { MealPlanDayNavigatorProps } from "./types";
 
 function isToday(isoDate: string): boolean {
@@ -23,9 +22,9 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
   return (
     <Paper
       sx={{
-        p: { xs: 1.5, md: 2.25 },
+        p: { xs: 1.25, md: 1.75 },
         borderRadius: { xs: 1, md: 1 },
-        overflow: "hidden",
+        overflow: "visible",
         position: "relative",
         background: (theme) =>
           theme.palette.mode === "dark"
@@ -48,7 +47,7 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
         }
       }}
     >
-      <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ position: "relative", zIndex: 1 }}>
+      <Stack spacing={{ xs: 1.25, md: 1.5 }} sx={{ position: "relative", zIndex: 1 }}>
         <DayNavigatorHeader
           locale={locale}
           selectedDate={selectedDate}
@@ -58,19 +57,34 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
           weekNumber={weekNumber}
           todayLabel={t("mealPlan.dayNav.today")}
           weekLabel={t("mealPlan.dayNav.week")}
+          selectDayLabel={t("mealPlan.dayNav.selectDay")}
           onDateChange={onDateChange}
         />
 
-        <Box sx={{ overflowX: "auto", pb: 0.5 }}>
+        <Box
+          sx={{
+            overflowX: "auto",
+            overflowY: "visible",
+            pb: 0.5,
+            mx: { xs: -0.25, md: 0 },
+            px: { xs: 0.25, md: 0 },
+            WebkitOverflowScrolling: "touch",
+            scrollSnapType: { xs: "x proximity", md: "none" },
+            scrollbarWidth: "none",
+            "&::-webkit-scrollbar": {
+              display: "none"
+            }
+          }}
+        >
           <Stack
             direction="row"
             spacing={{ xs: 1, md: 1.5 }}
             sx={{
               width: "max-content",
-              minWidth: "100%",
-              justifyContent: "center",
+              minWidth: { xs: "max-content", md: "100%" },
+              justifyContent: { xs: "flex-start", md: "center" },
               alignItems: "center",
-              px: { xs: 0.5, md: 1.5 },
+              px: { xs: 0.35, md: 1.5 },
               mx: "auto"
             }}
           >
@@ -89,8 +103,6 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
             ))}
           </Stack>
         </Box>
-
-        <DayNavigatorTimeline days={days} selectedDate={selectedDate} isToday={isToday} locale={locale} />
       </Stack>
     </Paper>
   );

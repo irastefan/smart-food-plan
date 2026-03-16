@@ -28,12 +28,11 @@ export function DayNavigatorDayCard({
     <Box
       onClick={() => onSelect(day)}
       sx={{
-        minWidth: active ? { xs: 106, sm: 114, md: 122 } : { xs: 88, sm: 96, md: 104 },
-        width: active ? { xs: 106, sm: 114, md: 122 } : { xs: 88, sm: 96, md: 104 },
-        //minHeight: active ? { xs: 146, sm: 152, md: 160 } : { xs: 124, sm: 134, md: 146 },
-        px: active ? 1.6 : 1.35,
-        py: active ? 1.55 : 1.35,
-        borderRadius: active ? 1.5 : 1,
+        minWidth: active ? { xs: 82, sm: 96, md: 112 } : { xs: 70, sm: 82, md: 96 },
+        width: active ? { xs: 82, sm: 96, md: 112 } : { xs: 70, sm: 82, md: 96 },
+        px: active ? { xs: 1.05, sm: 1.25 } : { xs: 0.85, sm: 1.05 },
+        py: active ? { xs: 1.05, sm: 1.2 } : { xs: 0.9, sm: 1.05 },
+        borderRadius: active ? 1.25 : 1,
         border: "1px solid",
         borderColor: active ? "primary.main" : today ? "rgba(16, 185, 129, 0.5)" : "divider",
         background: (theme) =>
@@ -59,6 +58,8 @@ export function DayNavigatorDayCard({
         flexDirection: "column",
         flexShrink: 0,
         justifyContent: "flex-start",
+        overflow: "visible",
+        scrollSnapAlign: { xs: "start", md: "unset" },
         "&:hover": {
           borderColor: "primary.main",
           transform: "translateY(-1px)"
@@ -70,7 +71,7 @@ export function DayNavigatorDayCard({
         color={active || today ? "primary.main" : "text.secondary"}
         fontWeight={800}
         sx={{
-          fontSize: active ? { xs: 11, md: 12 } : { xs: 9, md: 10 },
+          fontSize: active ? { xs: 9, md: 12 } : { xs: 8, md: 10 },
           letterSpacing: -0.2
         }}
       >
@@ -81,8 +82,8 @@ export function DayNavigatorDayCard({
         fontWeight={800}
         sx={{
           lineHeight: 1.05,
-          mt: 0.45,
-          fontSize: active ? { xs: 40, sm: 42, md: 46 } : { xs: 28, sm: 30, md: 34 }
+          mt: 0.2,
+          fontSize: active ? { xs: 28, sm: 34, md: 42 } : { xs: 22, sm: 26, md: 32 }
         }}
       >
         {new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date)}
@@ -91,8 +92,8 @@ export function DayNavigatorDayCard({
         variant={active ? "h5" : "body2"}
         color="text.secondary"
         sx={{
-          mt: active ? 0.55 : 0.5,
-          fontSize: active ? { xs: 13, md: 14 } : { xs: 11, md: 12 }
+          mt: 0.2,
+          fontSize: active ? { xs: 10, md: 14 } : { xs: 9, md: 12 }
         }}
       >
         {new Intl.DateTimeFormat(locale, { month: "short" }).format(date)}
@@ -104,13 +105,17 @@ export function DayNavigatorDayCard({
         <Box
           sx={{
             alignSelf: "center",
-            px: 1.15,
-            py: 0.45,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            px: { xs: 0.7, md: 1.15 },
+            minHeight: { xs: 18, md: 22 },
             borderRadius: 999,
             background: "linear-gradient(135deg, #60d5b0 0%, #10b981 100%)",
             color: "primary.contrastText",
-            fontSize: 12,
-            fontWeight: 800
+            fontSize: { xs: 10, md: 12 },
+            fontWeight: 800,
+            lineHeight: 1
           }}
         >
           {today ? todayLabel : selectedLabel}
@@ -121,19 +126,26 @@ export function DayNavigatorDayCard({
             width: "100%",
             display: "flex",
             justifyContent: "center",
-            minHeight: 20
+            alignItems: "center",
+            minHeight: { xs: 22, md: 22 },
+            pt: 0.25,
+            pb: 0.25
           }}
         >
           {today ? (
             <Box
               sx={{
-                px: 1,
-                py: 0.25,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                px: { xs: 0.7, md: 1 },
+                minHeight: { xs: 18, md: 20 },
                 borderRadius: 999,
                 backgroundColor: "rgba(16,185,129,0.12)",
                 color: "primary.main",
-                fontSize: 11,
-                fontWeight: 800
+                fontSize: { xs: 9, md: 11 },
+                fontWeight: 800,
+                lineHeight: 1
               }}
             >
               {todayShortLabel}
