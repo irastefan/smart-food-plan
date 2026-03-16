@@ -61,7 +61,7 @@ export function RecipeDetailsPage() {
 
   if (isLoading) {
     return (
-      <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
+      <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
         <CircularProgress />
       </Paper>
     );
@@ -112,7 +112,7 @@ export function RecipeDetailsPage() {
 
       <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
         <Stack spacing={3} sx={{ flex: 1.3, minWidth: 0 }}>
-          <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
             <Stack spacing={2.5}>
               <Typography variant="h5" fontWeight={800}>{t("recipe.ingredients")}</Typography>
               <List disablePadding>
@@ -134,7 +134,7 @@ export function RecipeDetailsPage() {
             </Stack>
           </Paper>
 
-          <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
             <Stack spacing={2.5}>
               <Typography variant="h5" fontWeight={800}>{t("recipe.steps")}</Typography>
               <Stack spacing={1.75}>
@@ -153,7 +153,7 @@ export function RecipeDetailsPage() {
 
         <Stack spacing={3} sx={{ flex: 0.9, minWidth: { xl: 340 } }}>
           <RecipeNutritionCard totals={recipe.nutritionPerServing} />
-          <Paper sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Paper sx={{ p: 3, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
             <Stack spacing={1.5}>
               <Typography variant="h5" fontWeight={800}>{t("recipe.summary")}</Typography>
               <SummaryRow label={t("recipe.servingsLabel")} value={String(recipe.servings)} />

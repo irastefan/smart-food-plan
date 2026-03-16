@@ -16,16 +16,16 @@ export function ProductNutritionCard({ nutrition }: ProductNutritionCardProps) {
   ];
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper sx={{ p: 3, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={2.5}>
         <Typography variant="h5" fontWeight={800}>{t("products.nutrition")}</Typography>
-        <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
+        <Box sx={{ p: 2, borderRadius: 1.25, bgcolor: "action.hover" }}>
           <Typography variant="caption" color="text.secondary">kcal / 100 g</Typography>
           <Typography variant="h3" fontWeight={800}>{Math.round(nutrition.caloriesKcal)}</Typography>
         </Box>
         <Stack spacing={1.25}>
           {metrics.map((metric) => (
-            <Stack key={metric.key} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+            <Stack key={metric.key} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, borderRadius: 1.25, bgcolor: "action.hover" }}>
               <Stack direction="row" spacing={1.25} alignItems="center">
                 <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: metric.color }} />
                 <Typography fontWeight={700}>{metric.label}</Typography>

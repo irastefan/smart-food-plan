@@ -59,7 +59,7 @@ export function ProductDetailsPage() {
 
   if (isLoading) {
     return (
-      <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
+      <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
         <CircularProgress />
       </Paper>
     );
@@ -103,7 +103,7 @@ export function ProductDetailsPage() {
       {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       <Stack direction={{ xs: "column", xl: "row" }} spacing={3}>
-        <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider", flex: 1 }}>
+        <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider", flex: 1 }}>
           <Stack spacing={2.5}>
             <Typography variant="h5" fontWeight={800}>{t("products.summary")}</Typography>
             <Row label={t("product.form.title")} value={product.title} />

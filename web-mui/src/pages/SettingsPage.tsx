@@ -101,7 +101,7 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
+      <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
         <CircularProgress />
       </Paper>
     );

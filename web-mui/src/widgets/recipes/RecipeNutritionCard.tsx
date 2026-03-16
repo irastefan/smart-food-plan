@@ -27,7 +27,7 @@ export function RecipeNutritionCard({ totals }: RecipeNutritionCardProps) {
     .join(", ");
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper sx={{ p: 3, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={2.5}>
         <Typography variant="h5" fontWeight={800}>
           {t("recipe.nutrition")}
@@ -41,7 +41,7 @@ export function RecipeNutritionCard({ totals }: RecipeNutritionCardProps) {
           </Box>
           <Stack spacing={1.5} sx={{ flex: 1, width: "100%" }}>
             {segments.map((segment) => (
-              <Stack key={segment.key} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+              <Stack key={segment.key} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, borderRadius: 1.25, bgcolor: "action.hover" }}>
                 <Stack direction="row" spacing={1.25} alignItems="center">
                   <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: segment.color }} />
                   <Typography fontWeight={700}>{segment.label}</Typography>

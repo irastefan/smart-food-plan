@@ -38,7 +38,7 @@ export function createAppTheme(mode: PaletteMode) {
       divider: isDark ? "rgba(148, 163, 184, 0.10)" : "rgba(26, 36, 48, 0.08)"
     },
     shape: {
-      borderRadius: 20
+      borderRadius: 12
     },
     typography: {
       fontFamily: "\"Manrope\", \"Segoe UI\", \"Helvetica Neue\", sans-serif",
@@ -74,7 +74,7 @@ export function createAppTheme(mode: PaletteMode) {
         styleOverrides: {
           root: {
             minHeight: 52,
-            borderRadius: 14
+            borderRadius: 12
           },
           containedPrimary: {
             boxShadow: isDark ? "0 10px 30px rgba(16, 185, 129, 0.22)" : "none"
@@ -90,7 +90,7 @@ export function createAppTheme(mode: PaletteMode) {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: 14,
+            borderRadius: 12,
             backgroundColor: isDark ? "rgba(11, 20, 32, 0.92)" : "#ffffff",
             color: isDark ? "#f8fafc" : undefined,
             "& fieldset": {
@@ -122,7 +122,7 @@ export function createAppTheme(mode: PaletteMode) {
       MuiAlert: {
         styleOverrides: {
           root: {
-            borderRadius: 14
+            borderRadius: 12
           }
         }
       }

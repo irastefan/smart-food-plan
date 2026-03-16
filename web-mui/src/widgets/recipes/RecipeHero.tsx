@@ -17,7 +17,7 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
     <Box
       sx={{
         minHeight: { xs: 360, md: 460 },
-        borderRadius: 2,
+        borderRadius: 1.25,
         overflow: "hidden",
         position: "relative",
         backgroundImage: `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl || heroImage})`,
@@ -56,7 +56,7 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
 
 function MetricBadge({ value, label, icon }: { value: string; label: string; icon?: React.ReactNode }) {
   return (
-    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 1.5, py: 1, borderRadius: 2, backdropFilter: "blur(10px)", backgroundColor: "rgba(255,255,255,0.12)", color: "common.white" }}>
+    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 1.5, py: 1, borderRadius: 1.25, backdropFilter: "blur(10px)", backgroundColor: "rgba(255,255,255,0.12)", color: "common.white" }}>
       {icon ? <Avatar sx={{ width: 30, height: 30, bgcolor: "rgba(255,255,255,0.12)" }}>{icon}</Avatar> : null}
       <Typography fontWeight={800}>{value}</Typography>
       <Typography color="rgba(255,255,255,0.72)">{label}</Typography>

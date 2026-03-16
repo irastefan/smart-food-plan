@@ -20,7 +20,7 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
     <Card
       sx={{
         height: "100%",
-        borderRadius: 2,
+        borderRadius: 1.25,
         border: "1px solid",
         borderColor: "divider",
         backgroundColor: "background.paper",

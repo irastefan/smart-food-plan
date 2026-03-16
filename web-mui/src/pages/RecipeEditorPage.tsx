@@ -135,7 +135,7 @@ export function RecipeEditorPage() {
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {isLoading ? (
-        <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
+        <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
           <CircularProgress />
         </Paper>
       ) : (

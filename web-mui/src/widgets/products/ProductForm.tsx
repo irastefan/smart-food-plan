@@ -23,7 +23,7 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
     <Stack spacing={3}>
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2.5}>
           <Typography variant="h5" fontWeight={800}>{t("product.form.basics")}</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -33,7 +33,7 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2.5}>
           <Typography variant="h5" fontWeight={800}>{t("products.nutrition")}</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -47,7 +47,7 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             <Metric label="kcal" value={Math.round(value.calories).toString()} />
@@ -66,7 +66,7 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ px: 1.5, py: 1.25, borderRadius: 2, bgcolor: "action.hover", minWidth: 92 }}>
+    <Box sx={{ px: 1.5, py: 1.25, borderRadius: 1.25, bgcolor: "action.hover", minWidth: 92 }}>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
       <Typography fontWeight={800}>{value}</Typography>
     </Box>

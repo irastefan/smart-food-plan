@@ -85,7 +85,7 @@ export function ProductsPage() {
         </Button>
       </Stack>
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <TextField
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -104,11 +104,11 @@ export function ProductsPage() {
       {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       {isLoading ? (
-        <Paper sx={{ p: 6, borderRadius: 2, display: "grid", placeItems: "center" }}>
+        <Paper sx={{ p: 6, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
           <CircularProgress />
         </Paper>
       ) : filteredProducts.length === 0 ? (
-        <Paper sx={{ p: 6, borderRadius: 2, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
+        <Paper sx={{ p: 6, borderRadius: 1.25, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
           <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>{t("products.emptyTitle")}</Typography>
           <Typography color="text.secondary">{query ? t("products.emptySearch") : t("products.empty")}</Typography>
         </Paper>

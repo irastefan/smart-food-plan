@@ -90,7 +90,7 @@ export function DashboardSidebar({
               sx={{
                 minHeight: 46,
                 mb: 0.5,
-                borderRadius: 2,
+                borderRadius: 1.25,
                 color: selected ? "#d1fae5" : "rgba(226, 232, 240, 0.84)",
                 background: selected ? "linear-gradient(90deg, rgba(16,185,129,0.18), rgba(16,185,129,0.08))" : "transparent",
                 "&:hover": {
@@ -120,7 +120,7 @@ export function DashboardSidebar({
           onClick={handleLogout}
           sx={{
             minHeight: 46,
-            borderRadius: 2,
+            borderRadius: 1.25,
             color: "rgba(248, 250, 252, 0.84)",
             "&:hover": {
               backgroundColor: "rgba(148, 163, 184, 0.08)"

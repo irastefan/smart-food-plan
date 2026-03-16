@@ -36,7 +36,7 @@ export function SettingsSectionNav({ value, onChange }: SettingsSectionNavProps)
   const { t } = useLanguage();
 
   return (
-    <Paper sx={{ p: 1.25, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper sx={{ p: 1.25, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={1}>
         {items.map((item) => {
           const Icon = item.icon;
@@ -49,7 +49,7 @@ export function SettingsSectionNav({ value, onChange }: SettingsSectionNavProps)
               sx={{
                 width: "100%",
                 textAlign: "left",
-                borderRadius: 2,
+                borderRadius: 1.25,
                 p: 1.5,
                 justifyContent: "flex-start",
                 border: "1px solid",

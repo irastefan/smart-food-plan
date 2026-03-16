@@ -15,7 +15,7 @@ export function ProductCard({ product, onAddToShopping }: ProductCardProps) {
   const { t } = useLanguage();
 
   return (
-    <Card sx={{ height: "100%", borderRadius: 2, border: "1px solid", borderColor: "divider", backgroundColor: "background.paper", boxShadow: (theme) => theme.shadows[2] }}>
+    <Card sx={{ height: "100%", borderRadius: 1.25, border: "1px solid", borderColor: "divider", backgroundColor: "background.paper", boxShadow: (theme) => theme.shadows[2] }}>
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={2}>
           <Stack direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">

@@ -101,7 +101,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
     <Stack spacing={3}>
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2.5}>
           <Typography variant="h5" fontWeight={800}>{t("recipe.form.basics")}</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -127,7 +127,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h5" fontWeight={800}>{t("recipe.ingredients")}</Typography>
@@ -136,7 +136,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
 
           <Stack spacing={2}>
             {value.ingredients.map((ingredient, index) => (
-              <Paper key={ingredient.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Paper key={ingredient.id} variant="outlined" sx={{ p: 2, borderRadius: 1.25 }}>
                 <Stack spacing={2}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography fontWeight={700}>{t("recipe.form.ingredient", { index: index + 1 })}</Typography>
@@ -162,7 +162,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h5" fontWeight={800}>{t("recipe.steps")}</Typography>
@@ -182,7 +182,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
         </Stack>
       </Paper>
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             <SummaryMetric label="kcal" value={Math.round(totalNutrition.caloriesKcal).toString()} />
@@ -201,7 +201,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
 
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ px: 1.5, py: 1.25, borderRadius: 2, bgcolor: "action.hover", minWidth: 92 }}>
+    <Box sx={{ px: 1.5, py: 1.25, borderRadius: 1.25, bgcolor: "action.hover", minWidth: 92 }}>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
       <Typography fontWeight={800}>{value}</Typography>
     </Box>

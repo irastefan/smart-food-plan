@@ -190,11 +190,11 @@ export function ShoppingPage() {
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {isLoading ? (
-        <Paper sx={{ p: 8, borderRadius: 2, display: "grid", placeItems: "center" }}>
+        <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
           <CircularProgress />
         </Paper>
       ) : groupedItems.length === 0 ? (
-        <Paper sx={{ p: 6, borderRadius: 2, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
+        <Paper sx={{ p: 6, borderRadius: 1.25, textAlign: "center", border: "1px dashed", borderColor: "divider" }}>
           <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>
             {t("shopping.emptyTitle")}
           </Typography>

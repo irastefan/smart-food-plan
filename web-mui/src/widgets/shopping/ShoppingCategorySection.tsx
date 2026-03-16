@@ -26,7 +26,7 @@ export function ShoppingCategorySection({
   onDelete
 }: ShoppingCategorySectionProps) {
   return (
-    <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={2}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Typography variant="h6" fontWeight={800}>{title}</Typography>
@@ -43,7 +43,7 @@ export function ShoppingCategorySection({
               justifyContent="space-between"
               sx={{
                 p: 1.5,
-                borderRadius: 2,
+                borderRadius: 1.25,
                 border: "1px solid",
                 borderColor: "divider",
                 backgroundColor: item.isDone ? "action.selected" : "background.paper"
