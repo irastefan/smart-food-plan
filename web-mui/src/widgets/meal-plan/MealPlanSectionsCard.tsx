@@ -1,13 +1,15 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import { Box, Button, Card, Divider, IconButton, Stack, Typography } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { MealPlanDay, MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
+import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type MealPlanSectionsCardProps = {
   day: MealPlanDay | null;
+  shoppingCategories: string[];
   itemsLabel: string;
   servingsLabel: string;
   emptyLabel: string;
@@ -16,11 +18,11 @@ type MealPlanSectionsCardProps = {
   addLabel: string;
   editLabel: string;
   deleteLabel: string;
-  addToShoppingLabel: string;
+  onCreateShoppingCategory: (name: string) => Promise<void> | void;
   onAddItem: (sectionId: string, sectionTitle: string) => void;
-  onEditItem: (sectionId: string, sectionTitle: string, item: MealPlanItem) => void;
   onDeleteItem: (sectionId: string, item: MealPlanItem) => void;
-  onAddToShoppingItem: (sectionId: string, item: MealPlanItem) => void;
+  onEditItem: (sectionId: string, sectionTitle: string, item: MealPlanItem) => void;
+  onAddToShoppingItem: (sectionId: string, item: MealPlanItem, categoryName: string) => void;
 };
 
 function formatNumber(value: number): string {
@@ -29,6 +31,7 @@ function formatNumber(value: number): string {
 
 export function MealPlanSectionsCard({
   day,
+  shoppingCategories,
   servingsLabel,
   emptyLabel,
   title,
@@ -36,7 +39,7 @@ export function MealPlanSectionsCard({
   addLabel,
   editLabel,
   deleteLabel,
-  addToShoppingLabel,
+  onCreateShoppingCategory,
   onAddItem,
   onEditItem,
   onDeleteItem,
@@ -121,15 +124,23 @@ export function MealPlanSectionsCard({
                         } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g`}
                       </Typography>
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
-                      <IconButton size="small" onClick={() => onAddToShoppingItem(section.id, item)} title={addToShoppingLabel}>
-                        <AddShoppingCartRoundedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => onEditItem(section.id, section.title, item)} title={editLabel}>
-                        <EditRoundedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
-                        <DeleteOutlineRoundedIcon fontSize="small" />
-                      </IconButton>
+                        {item.type === "product" ? (
+                          <ShoppingCategoryPickerButton
+                            categories={shoppingCategories}
+                            iconOnly
+                            size="small"
+                            tooltip={t("shopping.tooltip.addToList")}
+                            startIcon={<AddShoppingCartRoundedIcon fontSize="small" />}
+                            onAdd={(categoryName) => onAddToShoppingItem(section.id, item, categoryName)}
+                            onCreateCategory={onCreateShoppingCategory}
+                          />
+                        ) : null}
+                        <IconButton size="small" onClick={() => onEditItem(section.id, section.title, item)} title={editLabel}>
+                          <EditRoundedIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
+                          <DeleteOutlineRoundedIcon fontSize="small" />
+                        </IconButton>
                       </Stack>
                     </Stack>
                   </Stack>

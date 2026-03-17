@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
-import { getRecipe, getRecipes } from "../features/recipes/api/recipesApi";
+import { getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeSummary } from "../features/recipes/model/recipeTypes";
 import { getCurrentUserSettings } from "../features/settings/api/settingsApi";
 import {
   addMealPlanItemToShoppingList,
-  addRecipeToShoppingList
+  addShoppingCategory,
+  getShoppingList
 } from "../features/shopping/api/shoppingApi";
 import {
   addProductToMealPlan,
@@ -43,7 +44,7 @@ export function MealPlanDashboardPage() {
     item?: MealPlanItem | null;
   } | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
-  const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
   const [isMutating, setIsMutating] = useState(false);
   const [targetCalories, setTargetCalories] = useState<number>(0);
   const [targetMacros, setTargetMacros] = useState({ protein: 0, fat: 0, carbs: 0 });
@@ -64,6 +65,27 @@ export function MealPlanDashboardPage() {
     }
 
     void loadReferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShoppingCategories() {
+      try {
+        const list = await getShoppingList();
+        if (!cancelled) {
+          setShoppingCategories(list.categories.map((category) => category.name));
+        }
+      } catch (error) {
+        console.error("Failed to load shopping categories", error);
+      }
+    }
+
+    void loadShoppingCategories();
 
     return () => {
       cancelled = true;
@@ -191,25 +213,18 @@ export function MealPlanDashboardPage() {
     }
   }
 
-  async function handleAddMealPlanItemToShopping(_sectionId: string, item: MealPlanItem) {
+  async function handleAddMealPlanItemToShopping(_sectionId: string, item: MealPlanItem, categoryName: string) {
+    setIsMutating(true);
     try {
-      setIsMutating(true);
-      setShoppingStatus(null);
-
-      if (item.type === "recipe" && item.refId) {
-        const recipe = await getRecipe(item.refId);
-        await addRecipeToShoppingList(recipe, { multiplier: item.servings ?? 1, categoryName: item.title });
-      } else {
-        await addMealPlanItemToShoppingList(item, { categoryName: item.slot });
-      }
-
-      setShoppingStatus({ type: "success", message: t("shopping.status.addedFromMealPlan") });
-    } catch (error) {
-      console.error("Failed to add meal plan item to shopping list", error);
-      setShoppingStatus({ type: "error", message: t("shopping.status.addError") });
+      await addMealPlanItemToShoppingList(item, { categoryName });
     } finally {
       setIsMutating(false);
     }
+  }
+
+  async function handleCreateShoppingCategory(name: string) {
+    await addShoppingCategory(name);
+    setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
   return (
@@ -223,7 +238,6 @@ export function MealPlanDashboardPage() {
 
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       {mutationError ? <Alert severity="error">{mutationError}</Alert> : null}
-      {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, lg: 7 }}>
@@ -248,6 +262,7 @@ export function MealPlanDashboardPage() {
         <Grid size={{ xs: 12 }}>
           <MealPlanSectionsCard
             day={day}
+            shoppingCategories={shoppingCategories}
             title={t("mealPlan.section.dailyFlow")}
             subtitle={t("mealPlan.section.dailyFlowHint")}
             itemsLabel={t("mealPlan.cards.items")}
@@ -256,7 +271,7 @@ export function MealPlanDashboardPage() {
             addLabel={t("mealPlan.actions.add")}
             editLabel={t("mealPlan.actions.edit")}
             deleteLabel={t("mealPlan.actions.delete")}
-            addToShoppingLabel={t("shopping.addFromMealPlan")}
+            onCreateShoppingCategory={handleCreateShoppingCategory}
             onAddItem={(sectionId, sectionTitle) => setDialogState({ mode: "add", sectionId, sectionTitle })}
             onEditItem={(sectionId, sectionTitle, item) => setDialogState({ mode: "edit", sectionId, sectionTitle, item })}
             onDeleteItem={handleDelete}

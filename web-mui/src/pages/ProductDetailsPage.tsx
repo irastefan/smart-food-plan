@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import { Link as RouterLink, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { getProduct, type ProductDetail } from "../features/products/api/productsApi";
-import { addProductToShoppingList } from "../features/shopping/api/shoppingApi";
+import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductNutritionCard } from "../widgets/products/ProductNutritionCard";
+import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCategoryPickerButton";
 
 type LayoutContext = {
   openSidebar: () => void;
@@ -22,7 +23,7 @@ export function ProductDetailsPage() {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
-  const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +58,27 @@ export function ProductDetailsPage() {
     };
   }, [productId, t]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShoppingCategories() {
+      try {
+        const list = await getShoppingList();
+        if (!cancelled) {
+          setShoppingCategories(list.categories.map((category) => category.name));
+        }
+      } catch (error) {
+        console.error("Failed to load shopping categories", error);
+      }
+    }
+
+    void loadShoppingCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -69,19 +91,17 @@ export function ProductDetailsPage() {
     return <Alert severity="error">{status ?? t("products.status.loadOneError")}</Alert>;
   }
 
-  async function handleAddToShopping() {
+  async function handleAddToShopping(categoryName: string) {
     const currentProduct = product;
     if (!currentProduct) {
       return;
     }
-    try {
-      setShoppingStatus(null);
-      await addProductToShoppingList(currentProduct);
-      setShoppingStatus({ type: "success", message: t("shopping.status.addedFromProduct") });
-    } catch (error) {
-      console.error("Failed to add product to shopping list", error);
-      setShoppingStatus({ type: "error", message: t("shopping.status.addError") });
-    }
+    await addProductToShoppingList(currentProduct, { categoryName });
+  }
+
+  async function handleCreateShoppingCategory(name: string) {
+    await addShoppingCategory(name);
+    setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
   return (
@@ -95,13 +115,15 @@ export function ProductDetailsPage() {
         <Button component={RouterLink} to={`/products/${product.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
           {t("product.edit")}
         </Button>
-        <Button onClick={handleAddToShopping} startIcon={<AddShoppingCartRoundedIcon />} variant="outlined" sx={{ alignSelf: "flex-start" }}>
-          {t("shopping.addFromProduct")}
-        </Button>
+        <ShoppingCategoryPickerButton
+          categories={shoppingCategories}
+          iconOnly
+          tooltip={t("shopping.tooltip.addToList")}
+          startIcon={<AddShoppingCartRoundedIcon />}
+          onAdd={handleAddToShopping}
+          onCreateCategory={handleCreateShoppingCategory}
+        />
       </Stack>
-
-      {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
-
       <Stack direction={{ xs: "column", xl: "row" }} spacing={3}>
         <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider", flex: 1 }}>
           <Stack spacing={2.5}>

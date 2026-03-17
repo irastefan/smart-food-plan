@@ -1,8 +1,7 @@
-import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -10,10 +9,9 @@ import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCateg
 
 type RecipeCardProps = {
   recipe: RecipeSummary;
-  onAddToShopping?: (recipe: RecipeSummary) => void;
 };
 
-export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
+export function RecipeCard({ recipe }: RecipeCardProps) {
   const { t } = useLanguage();
 
   return (
@@ -99,19 +97,6 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
             <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color="#ffb547" />
             <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color="#d58bff" />
             <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color="#4dd6e3" />
-          </Stack>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-            {onAddToShopping ? (
-              <Button
-                variant="outlined"
-                startIcon={<AddShoppingCartRoundedIcon />}
-                onClick={() => onAddToShopping(recipe)}
-                sx={{ alignSelf: "flex-start" }}
-              >
-                {t("shopping.addFromRecipe")}
-              </Button>
-            ) : null}
           </Stack>
         </Stack>
       </CardContent>

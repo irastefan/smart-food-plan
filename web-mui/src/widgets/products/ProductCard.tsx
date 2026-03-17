@@ -1,17 +1,20 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import ScaleRoundedIcon from "@mui/icons-material/ScaleRounded";
-import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type ProductCardProps = {
   product: ProductSummary;
-  onAddToShopping?: (product: ProductSummary) => void;
+  shoppingCategories?: string[];
+  onAddToShopping?: (product: ProductSummary, categoryName: string) => Promise<void> | void;
+  onCreateShoppingCategory?: (name: string) => Promise<void> | void;
 };
 
-export function ProductCard({ product, onAddToShopping }: ProductCardProps) {
+export function ProductCard({ product, shoppingCategories = [], onAddToShopping, onCreateShoppingCategory }: ProductCardProps) {
   const { t } = useLanguage();
 
   return (
@@ -52,16 +55,17 @@ export function ProductCard({ product, onAddToShopping }: ProductCardProps) {
             <Macro label={t("product.macros.carbs")} value={product.nutritionPer100g.carbsG} color="#4dd6e3" />
           </Stack>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-            {onAddToShopping ? (
-              <Button
-                variant="outlined"
+          <Stack direction="row" spacing={0.75} justifyContent="flex-end">
+            {onAddToShopping && onCreateShoppingCategory ? (
+              <ShoppingCategoryPickerButton
+                categories={shoppingCategories}
+                iconOnly
+                size="small"
+                tooltip={t("shopping.tooltip.addToList")}
                 startIcon={<AddShoppingCartRoundedIcon />}
-                onClick={() => onAddToShopping(product)}
-                sx={{ alignSelf: "flex-start" }}
-              >
-                {t("shopping.addFromProduct")}
-              </Button>
+                onAdd={(categoryName) => onAddToShopping(product, categoryName)}
+                onCreateCategory={onCreateShoppingCategory}
+              />
             ) : null}
           </Stack>
         </Stack>

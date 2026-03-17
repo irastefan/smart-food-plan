@@ -3,10 +3,9 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Alert, Box, Button, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
-import { getRecipe, getRecipes } from "../features/recipes/api/recipesApi";
+import { getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeCategoryKey, RecipeSummary } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
-import { addRecipeToShoppingList } from "../features/shopping/api/shoppingApi";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeCard } from "../widgets/recipes/RecipeCard";
 import { RecipeCategoryTabs } from "../widgets/recipes/RecipeCategoryTabs";
@@ -22,7 +21,6 @@ export function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
-  const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<RecipeCategoryKey>("all");
 
@@ -72,18 +70,6 @@ export function RecipesPage() {
     });
   }, [category, query, recipes]);
 
-  async function handleAddToShopping(recipe: RecipeSummary) {
-    try {
-      setShoppingStatus(null);
-      const detail = await getRecipe(recipe.id);
-      await addRecipeToShoppingList(detail);
-      setShoppingStatus({ type: "success", message: t("shopping.status.addedFromRecipe") });
-    } catch (error) {
-      console.error("Failed to add recipe to shopping list", error);
-      setShoppingStatus({ type: "error", message: t("shopping.status.addError") });
-    }
-  }
-
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("recipes.title")} subtitle={t("recipes.subtitle")} />
@@ -107,7 +93,6 @@ export function RecipesPage() {
       </Paper>
 
       {status ? <Alert severity="error">{status}</Alert> : null}
-      {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       {isLoading ? (
         <Paper sx={{ p: 6, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -122,7 +107,7 @@ export function RecipesPage() {
         <Grid container spacing={2.5}>
           {filteredRecipes.map((recipe) => (
             <Grid key={recipe.id} size={{ xs: 12, md: 6, xl: 4 }}>
-              <RecipeCard recipe={recipe} onAddToShopping={handleAddToShopping} />
+              <RecipeCard recipe={recipe} />
             </Grid>
           ))}
         </Grid>

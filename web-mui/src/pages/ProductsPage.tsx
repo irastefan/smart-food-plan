@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
-import { addProductToShoppingList } from "../features/shopping/api/shoppingApi";
+import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductCard } from "../widgets/products/ProductCard";
 
@@ -20,8 +20,8 @@ export function ProductsPage() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
-  const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [query, setQuery] = useState("");
+  const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +53,27 @@ export function ProductsPage() {
     };
   }, [t]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShoppingCategories() {
+      try {
+        const list = await getShoppingList();
+        if (!cancelled) {
+          setShoppingCategories(list.categories.map((category) => category.name));
+        }
+      } catch (error) {
+        console.error("Failed to load shopping categories", error);
+      }
+    }
+
+    void loadShoppingCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filteredProducts = useMemo(() => {
     const term = query.trim().toLowerCase();
     return products.filter((product) => {
@@ -63,15 +84,13 @@ export function ProductsPage() {
     });
   }, [products, query]);
 
-  async function handleAddToShopping(product: ProductSummary) {
-    try {
-      setShoppingStatus(null);
-      await addProductToShoppingList(product);
-      setShoppingStatus({ type: "success", message: t("shopping.status.addedFromProduct") });
-    } catch (error) {
-      console.error("Failed to add product to shopping list", error);
-      setShoppingStatus({ type: "error", message: t("shopping.status.addError") });
-    }
+  async function handleAddToShopping(product: ProductSummary, categoryName: string) {
+    await addProductToShoppingList(product, { categoryName });
+  }
+
+  async function handleCreateShoppingCategory(name: string) {
+    await addShoppingCategory(name);
+    setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
   return (
@@ -94,7 +113,6 @@ export function ProductsPage() {
       </Paper>
 
       {status ? <Alert severity="error">{status}</Alert> : null}
-      {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
 
       {isLoading ? (
         <Paper sx={{ p: 6, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -109,7 +127,12 @@ export function ProductsPage() {
         <Grid container spacing={2.5}>
           {filteredProducts.map((product) => (
             <Grid key={product.id} size={{ xs: 12, md: 6, xl: 4 }}>
-              <ProductCard product={product} onAddToShopping={handleAddToShopping} />
+              <ProductCard
+                product={product}
+                shoppingCategories={shoppingCategories}
+                onAddToShopping={handleAddToShopping}
+                onCreateShoppingCategory={handleCreateShoppingCategory}
+              />
             </Grid>
           ))}
         </Grid>

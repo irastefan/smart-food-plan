@@ -8,10 +8,11 @@ import { getRecipe } from "../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategories";
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
-import { addRecipeToShoppingList } from "../features/shopping/api/shoppingApi";
+import { addShoppingCategory, addShoppingItem, getShoppingList } from "../features/shopping/api/shoppingApi";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeHero } from "../widgets/recipes/RecipeHero";
 import { RecipeNutritionCard } from "../widgets/recipes/RecipeNutritionCard";
+import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCategoryPickerButton";
 
 type LayoutContext = {
   openSidebar: () => void;
@@ -25,7 +26,7 @@ export function RecipeDetailsPage() {
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
-  const [shoppingStatus, setShoppingStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +61,27 @@ export function RecipeDetailsPage() {
     };
   }, [recipeId, t]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShoppingCategories() {
+      try {
+        const list = await getShoppingList();
+        if (!cancelled) {
+          setShoppingCategories(list.categories.map((category) => category.name));
+        }
+      } catch (error) {
+        console.error("Failed to load shopping categories", error);
+      }
+    }
+
+    void loadShoppingCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -72,19 +94,22 @@ export function RecipeDetailsPage() {
     return <Alert severity="error">{status ?? t("recipe.status.loadError")}</Alert>;
   }
 
-  async function handleAddToShopping() {
-    const currentRecipe = recipe;
-    if (!currentRecipe) {
-      return;
-    }
-    try {
-      setShoppingStatus(null);
-      await addRecipeToShoppingList(currentRecipe);
-      setShoppingStatus({ type: "success", message: t("shopping.status.addedFromRecipe") });
-    } catch (error) {
-      console.error("Failed to add recipe to shopping list", error);
-      setShoppingStatus({ type: "error", message: t("shopping.status.addError") });
-    }
+  async function handleAddIngredientToShopping(
+    ingredient: RecipeDetail["ingredients"][number],
+    categoryName: string
+  ) {
+    await addShoppingItem({
+      productId: ingredient.productId,
+      customName: ingredient.productId ? undefined : ingredient.title,
+      amount: ingredient.quantity,
+      unit: ingredient.unit,
+      categoryName
+    });
+  }
+
+  async function handleCreateShoppingCategory(name: string) {
+    await addShoppingCategory(name);
+    setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
   return (
@@ -102,13 +127,7 @@ export function RecipeDetailsPage() {
         <Button component={RouterLink} to={`/recipes/${recipe.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
           {t("recipe.edit")}
         </Button>
-        <Button onClick={handleAddToShopping} startIcon={<AddShoppingCartRoundedIcon />} variant="outlined" sx={{ alignSelf: "flex-start" }}>
-          {t("shopping.addFromRecipe")}
-        </Button>
       </Stack>
-
-      {shoppingStatus ? <Alert severity={shoppingStatus.type}>{shoppingStatus.message}</Alert> : null}
-
       <RecipeHero recipe={recipe} />
 
       <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
@@ -127,7 +146,18 @@ export function RecipeDetailsPage() {
                         primaryTypographyProps={{ fontWeight: 700 }}
                         secondaryTypographyProps={{ color: "text.secondary" }}
                       />
-                      <Typography color="text.secondary">{Math.round(ingredient.totals.caloriesKcal)} kcal</Typography>
+                      <Stack direction="row" spacing={1.25} alignItems="center">
+                        <Typography color="text.secondary">{Math.round(ingredient.totals.caloriesKcal)} kcal</Typography>
+                        <ShoppingCategoryPickerButton
+                          categories={shoppingCategories}
+                          iconOnly
+                          tooltip={t("shopping.tooltip.addToList")}
+                          startIcon={<AddShoppingCartRoundedIcon />}
+                          size="small"
+                          onAdd={(categoryName) => handleAddIngredientToShopping(ingredient, categoryName)}
+                          onCreateCategory={handleCreateShoppingCategory}
+                        />
+                      </Stack>
                     </ListItem>
                   </Box>
                 ))}
