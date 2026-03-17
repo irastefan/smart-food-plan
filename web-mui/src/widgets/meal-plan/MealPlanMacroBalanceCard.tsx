@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 
 type MacroItem = {
   key: string;
@@ -20,6 +20,9 @@ function formatNumber(value: number): string {
 }
 
 export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }: MealPlanMacroBalanceCardProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Card
       sx={{
@@ -52,6 +55,7 @@ export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }:
               percent={Math.min(100, macro.target > 0 ? (macro.value / macro.target) * 100 : 0)}
               leftLabel={leftLabel}
               overLabel={overLabel}
+              compact={isMobile}
             />
           ))}
         </Stack>
@@ -68,7 +72,8 @@ function MealPlanMacroRing({
   color,
   percent,
   leftLabel,
-  overLabel
+  overLabel,
+  compact
 }: {
   label: string;
   value: number;
@@ -78,10 +83,12 @@ function MealPlanMacroRing({
   percent: number;
   leftLabel: string;
   overLabel: string;
+  compact: boolean;
 }) {
   const difference = target - value;
   const statusLabel = difference >= 0 ? leftLabel : overLabel;
   const statusValue = Math.abs(difference);
+  const ringSize = compact ? 62 : 104;
 
   return (
     <Box
@@ -106,11 +113,9 @@ function MealPlanMacroRing({
           <CircularProgress
             variant="determinate"
             value={100}
-            size={104}
+            size={ringSize}
             thickness={3}
             sx={{
-              width: { xs: 40, sm: 104 },
-              height: { xs: 40, sm: 104 },
               color: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.14)" : "rgba(15, 23, 42, 0.08)"
             }}
@@ -118,11 +123,9 @@ function MealPlanMacroRing({
           <CircularProgress
             variant="determinate"
             value={percent}
-            size={104}
+            size={ringSize}
             thickness={3}
             sx={{
-              width: { xs: 40, sm: 104 },
-              height: { xs: 40, sm: 104 },
               color,
               position: "absolute",
               left: 0,
