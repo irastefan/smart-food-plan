@@ -88,7 +88,7 @@ function MealPlanMacroRing({
   const difference = target - value;
   const statusLabel = difference >= 0 ? leftLabel : overLabel;
   const statusValue = Math.abs(difference);
-  const ringSize = compact ? 62 : 104;
+  const ringSize = compact ? 68 : 104;
 
   return (
     <Box

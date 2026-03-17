@@ -1,7 +1,7 @@
 import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
-import { Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import type { ReactNode } from "react";
 
 type MealPlanSummaryCardProps = {
@@ -27,7 +27,10 @@ export function MealPlanSummaryCard({
   usedLabel,
   remainingLabel
 }: MealPlanSummaryCardProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
+  const ringSize = isMobile ? 118 : 168;
 
   return (
     <Card
@@ -52,11 +55,9 @@ export function MealPlanSummaryCard({
             <CircularProgress
               variant="determinate"
               value={100}
-              size={168}
+              size={ringSize}
               thickness={3.2}
               sx={{
-                width: { xs: 132, sm: 168 },
-                height: { xs: 132, sm: 168 },
                 color: (theme) =>
                   theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.12)" : "rgba(15, 23, 42, 0.08)"
               }}
@@ -64,11 +65,9 @@ export function MealPlanSummaryCard({
             <CircularProgress
               variant="determinate"
               value={progress}
-              size={168}
+              size={ringSize}
               thickness={3.2}
               sx={{
-                width: { xs: 132, sm: 168 },
-                height: { xs: 132, sm: 168 },
                 color: "#62b4ff",
                 position: "absolute",
                 left: 0,
@@ -87,7 +86,7 @@ export function MealPlanSummaryCard({
               }}
             >
               <Box textAlign="center">
-                <Typography variant="h2" lineHeight={1} mb={0.5} sx={{ fontSize: { xs: "2rem", sm: "3rem" } }}>
+                <Typography variant="h2" lineHeight={1} mb={0.5} sx={{ fontSize: { xs: "1.7rem", sm: "3rem" } }}>
                   {formatNumber(remainingValue)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.78rem", sm: "0.875rem" } }}>
