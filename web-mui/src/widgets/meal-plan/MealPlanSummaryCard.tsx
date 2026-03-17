@@ -30,7 +30,7 @@ export function MealPlanSummaryCard({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
-  const ringSize = isMobile ? 112 : 168;
+  const ringSize = isMobile ? 140 : 168;
 
   return (
     <Card
