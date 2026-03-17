@@ -1,14 +1,11 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CreateNewFolderRoundedIcon from "@mui/icons-material/CreateNewFolderRounded";
 import {
   Alert,
   Button,
   CircularProgress,
-  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   FormControl,
   IconButton,
   InputLabel,
@@ -70,33 +67,23 @@ export function ShoppingCategoryPickerButton({
   }, [uniqueCategories]);
 
   async function handleSubmit() {
-    if (!selectedCategory) {
+    const trimmedCategoryName = newCategoryName.trim();
+    const nextCategoryName = trimmedCategoryName || selectedCategory;
+
+    if (!nextCategoryName) {
       return;
     }
+
     try {
       setIsSubmitting(true);
-      await onAdd(selectedCategory);
+      if (trimmedCategoryName) {
+        await onCreateCategory(trimmedCategoryName);
+      }
+      await onAdd(nextCategoryName);
       setFeedback({ type: "success", message: t("shopping.status.added") });
       setPickerOpen(false);
     } catch (error) {
       console.error("Failed to add shopping item", error);
-      setFeedback({ type: "error", message: t("shopping.status.addError") });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleCreateCategory(name: string) {
-    try {
-      setIsSubmitting(true);
-      await onCreateCategory(name);
-      await onAdd(name);
-      setPickerOpen(false);
-      setIsCreatingCategory(false);
-      setNewCategoryName("");
-      setFeedback({ type: "success", message: t("shopping.status.added") });
-    } catch (error) {
-      console.error("Failed to create shopping category", error);
       setFeedback({ type: "error", message: t("shopping.status.addError") });
     } finally {
       setIsSubmitting(false);
@@ -132,7 +119,6 @@ export function ShoppingCategoryPickerButton({
       )}
 
       <Dialog open={pickerOpen} onClose={handleClose} fullWidth maxWidth="xs">
-        <DialogTitle>{t("shopping.dialog.category")}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <FormControl fullWidth size="small" disabled={isSubmitting || uniqueCategories.length === 0}>
@@ -155,45 +141,40 @@ export function ShoppingCategoryPickerButton({
                 {t("shopping.picker.noCategories")}
               </Typography>
             ) : null}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<CreateNewFolderRoundedIcon />}
-              onClick={() => setIsCreatingCategory((current) => !current)}
-              disabled={isSubmitting}
-              sx={{ alignSelf: "flex-start" }}
-            >
-              {t("shopping.addCategory")}
-            </Button>
-            <Collapse in={isCreatingCategory}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ pt: 0.5 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setIsCreatingCategory((current) => !current)}
+                disabled={isSubmitting}
+                sx={{ flexShrink: 0, minHeight: 40 }}
+              >
+                {t("shopping.addCategory")}
+              </Button>
+              {isCreatingCategory ? (
                 <TextField
                   fullWidth
                   size="small"
                   label={t("shopping.categoryDialog.name")}
                   value={newCategoryName}
                   onChange={(event) => setNewCategoryName(event.target.value)}
-                  autoFocus={isCreatingCategory}
                   disabled={isSubmitting}
+                  autoFocus
                   sx={{ "& .MuiInputBase-root": { minHeight: 40 } }}
                 />
-                <Button
-                  variant="contained"
-                  onClick={() => void handleCreateCategory(newCategoryName.trim())}
-                  disabled={isSubmitting || newCategoryName.trim().length === 0}
-                  sx={{ flexShrink: 0, minHeight: 40 }}
-                >
-                  {isSubmitting ? <CircularProgress size={16} color="inherit" /> : t("shopping.categoryDialog.add")}
-                </Button>
-              </Stack>
-            </Collapse>
+              ) : null}
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={handleClose} disabled={isSubmitting}>
             {t("shopping.dialog.cancel")}
           </Button>
-          <Button onClick={() => void handleSubmit()} variant="contained" disabled={isSubmitting || !selectedCategory}>
+          <Button
+            onClick={() => void handleSubmit()}
+            variant="contained"
+            disabled={isSubmitting || (!selectedCategory && newCategoryName.trim().length === 0)}
+          >
             {isSubmitting ? <CircularProgress size={16} color="inherit" /> : t("shopping.tooltip.addToList")}
           </Button>
         </DialogActions>
