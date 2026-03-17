@@ -7,6 +7,7 @@ type ShoppingCategorySectionProps = {
   title: string;
   items: ShoppingItem[];
   doneLabel: string;
+  onDeleteCategory?: () => void;
   onToggleDone: (item: ShoppingItem) => void;
   onDelete: (item: ShoppingItem) => void;
 };
@@ -22,6 +23,7 @@ export function ShoppingCategorySection({
   title,
   items,
   doneLabel,
+  onDeleteCategory,
   onToggleDone,
   onDelete
 }: ShoppingCategorySectionProps) {
@@ -30,7 +32,14 @@ export function ShoppingCategorySection({
       <Stack spacing={2}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Typography variant="h6" fontWeight={800}>{title}</Typography>
-          <Chip label={`${items.length}`} size="small" />
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <Chip label={`${items.length}`} size="small" />
+            {onDeleteCategory ? (
+              <IconButton size="small" onClick={onDeleteCategory}>
+                <DeleteOutlineRoundedIcon fontSize="small" />
+              </IconButton>
+            ) : null}
+          </Stack>
         </Stack>
 
         <Stack spacing={1}>

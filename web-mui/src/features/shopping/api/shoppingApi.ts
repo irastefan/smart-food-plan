@@ -143,6 +143,13 @@ export async function addShoppingCategory(name: string): Promise<ShoppingCategor
   return mapCategory(response, 0);
 }
 
+export async function removeShoppingCategory(categoryId: string): Promise<ShoppingList> {
+  const response = await apiRequest<BackendList>(`/v1/shopping-list/categories/${categoryId}`, {
+    method: "DELETE"
+  });
+  return mapList(response);
+}
+
 export async function addShoppingItem(input: AddShoppingItemInput): Promise<ShoppingList> {
   const response = await apiRequest<BackendList>("/v1/shopping-list/items", {
     method: "POST",

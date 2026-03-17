@@ -9,6 +9,7 @@ import {
   addShoppingCategory,
   addShoppingItem,
   getShoppingList,
+  removeShoppingCategory,
   removeShoppingItem,
   setShoppingItemState,
   type ShoppingItem,
@@ -73,6 +74,12 @@ export function ShoppingPage() {
     (shoppingList?.items ?? []).forEach((item) => names.add(item.categoryName));
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [shoppingList]);
+
+  const shoppingCategories = shoppingList?.categories ?? [];
+  const categoryByName = useMemo(
+    () => new Map(shoppingCategories.map((category) => [category.name, category])),
+    [shoppingCategories]
+  );
 
   const groupedItems = useMemo(() => {
     const items = shoppingList?.items ?? [];
@@ -165,6 +172,29 @@ export function ShoppingPage() {
     }
   }
 
+  async function handleDeleteCategory(categoryId: string, categoryName: string) {
+    if (typeof window !== "undefined" && !window.confirm(t("shopping.confirmDeleteCategory", { name: categoryName }))) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setStatus(null);
+      await removeShoppingCategory(categoryId);
+      const nextList = await getShoppingList();
+      setShoppingList(nextList);
+      if (filter === categoryName) {
+        setFilter("all");
+      }
+      setStatus({ type: "success", message: t("shopping.status.categoryDeleted") });
+    } catch (error) {
+      console.error("Failed to delete shopping category", error);
+      setStatus({ type: "error", message: t("shopping.status.categoryDeleteError") });
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   return (
     <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
@@ -173,7 +203,18 @@ export function ShoppingPage() {
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
           <Chip label={t("shopping.filters.all")} clickable color={filter === "all" ? "primary" : "default"} onClick={() => setFilter("all")} />
           {categoryNames.map((category) => (
-            <Chip key={category} label={category} clickable color={filter === category ? "primary" : "default"} onClick={() => setFilter(category)} />
+            <Chip
+              key={category}
+              label={category}
+              clickable
+              color={filter === category ? "primary" : "default"}
+              onClick={() => setFilter(category)}
+              onDelete={
+                categoryByName.get(category)
+                  ? () => void handleDeleteCategory(categoryByName.get(category)!.id, category)
+                  : undefined
+              }
+            />
           ))}
         </Stack>
       </Stack>
@@ -199,6 +240,11 @@ export function ShoppingPage() {
               title={categoryName}
               items={items}
               doneLabel={t("shopping.done")}
+              onDeleteCategory={
+                categoryByName.get(categoryName)
+                  ? () => void handleDeleteCategory(categoryByName.get(categoryName)!.id, categoryName)
+                  : undefined
+              }
               onToggleDone={handleToggleDone}
               onDelete={handleDelete}
             />
