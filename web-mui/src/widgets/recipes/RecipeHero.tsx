@@ -5,6 +5,7 @@ import { Link as RouterLink } from "react-router-dom";
 import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import heroImage from "../../assets/hero.png";
+import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 
 type RecipeHeroProps = {
   recipe: RecipeDetail;
@@ -28,7 +29,7 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
       <Stack justifyContent="space-between" sx={{ position: "relative", zIndex: 1, minHeight: "100%", p: { xs: 3, md: 4 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Chip
-            label={t(`recipes.categories.${recipe.category}` as never)}
+            label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{ backdropFilter: "blur(10px)", backgroundColor: "rgba(255,255,255,0.14)", color: "common.white", fontWeight: 700 }}
           />
           <Button component={RouterLink} to={`/recipes/${recipe.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" color="inherit" sx={{ color: "text.primary", bgcolor: "rgba(255,255,255,0.88)" }}>

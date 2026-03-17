@@ -7,6 +7,7 @@ import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import heroImage from "../../assets/hero.png";
+import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 
 type RecipeCardProps = {
   recipe: RecipeSummary;
@@ -38,7 +39,7 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
       >
         <Stack direction="row" spacing={1} sx={{ position: "absolute", top: 16, left: 16, right: 16, justifyContent: "space-between" }}>
           <Chip
-            label={t(`recipes.categories.${recipe.category}` as never)}
+            label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{
               backdropFilter: "blur(10px)",
               backgroundColor: "rgba(255,255,255,0.78)",
@@ -62,7 +63,22 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.75}>
           <Box>
-            <Typography variant="h5" fontWeight={800} sx={{ mb: 0.75 }}>
+            <Typography
+              component={RouterLink}
+              to={`/recipes/${recipe.id}`}
+              variant="h5"
+              fontWeight={800}
+              sx={{
+                mb: 0.75,
+                display: "inline-block",
+                textDecoration: "none",
+                color: "text.primary",
+                fontSize: { xs: "1.05rem", sm: "1.3rem" },
+                "&:hover": {
+                  color: "primary.main"
+                }
+              }}
+            >
               {recipe.title}
             </Typography>
             <Typography color="text.secondary" sx={{ minHeight: 44 }}>
@@ -75,16 +91,13 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
             {recipe.cookTimeMinutes ? <Chip icon={<AccessTimeRoundedIcon />} label={t("recipes.minutes", { value: recipe.cookTimeMinutes })} variant="outlined" /> : null}
           </Stack>
 
-          <Stack direction="row" spacing={2}>
-            <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color="#22c55e" />
-            <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color="#f59e0b" />
-            <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color="#38bdf8" />
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color="#ffb547" />
+            <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color="#d58bff" />
+            <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color="#4dd6e3" />
           </Stack>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-            <Button component={RouterLink} to={`/recipes/${recipe.id}`} variant="contained" sx={{ alignSelf: "flex-start" }}>
-              {t("recipes.view")}
-            </Button>
             {onAddToShopping ? (
               <Button
                 variant="outlined"
@@ -104,13 +117,13 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
 
 function MacroStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <Stack spacing={0.5}>
-      <Typography variant="caption" color="text.secondary">
+    <Box sx={{ px: 1.1, py: 0.85, borderRadius: 1.1, bgcolor: "action.hover", minWidth: 84 }}>
+      <Typography variant="caption" sx={{ color, display: "block", mb: 0.2 }}>
         {label}
       </Typography>
-      <Typography fontWeight={800} sx={{ color }}>
+      <Typography fontWeight={800} sx={{ fontSize: { xs: "0.92rem", sm: "1rem" } }}>
         {value.toFixed(1)}g
       </Typography>
-    </Stack>
+    </Box>
   );
 }

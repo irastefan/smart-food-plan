@@ -5,6 +5,7 @@ import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItem
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useOutletContext, useParams } from "react-router-dom";
 import { getRecipe } from "../features/recipes/api/recipesApi";
+import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategories";
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { addRecipeToShoppingList } from "../features/shopping/api/shoppingApi";
@@ -157,7 +158,7 @@ export function RecipeDetailsPage() {
             <Stack spacing={1.5}>
               <Typography variant="h5" fontWeight={800}>{t("recipe.summary")}</Typography>
               <SummaryRow label={t("recipe.servingsLabel")} value={String(recipe.servings)} />
-              <SummaryRow label={t("recipe.categoryLabel")} value={t(`recipes.categories.${recipe.category}` as never)} />
+              <SummaryRow label={t("recipe.categoryLabel")} value={getRecipeCategoryLabel(recipe.category, t)} />
               {recipe.cookTimeMinutes ? <SummaryRow label={t("recipe.cookingTime")} value={t("recipes.minutes", { value: recipe.cookTimeMinutes })} /> : null}
               <SummaryRow label={t("recipe.totalCalories")} value={`${Math.round(recipe.nutritionTotal.caloriesKcal)} kcal`} />
             </Stack>
