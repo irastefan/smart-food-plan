@@ -3,6 +3,7 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import { Box, Button, Card, Divider, IconButton, Stack, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { MealPlanDay, MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
@@ -27,6 +28,22 @@ type MealPlanSectionsCardProps = {
 
 function formatNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function getItemHref(item: MealPlanItem): string | null {
+  if (!item.refId) {
+    return null;
+  }
+
+  if (item.type === "product") {
+    return `/products/${item.refId}`;
+  }
+
+  if (item.type === "recipe") {
+    return `/recipes/${item.refId}`;
+  }
+
+  return null;
 }
 
 export function MealPlanSectionsCard({
@@ -101,8 +118,21 @@ export function MealPlanSectionsCard({
                   <Stack key={item.id} spacing={1.1} sx={{ px: 3, py: 2 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                       <Typography
+                        component={getItemHref(item) ? RouterLink : "span"}
+                        to={getItemHref(item) ?? undefined}
                         variant="h6"
-                        sx={{ wordBreak: "break-word", minWidth: 0, fontSize: { xs: "0.98rem", sm: "1.25rem" } }}
+                        sx={{
+                          wordBreak: "break-word",
+                          minWidth: 0,
+                          fontSize: { xs: "0.98rem", sm: "1.25rem" },
+                          textDecoration: "none",
+                          color: "text.primary",
+                          "&:hover": getItemHref(item)
+                            ? {
+                                color: "primary.main"
+                              }
+                            : undefined
+                        }}
                       >
                         {item.title}
                       </Typography>
