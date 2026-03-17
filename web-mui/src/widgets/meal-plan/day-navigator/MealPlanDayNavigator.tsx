@@ -28,7 +28,7 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
         position: "relative",
         background: (theme) =>
           theme.palette.mode === "dark"
-            ? "linear-gradient(180deg, rgba(18,29,43,0.98), rgba(13,22,34,0.99))"
+            ? "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))"
             : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,251,0.98))",
         border: "1px solid",
         borderColor: (theme) =>

@@ -57,7 +57,7 @@ export function DayNavigatorHeader({
             borderColor: "divider",
             borderRadius: 2.5,
             backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
+              theme.palette.mode === "dark" ? "rgba(31, 36, 54, 0.92)" : "rgba(255,255,255,0.86)"
           }}
         >
           <ChevronLeftRoundedIcon />
@@ -73,7 +73,7 @@ export function DayNavigatorHeader({
             border: "1px solid",
             borderColor: "divider",
             background: (theme) =>
-              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.74)",
+              theme.palette.mode === "dark" ? "rgba(31, 36, 54, 0.92)" : "rgba(255,255,255,0.74)",
             cursor: "pointer",
             flex: 1,
             minWidth: 0
@@ -116,7 +116,7 @@ export function DayNavigatorHeader({
             borderColor: "divider",
             borderRadius: 2.5,
             backgroundColor: (theme) =>
-              theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
+              theme.palette.mode === "dark" ? "rgba(31, 36, 54, 0.92)" : "rgba(255,255,255,0.86)"
           }}
         >
           <ChevronRightRoundedIcon />
@@ -135,7 +135,7 @@ export function DayNavigatorHeader({
           px: 0.5,
           py: 0.5,
           backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "rgba(20, 31, 45, 0.82)" : "rgba(255,255,255,0.86)"
+            theme.palette.mode === "dark" ? "rgba(31, 36, 54, 0.92)" : "rgba(255,255,255,0.86)"
         }}
       >
         <Button

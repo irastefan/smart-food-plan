@@ -63,7 +63,27 @@ export function createAppTheme(mode: PaletteMode) {
       MuiPaper: {
         styleOverrides: {
           root: {
-            backgroundImage: "none"
+            backgroundImage: "none",
+            ...(isDark
+              ? {
+                  backgroundColor: "#1b2336",
+                  backgroundImage: "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))",
+                  borderColor: "rgba(148, 163, 184, 0.10)"
+                }
+              : {})
+          }
+        }
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            ...(isDark
+              ? {
+                  backgroundColor: "#1b2336",
+                  backgroundImage: "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))",
+                  borderColor: "rgba(148, 163, 184, 0.10)"
+                }
+              : {})
           }
         }
       },

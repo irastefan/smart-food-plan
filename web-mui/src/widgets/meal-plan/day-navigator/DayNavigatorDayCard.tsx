@@ -45,7 +45,7 @@ export function DayNavigatorDayCard({
                 ? "linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04))"
                 : "linear-gradient(180deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03))"
               : theme.palette.mode === "dark"
-                ? "rgba(18,29,43,0.82)"
+                ? "rgba(31,36,54,0.92)"
                 : "#ffffff",
         cursor: "pointer",
         transition: "all 160ms ease",
