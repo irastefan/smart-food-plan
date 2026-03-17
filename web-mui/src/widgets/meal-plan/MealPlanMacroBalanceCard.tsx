@@ -104,7 +104,7 @@ function MealPlanMacroRing({
         variant="h6"
         fontWeight={700}
         textAlign="center"
-        sx={{ color, mb: { xs: 0.5, sm: 0.8 }, fontSize: { xs: "0.84rem", sm: "0.96rem" } }}
+        sx={{ color, mb: { xs: 0.5, sm: 0.8 }, fontSize: { xs: "0.96rem", sm: "0.96rem" } }}
       >
         {label}
       </Typography>
@@ -144,10 +144,10 @@ function MealPlanMacroRing({
             }}
           >
             <Box textAlign="center">
-              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1.04rem", sm: "1.42rem" } }}>
+              <Typography variant="h4" fontWeight={800} lineHeight={1} sx={{ fontSize: { xs: "1.18rem", sm: "1.42rem" } }}>
                 {formatNumber(value)}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.66rem", sm: "0.74rem" } }}>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.76rem", sm: "0.74rem" } }}>
                 /{formatNumber(target)}
                 {unit}
               </Typography>
@@ -155,7 +155,7 @@ function MealPlanMacroRing({
           </Box>
         </Box>
 
-        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.7rem", sm: "0.78rem" } }}>
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ fontSize: { xs: "0.82rem", sm: "0.78rem" } }}>
           {formatNumber(statusValue)}
           {unit} {statusLabel}
         </Typography>
