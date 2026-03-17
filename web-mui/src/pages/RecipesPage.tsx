@@ -85,15 +85,8 @@ export function RecipesPage() {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("recipes.title")} subtitle={t("recipes.subtitle")} />
-
-      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-        <Box />
-        <Button component={RouterLink} to="/recipes/new" variant="contained" startIcon={<AddRoundedIcon />} sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}>
-          {t("recipes.add")}
-        </Button>
-      </Stack>
 
       <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <Stack spacing={2}>
@@ -134,6 +127,19 @@ export function RecipesPage() {
           ))}
         </Grid>
       )}
+
+      <Box
+        sx={{
+          position: "fixed",
+          right: { xs: 16, md: 24 },
+          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
+          zIndex: 1200
+        }}
+      >
+        <Button component={RouterLink} to="/recipes/new" variant="contained" startIcon={<AddRoundedIcon />}>
+          {t("recipes.add")}
+        </Button>
+      </Box>
     </Stack>
   );
 }

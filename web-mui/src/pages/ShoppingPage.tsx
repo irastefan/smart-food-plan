@@ -166,7 +166,7 @@ export function ShoppingPage() {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
 
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
@@ -175,15 +175,6 @@ export function ShoppingPage() {
           {categoryNames.map((category) => (
             <Chip key={category} label={category} clickable color={filter === category ? "primary" : "default"} onClick={() => setFilter(category)} />
           ))}
-        </Stack>
-
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-          <Button variant="outlined" startIcon={<CreateNewFolderRoundedIcon />} onClick={() => setCategoryDialogOpen(true)} sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}>
-            {t("shopping.addCategory")}
-          </Button>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)} sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}>
-            {t("shopping.add")}
-          </Button>
         </Stack>
       </Stack>
 
@@ -229,6 +220,30 @@ export function ShoppingPage() {
         onClose={() => setCategoryDialogOpen(false)}
         onSubmit={handleAddCategory}
       />
+
+      <Paper
+        elevation={6}
+        sx={{
+          position: "fixed",
+          right: { xs: 16, md: 24 },
+          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
+          zIndex: 1200,
+          p: 1,
+          borderRadius: 1.25,
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.paper"
+        }}
+      >
+        <Stack spacing={1} sx={{ minWidth: { xs: 180, md: 200 } }}>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>
+            {t("shopping.add")}
+          </Button>
+          <Button variant="outlined" startIcon={<CreateNewFolderRoundedIcon />} onClick={() => setCategoryDialogOpen(true)}>
+            {t("shopping.addCategory")}
+          </Button>
+        </Stack>
+      </Paper>
     </Stack>
   );
 }

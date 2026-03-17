@@ -1,6 +1,6 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import { Alert, Button, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -75,15 +75,8 @@ export function ProductsPage() {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("products.title")} subtitle={t("products.subtitle")} />
-
-      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-        <div />
-        <Button component={RouterLink} to="/products/new" variant="contained" startIcon={<AddRoundedIcon />} sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}>
-          {t("products.add")}
-        </Button>
-      </Stack>
 
       <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
         <TextField
@@ -121,6 +114,19 @@ export function ProductsPage() {
           ))}
         </Grid>
       )}
+
+      <Box
+        sx={{
+          position: "fixed",
+          right: { xs: 16, md: 24 },
+          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
+          zIndex: 1200
+        }}
+      >
+        <Button component={RouterLink} to="/products/new" variant="contained" startIcon={<AddRoundedIcon />}>
+          {t("products.add")}
+        </Button>
+      </Box>
     </Stack>
   );
 }
