@@ -6,7 +6,6 @@ import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/ma
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
-import heroImage from "../../assets/hero.png";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 
 type RecipeCardProps = {
@@ -32,9 +31,14 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
         sx={{
           height: 220,
           position: "relative",
-          backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.72)), url(${recipe.photoUrl || heroImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center"
+          background: (theme) =>
+            recipe.photoUrl
+              ? `linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.72)), url(${recipe.photoUrl})`
+              : theme.palette.mode === "dark"
+                ? "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(14,165,233,0.08) 35%, rgba(15,23,42,0.86) 100%)"
+                : "linear-gradient(180deg, rgba(10,20,38,0.18), rgba(12,22,40,0.50) 34%, rgba(14,23,42,0.92) 100%)",
+          backgroundSize: recipe.photoUrl ? "cover" : undefined,
+          backgroundPosition: recipe.photoUrl ? "center" : undefined
         }}
       >
         <Stack direction="row" spacing={1} sx={{ position: "absolute", top: 16, left: 16, right: 16, justifyContent: "space-between" }}>
@@ -73,7 +77,7 @@ export function RecipeCard({ recipe, onAddToShopping }: RecipeCardProps) {
                 display: "inline-block",
                 textDecoration: "none",
                 color: "text.primary",
-                fontSize: { xs: "1.05rem", sm: "1.3rem" },
+                fontSize: { xs: "1.5rem", sm: "1.62rem" },
                 "&:hover": {
                   color: "primary.main"
                 }

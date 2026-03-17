@@ -4,7 +4,6 @@ import { Avatar, Box, Button, Chip, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
-import heroImage from "../../assets/hero.png";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 
 type RecipeHeroProps = {
@@ -21,9 +20,14 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
         borderRadius: 1.25,
         overflow: "hidden",
         position: "relative",
-        backgroundImage: `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl || heroImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
+        background: (theme) =>
+          recipe.photoUrl
+            ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
+            : theme.palette.mode === "dark"
+              ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
+              : "linear-gradient(135deg, rgba(12,24,44,0.78) 0%, rgba(16,30,52,0.88) 38%, rgba(17,26,46,0.96) 100%)",
+        backgroundSize: recipe.photoUrl ? "cover" : undefined,
+        backgroundPosition: recipe.photoUrl ? "center" : undefined
       }}
     >
       <Stack justifyContent="space-between" sx={{ position: "relative", zIndex: 1, minHeight: "100%", p: { xs: 3, md: 4 } }}>
@@ -38,7 +42,7 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
         </Stack>
 
         <Stack spacing={2.5} sx={{ maxWidth: 720 }}>
-          <Typography variant="h1" sx={{ fontSize: { xs: 42, md: 72 }, lineHeight: 0.96, color: "common.white", fontWeight: 800, letterSpacing: -1.6 }}>
+          <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 72 }, lineHeight: 0.96, color: "common.white", fontWeight: 800, letterSpacing: -1.6 }}>
             {recipe.title}
           </Typography>
           <Typography sx={{ color: "rgba(255,255,255,0.82)", fontSize: { xs: 18, md: 26 }, maxWidth: 620 }}>
