@@ -20,7 +20,7 @@ export function AiAgentConversation({ messages, emptyTitle, emptySubtitle, isSub
     return (
       <Paper
         sx={{
-          p: { xs: 4, md: 7 },
+          p: { xs: 3, md: 4.5 },
           borderRadius: 1,
           border: "1px solid",
           borderColor: "divider",
@@ -35,12 +35,16 @@ export function AiAgentConversation({ messages, emptyTitle, emptySubtitle, isSub
           <Avatar sx={{ width: 52, height: 52, bgcolor: "primary.main", color: "primary.contrastText" }}>
             <SmartToyRoundedIcon />
           </Avatar>
-          <Typography variant="h5" fontWeight={800}>
-            {emptyTitle}
-          </Typography>
-          <Typography color="text.secondary" sx={{ maxWidth: 560 }}>
-            {emptySubtitle}
-          </Typography>
+          {emptyTitle ? (
+            <Typography variant="h5" fontWeight={800}>
+              {emptyTitle}
+            </Typography>
+          ) : null}
+          {emptySubtitle ? (
+            <Typography color="text.secondary" sx={{ maxWidth: 560 }}>
+              {emptySubtitle}
+            </Typography>
+          ) : null}
         </Stack>
       </Paper>
     );
