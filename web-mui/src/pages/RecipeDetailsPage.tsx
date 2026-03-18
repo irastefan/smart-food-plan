@@ -1,14 +1,16 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Link as RouterLink, useOutletContext, useParams } from "react-router-dom";
-import { getRecipe } from "../features/recipes/api/recipesApi";
+import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { deleteRecipe, getRecipe } from "../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategories";
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { addShoppingCategory, addShoppingItem, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeHero } from "../widgets/recipes/RecipeHero";
 import { RecipeNutritionCard } from "../widgets/recipes/RecipeNutritionCard";
@@ -22,11 +24,14 @@ type LayoutContext = {
 export function RecipeDetailsPage() {
   const { recipeId } = useParams();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +117,24 @@ export function RecipeDetailsPage() {
     setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
+  async function handleDelete() {
+    if (!recipe) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteRecipe(recipe.id);
+      navigate("/recipes");
+    } catch (error) {
+      console.error("Failed to delete recipe", error);
+      setStatus(t("recipe.status.deleteError"));
+    } finally {
+      setIsDeleting(false);
+      setDeleteOpen(false);
+    }
+  }
+
   return (
     <Stack spacing={3}>
       <DashboardTopbar
@@ -127,6 +150,11 @@ export function RecipeDetailsPage() {
         <Button component={RouterLink} to={`/recipes/${recipe.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
           {t("recipe.edit")}
         </Button>
+        {recipe.isPublic ? null : (
+          <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteOpen(true)} sx={{ alignSelf: "flex-start" }}>
+            {t("recipe.delete")}
+          </Button>
+        )}
       </Stack>
       <RecipeHero recipe={recipe} />
 
@@ -195,6 +223,17 @@ export function RecipeDetailsPage() {
           </Paper>
         </Stack>
       </Stack>
+
+      {recipe.isPublic ? null : (
+        <ConfirmActionDialog
+          open={deleteOpen}
+          title={t("recipe.delete")}
+          message={t("recipe.confirmDelete", { name: recipe.title })}
+          isSubmitting={isDeleting}
+          onClose={() => setDeleteOpen(false)}
+          onConfirm={() => void handleDelete()}
+        />
+      )}
     </Stack>
   );
 }

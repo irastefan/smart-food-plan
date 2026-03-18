@@ -4,8 +4,9 @@ import { Alert, Box, Button, CircularProgress, Grid, InputAdornment, Paper, Stac
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
-import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
+import { deleteProduct, getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductCard } from "../widgets/products/ProductCard";
 
@@ -19,9 +20,10 @@ export function ProductsPage() {
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [query, setQuery] = useState("");
   const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<ProductSummary | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +39,7 @@ export function ProductsPage() {
       } catch (error) {
         if (!cancelled) {
           console.error("Failed to load products", error);
-          setStatus(t("products.status.loadError"));
+          setStatus({ type: "error", message: t("products.status.loadError") });
         }
       } finally {
         if (!cancelled) {
@@ -93,6 +95,22 @@ export function ProductsPage() {
     setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
+  async function handleConfirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    try {
+      await deleteProduct(deleteTarget.id);
+      setProducts((current) => current.filter((product) => product.id !== deleteTarget.id));
+      setStatus({ type: "success", message: t("products.status.deleted") });
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Failed to delete product", error);
+      setStatus({ type: "error", message: t("products.status.deleteError") });
+    }
+  }
+
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("products.title")} subtitle={t("products.subtitle")} />
@@ -112,7 +130,7 @@ export function ProductsPage() {
         />
       </Paper>
 
-      {status ? <Alert severity="error">{status}</Alert> : null}
+      {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {isLoading ? (
         <Paper sx={{ p: 6, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -132,11 +150,20 @@ export function ProductsPage() {
                 shoppingCategories={shoppingCategories}
                 onAddToShopping={handleAddToShopping}
                 onCreateShoppingCategory={handleCreateShoppingCategory}
+                onDelete={product.isPublic ? undefined : setDeleteTarget}
               />
             </Grid>
           ))}
         </Grid>
       )}
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        title={t("products.delete")}
+        message={t("products.confirmDelete", { name: deleteTarget?.title ?? "" })}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void handleConfirmDelete()}
+      />
 
       <Box
         sx={{

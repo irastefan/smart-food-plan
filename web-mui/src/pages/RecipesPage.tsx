@@ -3,9 +3,10 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Alert, Box, Button, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
-import { getRecipes } from "../features/recipes/api/recipesApi";
+import { deleteRecipe, getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeCategoryKey, RecipeSummary } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeCard } from "../widgets/recipes/RecipeCard";
 import { RecipeCategoryTabs } from "../widgets/recipes/RecipeCategoryTabs";
@@ -20,9 +21,10 @@ export function RecipesPage() {
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<RecipeCategoryKey>("all");
+  const [deleteTarget, setDeleteTarget] = useState<RecipeSummary | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +40,7 @@ export function RecipesPage() {
       } catch (error) {
         if (!cancelled) {
           console.error("Failed to load recipes", error);
-          setStatus(t("recipes.status.loadError"));
+          setStatus({ type: "error", message: t("recipes.status.loadError") });
         }
       } finally {
         if (!cancelled) {
@@ -70,6 +72,22 @@ export function RecipesPage() {
     });
   }, [category, query, recipes]);
 
+  async function handleConfirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    try {
+      await deleteRecipe(deleteTarget.id);
+      setRecipes((current) => current.filter((recipe) => recipe.id !== deleteTarget.id));
+      setStatus({ type: "success", message: t("recipe.status.deleted") });
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Failed to delete recipe", error);
+      setStatus({ type: "error", message: t("recipe.status.deleteError") });
+    }
+  }
+
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("recipes.title")} subtitle={t("recipes.subtitle")} />
@@ -92,7 +110,7 @@ export function RecipesPage() {
         </Stack>
       </Paper>
 
-      {status ? <Alert severity="error">{status}</Alert> : null}
+      {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {isLoading ? (
         <Paper sx={{ p: 6, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -107,11 +125,19 @@ export function RecipesPage() {
         <Grid container spacing={2.5}>
           {filteredRecipes.map((recipe) => (
             <Grid key={recipe.id} size={{ xs: 12, md: 6, xl: 4 }}>
-              <RecipeCard recipe={recipe} />
+              <RecipeCard recipe={recipe} onDelete={recipe.isPublic ? undefined : setDeleteTarget} />
             </Grid>
           ))}
         </Grid>
       )}
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        title={t("recipe.delete")}
+        message={t("recipe.confirmDelete", { name: deleteTarget?.title ?? "" })}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void handleConfirmDelete()}
+      />
 
       <Box
         sx={{

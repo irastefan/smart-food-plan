@@ -1,7 +1,8 @@
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -9,9 +10,10 @@ import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCateg
 
 type RecipeCardProps = {
   recipe: RecipeSummary;
+  onDelete?: (recipe: RecipeSummary) => void;
 };
 
-export function RecipeCard({ recipe }: RecipeCardProps) {
+export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
   const { t } = useLanguage();
 
   return (
@@ -98,6 +100,16 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
             <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color="#d58bff" />
             <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color="#4dd6e3" />
           </Stack>
+
+          {onDelete ? (
+            <Stack direction="row" justifyContent="flex-end">
+              <Tooltip title={t("recipe.delete")}>
+                <IconButton size="small" color="error" onClick={() => onDelete(recipe)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          ) : null}
         </Stack>
       </CardContent>
     </Card>

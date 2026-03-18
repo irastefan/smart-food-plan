@@ -15,6 +15,7 @@ import {
   type ShoppingItem,
   type ShoppingList
 } from "../features/shopping/api/shoppingApi";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ShoppingAddDialog } from "../widgets/shopping/ShoppingAddDialog";
 import { ShoppingCategoryDialog } from "../widgets/shopping/ShoppingCategoryDialog";
@@ -36,6 +37,11 @@ export function ShoppingPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<
+    | { type: "item"; item: ShoppingItem }
+    | { type: "category"; categoryId: string; categoryName: string }
+    | null
+  >(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,12 +116,13 @@ export function ShoppingPage() {
     }
   }
 
-  async function handleDelete(item: ShoppingItem) {
+  async function handleDeleteItem(item: ShoppingItem) {
     try {
       setIsMutating(true);
       setStatus(null);
       const nextList = await removeShoppingItem(item.id);
       setShoppingList(nextList);
+      setPendingDelete(null);
     } catch (error) {
       console.error("Failed to remove shopping item", error);
       setStatus({ type: "error", message: t("shopping.status.deleteError") });
@@ -173,10 +180,6 @@ export function ShoppingPage() {
   }
 
   async function handleDeleteCategory(categoryId: string, categoryName: string) {
-    if (typeof window !== "undefined" && !window.confirm(t("shopping.confirmDeleteCategory", { name: categoryName }))) {
-      return;
-    }
-
     try {
       setIsMutating(true);
       setStatus(null);
@@ -187,6 +190,7 @@ export function ShoppingPage() {
         setFilter("all");
       }
       setStatus({ type: "success", message: t("shopping.status.categoryDeleted") });
+      setPendingDelete(null);
     } catch (error) {
       console.error("Failed to delete shopping category", error);
       setStatus({ type: "error", message: t("shopping.status.categoryDeleteError") });
@@ -211,7 +215,7 @@ export function ShoppingPage() {
               onClick={() => setFilter(category)}
               onDelete={
                 categoryByName.get(category)
-                  ? () => void handleDeleteCategory(categoryByName.get(category)!.id, category)
+                  ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(category)!.id, categoryName: category })
                   : undefined
               }
             />
@@ -242,11 +246,11 @@ export function ShoppingPage() {
               doneLabel={t("shopping.done")}
               onDeleteCategory={
                 categoryByName.get(categoryName)
-                  ? () => void handleDeleteCategory(categoryByName.get(categoryName)!.id, categoryName)
+                  ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(categoryName)!.id, categoryName })
                   : undefined
               }
               onToggleDone={handleToggleDone}
-              onDelete={handleDelete}
+              onDelete={(item) => setPendingDelete({ type: "item", item })}
             />
           ))}
         </Stack>
@@ -265,6 +269,24 @@ export function ShoppingPage() {
         isSubmitting={isMutating}
         onClose={() => setCategoryDialogOpen(false)}
         onSubmit={handleAddCategory}
+      />
+      <ConfirmActionDialog
+        open={Boolean(pendingDelete)}
+        title={pendingDelete?.type === "category" ? t("shopping.deleteCategory") : t("shopping.deleteItem")}
+        message={
+          pendingDelete?.type === "category"
+            ? t("shopping.confirmDeleteCategory", { name: pendingDelete.categoryName })
+            : t("shopping.confirmDeleteItem", { name: pendingDelete?.item.title ?? "" })
+        }
+        isSubmitting={isMutating}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete?.type === "category") {
+            void handleDeleteCategory(pendingDelete.categoryId, pendingDelete.categoryName);
+          } else if (pendingDelete?.type === "item") {
+            void handleDeleteItem(pendingDelete.item);
+          }
+        }}
       />
 
       <Paper

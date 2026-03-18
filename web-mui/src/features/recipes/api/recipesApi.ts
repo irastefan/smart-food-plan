@@ -6,6 +6,7 @@ export type BackendRecipe = {
   id: string;
   title?: string;
   description?: string | null;
+  isPublic?: boolean | null;
   category?: string | null;
   servings?: number | null;
   photoUrl?: string | null;
@@ -141,6 +142,7 @@ function mapSummary(recipe: BackendRecipe): RecipeSummary {
     slug: createSlug(recipe.title ?? "recipe") || recipe.id,
     title: (recipe.title ?? "Recipe").trim() || "Recipe",
     description: recipe.description ?? undefined,
+    isPublic: recipe.isPublic ?? undefined,
     category: String(normalizeRecipeCategory(recipe.category)),
     servings,
     nutritionTotal,

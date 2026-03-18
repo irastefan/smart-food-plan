@@ -1,7 +1,8 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import ScaleRoundedIcon from "@mui/icons-material/ScaleRounded";
-import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -12,9 +13,10 @@ type ProductCardProps = {
   shoppingCategories?: string[];
   onAddToShopping?: (product: ProductSummary, categoryName: string) => Promise<void> | void;
   onCreateShoppingCategory?: (name: string) => Promise<void> | void;
+  onDelete?: (product: ProductSummary) => void;
 };
 
-export function ProductCard({ product, shoppingCategories = [], onAddToShopping, onCreateShoppingCategory }: ProductCardProps) {
+export function ProductCard({ product, shoppingCategories = [], onAddToShopping, onCreateShoppingCategory, onDelete }: ProductCardProps) {
   const { t } = useLanguage();
 
   return (
@@ -66,6 +68,13 @@ export function ProductCard({ product, shoppingCategories = [], onAddToShopping,
                 onAdd={(categoryName) => onAddToShopping(product, categoryName)}
                 onCreateCategory={onCreateShoppingCategory}
               />
+            ) : null}
+            {onDelete ? (
+              <Tooltip title={t("products.delete")}>
+                <IconButton size="small" color="error" onClick={() => onDelete(product)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             ) : null}
           </Stack>
         </Stack>

@@ -12,6 +12,7 @@ export type ProductSummary = {
   slug: string;
   title: string;
   brand?: string;
+  isPublic?: boolean;
   nutritionPer100g: ProductNutrition;
   createdAt?: string;
   updatedAt?: string;
@@ -37,6 +38,7 @@ type BackendProduct = {
   protein100?: number;
   fat100?: number;
   carbs100?: number;
+  isPublic?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -72,6 +74,7 @@ function mapProduct(item: BackendProduct): ProductSummary {
     slug: createSlug(title) || item.id,
     title,
     brand: item.brand,
+    isPublic: item.isPublic ?? undefined,
     nutritionPer100g: {
       caloriesKcal: toNumber(item.kcal100),
       proteinG: toNumber(item.protein100),

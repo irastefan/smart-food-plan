@@ -1,12 +1,14 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { Alert, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Link as RouterLink, useOutletContext, useParams } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
-import { getProduct, type ProductDetail } from "../features/products/api/productsApi";
+import { deleteProduct, getProduct, type ProductDetail } from "../features/products/api/productsApi";
 import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductNutritionCard } from "../widgets/products/ProductNutritionCard";
 import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCategoryPickerButton";
@@ -19,11 +21,14 @@ type LayoutContext = {
 export function ProductDetailsPage() {
   const { productId } = useParams();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,6 +109,24 @@ export function ProductDetailsPage() {
     setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
+  async function handleDelete() {
+    if (!product) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteProduct(product.id);
+      navigate("/products");
+    } catch (error) {
+      console.error("Failed to delete product", error);
+      setStatus(t("products.status.deleteError"));
+    } finally {
+      setIsDeleting(false);
+      setDeleteOpen(false);
+    }
+  }
+
   return (
     <Stack spacing={3}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={product.title} subtitle={product.brand || t("products.noBrand")} />
@@ -115,6 +138,11 @@ export function ProductDetailsPage() {
         <Button component={RouterLink} to={`/products/${product.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
           {t("product.edit")}
         </Button>
+        {product.isPublic ? null : (
+          <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteOpen(true)} sx={{ alignSelf: "flex-start" }}>
+            {t("products.delete")}
+          </Button>
+        )}
         <ShoppingCategoryPickerButton
           categories={shoppingCategories}
           iconOnly
@@ -138,6 +166,17 @@ export function ProductDetailsPage() {
           <ProductNutritionCard nutrition={product.nutritionPer100g} />
         </Stack>
       </Stack>
+
+      {product.isPublic ? null : (
+        <ConfirmActionDialog
+          open={deleteOpen}
+          title={t("products.delete")}
+          message={t("products.confirmDelete", { name: product.title })}
+          isSubmitting={isDeleting}
+          onClose={() => setDeleteOpen(false)}
+          onConfirm={() => void handleDelete()}
+        />
+      )}
     </Stack>
   );
 }

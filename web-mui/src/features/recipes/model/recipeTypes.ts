@@ -22,6 +22,7 @@ export type RecipeSummary = {
   slug: string;
   title: string;
   description?: string;
+  isPublic?: boolean;
   category: string;
   servings: number;
   nutritionTotal: NutritionTotals;
