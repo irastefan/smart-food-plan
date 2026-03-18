@@ -31,6 +31,7 @@ type AiAgentComposerProps = {
   placeholder: string;
   submitLabel: string;
   value: string;
+  speechLanguage: "interface" | "en" | "ru";
   onValueChange: (value: string) => void;
   onSubmit: (payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) => Promise<void>;
 };
@@ -46,6 +47,7 @@ export function AiAgentComposer({
   placeholder,
   submitLabel,
   value,
+  speechLanguage,
   onValueChange,
   onSubmit
 }: AiAgentComposerProps) {
@@ -153,7 +155,8 @@ export function AiAgentComposer({
     recognitionRef.current = recognition;
     recognition.continuous = !isMobileSpeechMode;
     recognition.interimResults = !isMobileSpeechMode;
-    recognition.lang = language === "ru" ? "ru-RU" : "en-US";
+    const resolvedSpeechLanguage = speechLanguage === "interface" ? language : speechLanguage;
+    recognition.lang = resolvedSpeechLanguage === "ru" ? "ru-RU" : "en-US";
 
     recognition.onresult = (event) => {
       let finalChunk = "";

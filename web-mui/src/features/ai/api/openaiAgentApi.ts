@@ -100,6 +100,8 @@ export async function runAgentTurn(input: {
   history: AgentMessage[];
   userText: string;
   images?: AgentImageInput[];
+  model?: string;
+  userInstructions?: string;
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);
   const openAiTools = toOpenAiTools(input.tools);
@@ -112,7 +114,8 @@ export async function runAgentTurn(input: {
     "You are SmartFood AI inside a nutrition planning app.",
     "Use tools whenever they can provide concrete backend data or complete an action.",
     "When you call a tool, be precise with arguments and avoid guessing IDs.",
-    "Keep final answers concise and actionable."
+    "Keep final answers concise and actionable.",
+    input.userInstructions?.trim() ? `Additional user instructions: ${input.userInstructions.trim()}` : ""
   ].join(" ");
 
   const baseInput = [
@@ -142,7 +145,7 @@ export async function runAgentTurn(input: {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: "gpt-5-mini",
+        model: input.model?.trim() || "gpt-5-mini",
         input: currentInput,
         previous_response_id: previousResponseId,
         tools: openAiTools,

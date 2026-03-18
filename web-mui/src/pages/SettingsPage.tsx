@@ -8,8 +8,10 @@ import {
   saveUserProfile,
   type UserProfile
 } from "../features/settings/api/settingsApi";
+import { getAiAgentSettings, setAiAgentSettings, type AiAgentSettings } from "../shared/config/aiAgent";
 import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
+import { AiAgentSettingsCard } from "../widgets/settings/AiAgentSettingsCard";
 import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
 import { ProfilePreviewCard } from "../widgets/settings/ProfilePreviewCard";
 import { SettingsSectionCard } from "../widgets/settings/SettingsSectionCard";
@@ -26,6 +28,7 @@ export function SettingsPage() {
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [openAiApiKey, setOpenAiApiKeyState] = useState("");
+  const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
   const [activeSection, setActiveSection] = useState<SettingsSectionId>("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +45,7 @@ export function SettingsPage() {
         if (!cancelled) {
           setProfile(current.profile);
           setOpenAiApiKeyState(getOpenAiApiKey());
+          setAgentSettingsState(getAiAgentSettings());
         }
       } catch (error) {
         console.error("Failed to load settings", error);
@@ -99,6 +103,12 @@ export function SettingsPage() {
     setStatus({ type: "success", message: t("settings.openai.saved") });
   }
 
+  function handleSaveAgentSettings(value: AiAgentSettings) {
+    setAiAgentSettings(value);
+    setAgentSettingsState(value);
+    setStatus({ type: "success", message: t("settings.agent.saved") });
+  }
+
   if (isLoading) {
     return (
       <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -150,7 +160,10 @@ export function SettingsPage() {
                   title={t("settings.sections.openai.title")}
                   subtitle={t("settings.sections.openai.subtitle")}
                 >
-                  <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
+                  <Stack spacing={4}>
+                    <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
+                    <AiAgentSettingsCard value={agentSettings} isSubmitting={isSubmitting} onSave={handleSaveAgentSettings} />
+                  </Stack>
                 </SettingsSectionCard>
               ) : null}
             </Stack>

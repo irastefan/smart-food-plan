@@ -7,6 +7,7 @@ import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../features/ai/api/mcpApi";
 import { runAgentTurn, type AgentMessage } from "../features/ai/api/openaiAgentApi";
+import { getAiAgentSettings } from "../shared/config/aiAgent";
 import { getOpenAiApiKey } from "../shared/config/openai";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAgentComposer } from "../widgets/ai/AiAgentComposer";
@@ -26,6 +27,7 @@ export function AiAgentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
+  const [agentSettings, setAgentSettings] = useState(getAiAgentSettings());
   const quickPrompts = [
     t("aiAgent.prompt.analyzeDay"),
     t("aiAgent.prompt.addRecipe"),
@@ -43,6 +45,7 @@ export function AiAgentPage() {
         const availableTools = await listMcpTools();
         if (!cancelled) {
           setTools(availableTools);
+          setAgentSettings(getAiAgentSettings());
         }
       } catch (error) {
         console.error("Failed to load MCP tools", error);
@@ -95,7 +98,9 @@ export function AiAgentPage() {
         tools,
         history: messages,
         userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
-        images: payload.images
+        images: payload.images,
+        model: agentSettings.model,
+        userInstructions: agentSettings.userInstructions
       });
       setMessages([...nextHistory, ...result.toolMessages, result.assistantMessage]);
     } catch (error) {
@@ -235,7 +240,7 @@ export function AiAgentPage() {
               ))}
             </Stack>
             <AiAgentConversation
-              messages={messages}
+              messages={agentSettings.showToolOutput ? messages : messages.filter((message) => message.role !== "tool")}
               isSubmitting={isSubmitting}
             />
             <AiAgentComposer
@@ -243,6 +248,7 @@ export function AiAgentPage() {
               placeholder={t("aiAgent.placeholder")}
               submitLabel={t("aiAgent.send")}
               value={draft}
+              speechLanguage={agentSettings.speechLanguage}
               onValueChange={setDraft}
               onSubmit={handleSend}
             />
