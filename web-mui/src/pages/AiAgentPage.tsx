@@ -1,4 +1,7 @@
-import { Alert, Button, Chip, CircularProgress, Paper, Stack } from "@mui/material";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Button, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -19,6 +22,7 @@ export function AiAgentPage() {
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
@@ -105,12 +109,8 @@ export function AiAgentPage() {
     }
   }
 
-  async function handleQuickPrompt(prompt: string) {
-    if (isSubmitting) {
-      return;
-    }
-
-    await handleSend({ text: prompt, images: [] });
+  function handleQuickPrompt(prompt: string) {
+    setDraft(prompt);
   }
 
   return (
@@ -145,28 +145,105 @@ export function AiAgentPage() {
           }}
         >
           <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ maxWidth: 980, mx: "auto", minHeight: "100%" }}>
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Paper
+              sx={{
+                p: { xs: 2, md: 2.5 },
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+                background: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(180deg, rgba(20,31,45,0.96), rgba(12,20,30,0.96))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.96))"
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar sx={{ width: 44, height: 44, bgcolor: "primary.main", color: "primary.contrastText" }}>
+                  <SmartToyRoundedIcon />
+                </Avatar>
+                <Stack spacing={0.25}>
+                  <Typography fontWeight={800}>{t("aiAgent.hero.title")}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.hero.subtitle")}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+
+            <Accordion
+              disableGutters
+              elevation={0}
+              sx={{
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+                backgroundColor: "background.paper",
+                "&::before": { display: "none" }
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: 1.5, minHeight: 44 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <HelpOutlineRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  <Typography fontWeight={700}>{t("aiAgent.guide.title")}</Typography>
+                </Stack>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                <Stack spacing={1}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.guide.intro")}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.guide.itemMeal")}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.guide.itemShopping")}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.guide.itemRecipes")}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("aiAgent.guide.itemAnalysis")}
+                  </Typography>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                overflowX: "auto",
+                overflowY: "hidden",
+                flexWrap: "nowrap",
+                pb: 0.5,
+                scrollSnapType: "x proximity",
+                WebkitOverflowScrolling: "touch",
+                "&::-webkit-scrollbar": {
+                  display: "none"
+                },
+                scrollbarWidth: "none"
+              }}
+            >
               {quickPrompts.map((prompt) => (
                 <Chip
                   key={prompt}
                   label={prompt}
                   variant="outlined"
                   clickable
-                  onClick={() => void handleQuickPrompt(prompt)}
-                  sx={{ height: 32 }}
+                  onClick={() => handleQuickPrompt(prompt)}
+                  sx={{ height: 32, flexShrink: 0, scrollSnapAlign: "start" }}
                 />
               ))}
             </Stack>
             <AiAgentConversation
               messages={messages}
-              emptyTitle={t("aiAgent.emptyTitle")}
-              emptySubtitle={t("aiAgent.emptySubtitle")}
               isSubmitting={isSubmitting}
             />
             <AiAgentComposer
               isSubmitting={isSubmitting}
               placeholder={t("aiAgent.placeholder")}
               submitLabel={t("aiAgent.send")}
+              value={draft}
+              onValueChange={setDraft}
               onSubmit={handleSend}
             />
           </Stack>

@@ -8,46 +8,14 @@ import { useLanguage } from "../../app/providers/LanguageProvider";
 
 type AiAgentConversationProps = {
   messages: AgentMessage[];
-  emptyTitle: string;
-  emptySubtitle: string;
   isSubmitting?: boolean;
 };
 
-export function AiAgentConversation({ messages, emptyTitle, emptySubtitle, isSubmitting = false }: AiAgentConversationProps) {
+export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentConversationProps) {
   const { t } = useLanguage();
 
   if (messages.length === 0 && !isSubmitting) {
-    return (
-      <Paper
-        sx={{
-          p: { xs: 3, md: 4.5 },
-          borderRadius: 1,
-          border: "1px solid",
-          borderColor: "divider",
-          textAlign: "center",
-          background: (theme) =>
-            theme.palette.mode === "dark"
-              ? "linear-gradient(180deg, rgba(20,31,45,0.96), rgba(12,20,30,0.96))"
-              : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.96))"
-        }}
-      >
-        <Stack spacing={1.5} alignItems="center">
-          <Avatar sx={{ width: 52, height: 52, bgcolor: "primary.main", color: "primary.contrastText" }}>
-            <SmartToyRoundedIcon />
-          </Avatar>
-          {emptyTitle ? (
-            <Typography variant="h5" fontWeight={800}>
-              {emptyTitle}
-            </Typography>
-          ) : null}
-          {emptySubtitle ? (
-            <Typography color="text.secondary" sx={{ maxWidth: 560 }}>
-              {emptySubtitle}
-            </Typography>
-          ) : null}
-        </Stack>
-      </Paper>
-    );
+    return null;
   }
 
   return (

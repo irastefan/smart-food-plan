@@ -30,6 +30,8 @@ type AiAgentComposerProps = {
   isSubmitting: boolean;
   placeholder: string;
   submitLabel: string;
+  value: string;
+  onValueChange: (value: string) => void;
   onSubmit: (payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) => Promise<void>;
 };
 
@@ -39,9 +41,15 @@ type ComposerImage = {
   previewUrl: string;
 };
 
-export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubmit }: AiAgentComposerProps) {
+export function AiAgentComposer({
+  isSubmitting,
+  placeholder,
+  submitLabel,
+  value,
+  onValueChange,
+  onSubmit
+}: AiAgentComposerProps) {
   const { language, t } = useLanguage();
-  const [value, setValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [images, setImages] = useState<ComposerImage[]>([]);
   const imagesRef = useRef<ComposerImage[]>([]);
@@ -125,7 +133,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     await onSubmit({ text, images: payloadImages });
     images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
     setImages([]);
-    setValue("");
+    onValueChange("");
   }
 
   function handleVoiceToggle() {
@@ -176,7 +184,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
       }
 
       const nextValue = `${speechFinalTextRef.current} ${isMobileSpeechMode ? "" : interimChunk}`.trim();
-      setValue(nextValue);
+      onValueChange(nextValue);
     };
 
     recognition.onerror = () => {
@@ -186,7 +194,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
     recognition.onend = () => {
       setIsRecording(false);
       recognitionRef.current = null;
-      setValue(speechFinalTextRef.current.trim());
+      onValueChange(speechFinalTextRef.current.trim());
     };
 
     recognition.start();
@@ -245,7 +253,7 @@ export function AiAgentComposer({ isSubmitting, placeholder, submitLabel, onSubm
 
         <TextField
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => onValueChange(event.target.value)}
           placeholder={placeholder}
           multiline
           minRows={2}
