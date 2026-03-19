@@ -8,8 +8,10 @@ type ProfilePreviewCardProps = {
 
 export function ProfilePreviewCard({ profile }: ProfilePreviewCardProps) {
   const { t } = useLanguage();
+  const selectedFormula = profile.availableTargetFormulas.find((option) => option.value === profile.targetFormula);
 
   const items = [
+    { label: t("settings.profile.preview.formula"), value: selectedFormula?.label ?? "—" },
     { label: t("settings.profile.preview.targetCalories"), value: profile.targetCalories ? `${Math.round(profile.targetCalories)} kcal` : "—" },
     { label: t("settings.profile.preview.protein"), value: profile.targetProteinG ? `${Math.round(profile.targetProteinG)} g` : "—" },
     { label: t("settings.profile.preview.fat"), value: profile.targetFatG ? `${Math.round(profile.targetFatG)} g` : "—" },

@@ -4,6 +4,13 @@ export type UserSex = "FEMALE" | "MALE" | "";
 export type UserActivityLevel = "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | "";
 export type UserGoal = "MAINTAIN" | "LOSE" | "GAIN" | "";
 
+export type TargetFormulaOption = {
+  value: string;
+  label: string;
+  description: string;
+  isDefault: boolean;
+};
+
 export type UserProfile = {
   id?: string;
   userId?: string;
@@ -15,6 +22,8 @@ export type UserProfile = {
   weightKg: number | null;
   activityLevel: UserActivityLevel;
   goal: UserGoal;
+  targetFormula: string;
+  availableTargetFormulas: TargetFormulaOption[];
   calorieDelta: number | null;
   targetCalories: number | null;
   targetProteinG: number | null;
@@ -33,6 +42,13 @@ type UserProfileResponseDto = {
   weightKg?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | null;
   goal?: "MAINTAIN" | "LOSE" | "GAIN" | null;
+  targetFormula?: string | null;
+  availableTargetFormulas?: Array<{
+    value?: string | null;
+    label?: string | null;
+    description?: string | null;
+    isDefault?: boolean | null;
+  }> | null;
   calorieDelta?: number | null;
   targetCalories?: number | null;
   targetProteinG?: number | null;
@@ -71,6 +87,19 @@ function normalizeDate(value: string | null | undefined): string {
 }
 
 function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
+  const availableTargetFormulas: TargetFormulaOption[] = (input?.availableTargetFormulas ?? [])
+    .filter((option): option is NonNullable<typeof option> => Boolean(option?.value))
+    .map((option) => ({
+      value: option.value ?? "",
+      label: option.label ?? option.value ?? "",
+      description: option.description ?? "",
+      isDefault: Boolean(option.isDefault)
+    }));
+  const fallbackTargetFormula =
+    availableTargetFormulas.find((option) => option.isDefault)?.value ??
+    availableTargetFormulas[0]?.value ??
+    "";
+
   return {
     id: input?.id,
     userId: input?.userId,
@@ -82,6 +111,8 @@ function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
     weightKg: toNumber(input?.weightKg),
     activityLevel: input?.activityLevel ?? "",
     goal: input?.goal ?? "",
+    targetFormula: input?.targetFormula ?? fallbackTargetFormula,
+    availableTargetFormulas,
     calorieDelta: toNumber(input?.calorieDelta),
     targetCalories: toNumber(input?.targetCalories),
     targetProteinG: toNumber(input?.targetProteinG),
@@ -109,6 +140,7 @@ function toProfilePayload(profile: UserProfile) {
     weightKg: profile.weightKg ?? undefined,
     activityLevel: profile.activityLevel || undefined,
     goal: profile.goal || undefined,
+    targetFormula: profile.targetFormula || undefined,
     calorieDelta: profile.calorieDelta ?? undefined
   };
 }

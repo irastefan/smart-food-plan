@@ -42,6 +42,8 @@ export function AuthForm({
     weightKg: null,
     activityLevel: "",
     goal: "",
+    targetFormula: "",
+    availableTargetFormulas: [],
     calorieDelta: null,
     targetCalories: null,
     targetProteinG: null,

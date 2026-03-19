@@ -34,6 +34,18 @@ export function SettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "success" | "info"; message: string } | null>(null);
 
+  function mergeProfileFormulas(nextProfile: UserProfile, fallbackProfile: UserProfile | null): UserProfile {
+    if (nextProfile.availableTargetFormulas.length > 0) {
+      return nextProfile;
+    }
+
+    return {
+      ...nextProfile,
+      targetFormula: nextProfile.targetFormula || fallbackProfile?.targetFormula || "",
+      availableTargetFormulas: fallbackProfile?.availableTargetFormulas ?? []
+    };
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -43,7 +55,7 @@ export function SettingsPage() {
         setStatus(null);
         const current = await getCurrentUserSettings();
         if (!cancelled) {
-          setProfile(current.profile);
+          setProfile(mergeProfileFormulas(current.profile, null));
           setOpenAiApiKeyState(getOpenAiApiKey());
           setAgentSettingsState(getAiAgentSettings());
         }
@@ -73,7 +85,7 @@ export function SettingsPage() {
     try {
       setIsSubmitting(true);
       const saved = await saveUserProfile(profile);
-      setProfile(saved);
+      setProfile((current) => mergeProfileFormulas(saved, current));
       setStatus({ type: "success", message: t("settings.status.saved") });
     } catch (error) {
       console.error("Failed to save profile", error);
@@ -87,7 +99,7 @@ export function SettingsPage() {
     try {
       setIsSubmitting(true);
       const recalculated = await recalculateUserProfile();
-      setProfile(recalculated);
+      setProfile((current) => mergeProfileFormulas(recalculated, current));
       setStatus({ type: "success", message: t("settings.status.recalculated") });
     } catch (error) {
       console.error("Failed to recalculate profile", error);

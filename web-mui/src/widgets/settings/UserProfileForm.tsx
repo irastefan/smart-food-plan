@@ -18,6 +18,7 @@ type UserProfileFormProps = {
 export function UserProfileForm({ value, isSubmitting, status, onChange, onSave, onRecalculate }: UserProfileFormProps) {
   const { t } = useLanguage();
   const [deltaInput, setDeltaInput] = useState(formatCalorieDelta(value.calorieDelta));
+  const selectedFormula = value.availableTargetFormulas.find((option) => option.value === value.targetFormula);
 
   useEffect(() => {
     setDeltaInput(formatCalorieDelta(value.calorieDelta));
@@ -82,6 +83,22 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
             <MenuItem value="GAIN">{t("settings.profile.goal.gain")}</MenuItem>
           </TextField>
         </Stack>
+
+        <TextField
+          select
+          label={t("settings.profile.targetFormula")}
+          value={value.targetFormula}
+          onChange={(event) => update("targetFormula", event.target.value)}
+          helperText={selectedFormula?.description || t("settings.profile.targetFormulaHint")}
+          fullWidth
+        >
+          {value.availableTargetFormulas.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+              {option.isDefault ? ` (${t("settings.profile.targetFormulaDefault")})` : ""}
+            </MenuItem>
+          ))}
+        </TextField>
 
         <TextField
           label={t("settings.profile.calorieDelta")}
