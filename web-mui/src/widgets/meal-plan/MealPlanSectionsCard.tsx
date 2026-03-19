@@ -31,16 +31,12 @@ function formatNumber(value: number): string {
 }
 
 function getItemHref(item: MealPlanItem): string | null {
-  if (!item.refId) {
-    return null;
+  if (item.type === "product" && item.productId) {
+    return `/products/${item.productId}`;
   }
 
-  if (item.type === "product") {
-    return `/products/${item.refId}`;
-  }
-
-  if (item.type === "recipe") {
-    return `/recipes/${item.refId}`;
+  if (item.type === "recipe" && item.recipeId) {
+    return `/recipes/${item.recipeId}`;
   }
 
   return null;
@@ -137,7 +133,7 @@ export function MealPlanSectionsCard({
                         {item.title}
                       </Typography>
                       <Typography fontWeight={800} sx={{ flexShrink: 0 }}>
-                        {formatNumber(item.nutrition.caloriesKcal)}
+                        {formatNumber(item.nutritionTotal.caloriesKcal)}
                       </Typography>
                     </Stack>
 
@@ -151,7 +147,7 @@ export function MealPlanSectionsCard({
                           item.type === "recipe"
                             ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
                             : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`
-                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutrition.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutrition.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutrition.carbsG)}g`}
+                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}g`}
                       </Typography>
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
                         {item.type === "product" ? (

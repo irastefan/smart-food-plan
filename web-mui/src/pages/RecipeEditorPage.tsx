@@ -57,14 +57,18 @@ export function RecipeEditorPage() {
             category: recipe.category,
             servings: recipe.servings,
             steps: recipe.steps.length > 0 ? recipe.steps : [""],
-            ingredients: recipe.ingredients
-              .filter((ingredient) => ingredient.productId)
-              .map((ingredient) => ({
-                id: ingredient.id,
-                productId: ingredient.productId ?? "",
-                amount: ingredient.quantity,
-                unit: ingredient.unit || "g"
-              }))
+            ingredients: recipe.ingredients.map((ingredient) => ({
+              id: ingredient.id,
+              isManual: ingredient.isManual,
+              productId: ingredient.productId,
+              name: ingredient.title,
+              amount: ingredient.quantity,
+              unit: ingredient.unit || "g",
+              kcal100: ingredient.macros.caloriesKcal,
+              protein100: ingredient.macros.proteinG,
+              fat100: ingredient.macros.fatG,
+              carbs100: ingredient.macros.carbsG
+            }))
           });
         }
       } catch (error) {
@@ -97,8 +101,8 @@ export function RecipeEditorPage() {
       setStatus({ type: "error", message: t("recipe.form.status.validationIngredients") });
       return;
     }
-    if (form.ingredients.some((ingredient) => !ingredient.productId)) {
-      setStatus({ type: "error", message: t("recipe.form.status.validationProduct") });
+    if (form.ingredients.some((ingredient) => ingredient.isManual ? !ingredient.name.trim() : !ingredient.productId)) {
+      setStatus({ type: "error", message: t("recipe.form.status.validationIngredient") });
       return;
     }
 

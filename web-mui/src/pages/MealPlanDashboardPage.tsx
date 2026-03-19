@@ -12,6 +12,7 @@ import {
   getShoppingList
 } from "../features/shopping/api/shoppingApi";
 import {
+  addManualItemToMealPlan,
   addProductToMealPlan,
   addRecipeToMealPlan,
   removeMealPlanItem,
@@ -154,11 +155,17 @@ export function MealPlanDashboardPage() {
   const remainingCalories = targetCalories - usedCalories;
 
   async function handleSubmitDialog(payload: {
-    type: "product" | "recipe";
+    type: "product" | "recipe" | "manual";
     product?: ProductSummary;
     recipe?: RecipeSummary;
     quantity?: number;
     servings?: number;
+    name?: string;
+    unit?: string;
+    kcal100?: number;
+    protein100?: number;
+    fat100?: number;
+    carbs100?: number;
   }) {
     if (!dialogState) {
       return;
@@ -176,6 +183,16 @@ export function MealPlanDashboardPage() {
                 quantity: payload.quantity,
                 unit: "g"
               })
+            : payload.type === "manual" && payload.name
+              ? await addManualItemToMealPlan(selectedDate, dialogState.sectionId, {
+                  name: payload.name,
+                  amount: payload.quantity ?? 100,
+                  unit: payload.unit ?? "g",
+                  kcal100: payload.kcal100 ?? 0,
+                  protein100: payload.protein100 ?? 0,
+                  fat100: payload.fat100 ?? 0,
+                  carbs100: payload.carbs100 ?? 0
+                })
             : payload.recipe
               ? await addRecipeToMealPlan(selectedDate, dialogState.sectionId, payload.recipe, {
                   servings: payload.servings
@@ -183,8 +200,8 @@ export function MealPlanDashboardPage() {
               : day;
       } else if (dialogState.item) {
         nextDay = await updateMealPlanItem(selectedDate, dialogState.sectionId, dialogState.item, {
-          quantity: payload.type === "product" ? payload.quantity : undefined,
-          unit: payload.type === "product" ? "g" : undefined,
+          quantity: payload.type === "product" || payload.type === "manual" ? payload.quantity : undefined,
+          unit: payload.type === "product" || payload.type === "manual" ? payload.unit ?? "g" : undefined,
           servings: payload.type === "recipe" ? payload.servings : undefined
         });
       }
@@ -284,7 +301,7 @@ export function MealPlanDashboardPage() {
         open={Boolean(dialogState)}
         mode={dialogState?.mode ?? "add"}
         sectionTitle={dialogState?.sectionTitle ?? ""}
-        initialItemType={dialogState?.item?.type ?? "product"}
+        initialItemType={dialogState?.item?.isManual ? "manual" : dialogState?.item?.type ?? "product"}
         item={dialogState?.item}
         recipes={recipes}
         products={products}

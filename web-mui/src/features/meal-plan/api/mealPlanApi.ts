@@ -9,17 +9,22 @@ export type NutritionTotals = {
   carbsG: number;
 };
 
+export type NutritionPer100 = NutritionTotals;
+
 export type MealPlanItem = {
   id: string;
   slot: string;
   type: "product" | "recipe";
+  isManual: boolean;
   title: string;
-  refId?: string | null;
+  productId?: string | null;
+  recipeId?: string | null;
   entryId?: string | null;
   amount?: number | null;
   unit?: string | null;
   servings?: number | null;
-  nutrition: NutritionTotals;
+  nutritionPer100?: NutritionPer100 | null;
+  nutritionTotal: NutritionTotals;
 };
 
 export type MealPlanSection = {
@@ -37,6 +42,8 @@ export type MealPlanDay = {
 
 type BackendEntry = {
   id?: string;
+  name?: string;
+  isManual?: boolean;
   productId?: string;
   recipeId?: string;
   slot?: string;
@@ -45,6 +52,7 @@ type BackendEntry = {
   unit?: string;
   servings?: number;
   nutrition?: Record<string, unknown>;
+  nutritionPer100?: Record<string, unknown>;
   nutritionTotal?: Record<string, unknown>;
   product?: {
     id?: string;
@@ -98,20 +106,26 @@ function slotTitle(slot: string): string {
 
 function mapEntry(slot: string, entry: BackendEntry): MealPlanItem {
   const type = String(entry.type ?? "").toUpperCase() === "RECIPE" || entry.recipe ? "recipe" : "product";
-  const title = entry.product?.name ?? entry.recipe?.title ?? entry.recipe?.name ?? "Item";
-  const refId = type === "recipe" ? entry.recipeId ?? entry.recipe?.id : entry.productId ?? entry.product?.id;
+  const title = entry.name ?? entry.product?.name ?? entry.recipe?.title ?? entry.recipe?.name ?? "Item";
+  const nutritionTotal = normalizeTotals((entry.nutritionTotal ?? entry.nutrition) as Record<string, unknown> | undefined);
+  const nutritionPer100 = type === "product"
+    ? normalizeTotals(entry.nutritionPer100 as Record<string, unknown> | undefined)
+    : null;
 
   return {
     id: entry.id ?? `${slot}-${title}`,
     slot,
     type,
+    isManual: Boolean(entry.isManual),
     title,
-    refId: refId ?? null,
+    productId: type === "product" ? entry.productId ?? entry.product?.id ?? null : null,
+    recipeId: type === "recipe" ? entry.recipeId ?? entry.recipe?.id ?? null : null,
     entryId: entry.id ?? null,
     amount: type === "product" ? toNumber(entry.amount) || null : null,
     unit: type === "product" ? entry.unit ?? "g" : null,
     servings: type === "recipe" ? toNumber(entry.servings) || 1 : null,
-    nutrition: normalizeTotals((entry.nutrition ?? entry.nutritionTotal) as Record<string, unknown> | undefined)
+    nutritionPer100,
+    nutritionTotal
   };
 }
 
@@ -183,6 +197,37 @@ export async function addProductToMealPlan(
   return getMealPlanDay(date);
 }
 
+export async function addManualItemToMealPlan(
+  date: string,
+  sectionId: string,
+  item: {
+    name: string;
+    amount: number;
+    unit: string;
+    kcal100: number;
+    protein100: number;
+    fat100: number;
+    carbs100: number;
+  }
+): Promise<MealPlanDay> {
+  await apiRequest("/v1/meal-plans/day/entries", {
+    method: "POST",
+    body: JSON.stringify({
+      date,
+      slot: sectionToSlot(sectionId),
+      name: item.name,
+      amount: item.amount,
+      unit: item.unit,
+      kcal100: item.kcal100,
+      protein100: item.protein100,
+      fat100: item.fat100,
+      carbs100: item.carbs100
+    })
+  });
+
+  return getMealPlanDay(date);
+}
+
 export async function addRecipeToMealPlan(
   date: string,
   sectionId: string,
@@ -227,9 +272,21 @@ export async function updateMealPlanItem(
       body: JSON.stringify({
         date,
         slot: sectionToSlot(sectionId),
-        productId: item.refId,
-        amount: updates.quantity ?? item.amount ?? 100,
-        unit: updates.unit ?? item.unit ?? "g"
+        ...(item.isManual
+          ? {
+              name: item.title,
+              amount: updates.quantity ?? item.amount ?? 100,
+              unit: updates.unit ?? item.unit ?? "g",
+              kcal100: item.nutritionPer100?.caloriesKcal ?? 0,
+              protein100: item.nutritionPer100?.proteinG ?? 0,
+              fat100: item.nutritionPer100?.fatG ?? 0,
+              carbs100: item.nutritionPer100?.carbsG ?? 0
+            }
+          : {
+              productId: item.productId,
+              amount: updates.quantity ?? item.amount ?? 100,
+              unit: updates.unit ?? item.unit ?? "g"
+            })
       })
     });
   } else {
@@ -238,7 +295,7 @@ export async function updateMealPlanItem(
       body: JSON.stringify({
         date,
         slot: sectionToSlot(sectionId),
-        recipeId: item.refId,
+        recipeId: item.recipeId,
         servings: updates.servings ?? item.servings ?? 1
       })
     });

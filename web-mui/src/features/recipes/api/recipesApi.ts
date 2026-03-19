@@ -17,6 +17,7 @@ export type BackendRecipe = {
   nutritionPerServing?: Record<string, unknown> | null;
   ingredients?: Array<{
     id?: string;
+    isManual?: boolean | null;
     productId?: string | null;
     name?: string | null;
     amount?: number | null;
@@ -94,6 +95,7 @@ function sumTotals(items: NutritionTotals[]): NutritionTotals {
 
 function mapIngredient(item: NonNullable<BackendRecipe["ingredients"]>[number]): RecipeIngredient {
   const amount = toNumber(item.amount);
+  const isManual = Boolean(item.isManual) || !item.productId;
   const macros = {
     caloriesKcal: toNumber(item.kcal100 ?? item.product?.kcal100),
     proteinG: toNumber(item.protein100 ?? item.product?.protein100),
@@ -103,6 +105,7 @@ function mapIngredient(item: NonNullable<BackendRecipe["ingredients"]>[number]):
 
   return {
     id: item.id ?? crypto.randomUUID(),
+    isManual,
     productId: item.productId ?? item.product?.id ?? undefined,
     title: (item.name ?? item.product?.name ?? "Ingredient").trim() || "Ingredient",
     quantity: amount,
@@ -188,9 +191,14 @@ function toPayload(values: RecipeFormValues) {
     servings: values.servings,
     isPublic: false,
     ingredients: values.ingredients.map((ingredient) => ({
-      productId: ingredient.productId,
+      productId: ingredient.isManual ? undefined : ingredient.productId,
+      name: ingredient.isManual ? ingredient.name : undefined,
       amount: ingredient.amount,
-      unit: ingredient.unit || "g"
+      unit: ingredient.unit || "g",
+      kcal100: ingredient.isManual ? ingredient.kcal100 : undefined,
+      protein100: ingredient.isManual ? ingredient.protein100 : undefined,
+      fat100: ingredient.isManual ? ingredient.fat100 : undefined,
+      carbs100: ingredient.isManual ? ingredient.carbs100 : undefined
     })),
     steps: values.steps.filter((step) => step.trim().length > 0)
   };

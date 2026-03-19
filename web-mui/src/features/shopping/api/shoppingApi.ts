@@ -211,8 +211,8 @@ export async function addMealPlanItemToShoppingList(
 ): Promise<ShoppingList> {
   if (item.type === "product") {
     return addShoppingItem({
-      productId: item.refId ?? undefined,
-      customName: item.refId ? undefined : item.title,
+      productId: item.productId ?? undefined,
+      customName: item.productId ? undefined : item.title,
       amount: item.amount ?? 100,
       unit: item.unit ?? "g",
       categoryName: options?.categoryName ?? "Meal plan"

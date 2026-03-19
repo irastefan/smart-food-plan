@@ -10,6 +10,8 @@ import {
   MenuItem,
   Paper,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   TextField,
   Typography
 } from "@mui/material";
@@ -35,16 +37,22 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
   const totalNutrition = useMemo(() => {
     return value.ingredients.reduce(
       (acc, ingredient) => {
-        const product = products.find((item) => item.id === ingredient.productId);
-        if (!product) {
-          return acc;
-        }
+        const linkedProduct = ingredient.isManual ? null : products.find((item) => item.id === ingredient.productId);
+        const per100 = ingredient.isManual
+          ? {
+              caloriesKcal: ingredient.kcal100,
+              proteinG: ingredient.protein100,
+              fatG: ingredient.fat100,
+              carbsG: ingredient.carbs100
+            }
+          : linkedProduct?.nutritionPer100g;
+        if (!per100) return acc;
         const factor = ingredient.amount / 100;
         return {
-          caloriesKcal: acc.caloriesKcal + product.nutritionPer100g.caloriesKcal * factor,
-          proteinG: acc.proteinG + product.nutritionPer100g.proteinG * factor,
-          fatG: acc.fatG + product.nutritionPer100g.fatG * factor,
-          carbsG: acc.carbsG + product.nutritionPer100g.carbsG * factor
+          caloriesKcal: acc.caloriesKcal + per100.caloriesKcal * factor,
+          proteinG: acc.proteinG + per100.proteinG * factor,
+          fatG: acc.fatG + per100.fatG * factor,
+          carbsG: acc.carbsG + per100.carbsG * factor
         };
       },
       { caloriesKcal: 0, proteinG: 0, fatG: 0, carbsG: 0 }
@@ -67,9 +75,15 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
       ...value.ingredients,
       {
         id: crypto.randomUUID(),
+        isManual: false,
         productId: "",
+        name: "",
         amount: 100,
-        unit: "g"
+        unit: "g",
+        kcal100: 0,
+        protein100: 0,
+        fat100: 0,
+        carbs100: 0
       }
     ]);
   }
@@ -144,13 +158,43 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
                       <DeleteOutlineRoundedIcon />
                     </IconButton>
                   </Stack>
-                  <Autocomplete
-                    options={products}
-                    value={products.find((item) => item.id === ingredient.productId) ?? null}
-                    onChange={(_event, nextValue) => updateIngredient(index, { productId: nextValue?.id ?? "" })}
-                    getOptionLabel={(option) => option.title}
-                    renderInput={(params) => <TextField {...params} label={t("recipe.form.product")} />}
-                  />
+                  <ToggleButtonGroup
+                    exclusive
+                    value={ingredient.isManual ? "manual" : "linked"}
+                    onChange={(_event, nextValue: "manual" | "linked" | null) => {
+                      if (!nextValue) return;
+                      updateIngredient(index, {
+                        isManual: nextValue === "manual",
+                        productId: nextValue === "manual" ? undefined : ingredient.productId,
+                        name: nextValue === "manual" ? ingredient.name : ""
+                      });
+                    }}
+                    sx={{ alignSelf: "flex-start" }}
+                  >
+                    <ToggleButton value="linked">{t("recipe.form.linkedIngredient")}</ToggleButton>
+                    <ToggleButton value="manual">{t("recipe.form.manualIngredient")}</ToggleButton>
+                  </ToggleButtonGroup>
+                  {ingredient.isManual ? (
+                    <>
+                      <TextField label={t("recipe.form.name")} value={ingredient.name} onChange={(event) => updateIngredient(index, { name: event.target.value })} fullWidth />
+                      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                        <TextField label={t("recipe.form.caloriesPer100")} type="number" value={ingredient.kcal100} onChange={(event) => updateIngredient(index, { kcal100: Number(event.target.value) || 0 })} fullWidth />
+                        <TextField label={t("recipe.form.proteinPer100")} type="number" value={ingredient.protein100} onChange={(event) => updateIngredient(index, { protein100: Number(event.target.value) || 0 })} fullWidth />
+                      </Stack>
+                      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                        <TextField label={t("recipe.form.fatPer100")} type="number" value={ingredient.fat100} onChange={(event) => updateIngredient(index, { fat100: Number(event.target.value) || 0 })} fullWidth />
+                        <TextField label={t("recipe.form.carbsPer100")} type="number" value={ingredient.carbs100} onChange={(event) => updateIngredient(index, { carbs100: Number(event.target.value) || 0 })} fullWidth />
+                      </Stack>
+                    </>
+                  ) : (
+                    <Autocomplete
+                      options={products}
+                      value={products.find((item) => item.id === ingredient.productId) ?? null}
+                      onChange={(_event, nextValue) => updateIngredient(index, { productId: nextValue?.id ?? "" })}
+                      getOptionLabel={(option) => option.title}
+                      renderInput={(params) => <TextField {...params} label={t("recipe.form.product")} />}
+                    />
+                  )}
                   <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
                     <TextField label={t("recipe.form.amount")} type="number" inputProps={{ min: 0.1, step: 0.1 }} value={ingredient.amount} onChange={(event) => updateIngredient(index, { amount: Math.max(0.1, Number(event.target.value) || 0.1) })} fullWidth />
                     <TextField label={t("recipe.form.unit")} value={ingredient.unit} onChange={(event) => updateIngredient(index, { unit: event.target.value || "g" })} fullWidth />

@@ -7,6 +7,7 @@ export type NutritionTotals = {
 
 export type RecipeIngredient = {
   id: string;
+  isManual: boolean;
   productId?: string;
   title: string;
   quantity: number;
@@ -40,9 +41,15 @@ export type RecipeDetail = RecipeSummary & {
 
 export type RecipeFormIngredient = {
   id: string;
-  productId: string;
+  isManual: boolean;
+  productId?: string;
+  name: string;
   amount: number;
   unit: string;
+  kcal100: number;
+  protein100: number;
+  fat100: number;
+  carbs100: number;
 };
 
 export type RecipeFormValues = {
