@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
 import type { AuthUser } from "../api/authApi";
 import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../settings/api/settingsApi";
+import { formatCalorieDelta, getDefaultCalorieDelta, parseCalorieDelta } from "../../settings/model/profileDefaults";
 import { AuthCard } from "./AuthCard";
 import { BrandMark } from "./BrandMark";
 import { PasswordField } from "./PasswordField";
@@ -47,6 +48,7 @@ export function AuthForm({
     targetFatG: null,
     targetCarbsG: null
   });
+  const [deltaInput, setDeltaInput] = useState("");
 
   const isLogin = mode === "login";
   const title = isLogin ? t("auth.login.title") : t("auth.register.title");
@@ -57,6 +59,20 @@ export function AuthForm({
 
   function updateProfile<K extends keyof UserProfile>(key: K, nextValue: UserProfile[K]) {
     setProfile((current) => ({ ...current, [key]: nextValue }));
+  }
+
+  function handleGoalChange(goal: UserGoal) {
+    const nextDelta = getDefaultCalorieDelta(goal);
+    setProfile((current) => ({ ...current, goal, calorieDelta: nextDelta }));
+    setDeltaInput(formatCalorieDelta(nextDelta));
+  }
+
+  function handleDeltaChange(nextValue: string) {
+    setDeltaInput(nextValue);
+    const parsed = parseCalorieDelta(nextValue);
+    if (parsed != null || nextValue.trim() === "") {
+      updateProfile("calorieDelta", parsed);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -190,13 +206,23 @@ export function AuthForm({
                   <MenuItem value="MODERATE">{t("settings.profile.activity.moderate")}</MenuItem>
                   <MenuItem value="VERY_ACTIVE">{t("settings.profile.activity.veryActive")}</MenuItem>
                 </TextField>
-                <TextField select label={t("settings.profile.goal")} value={profile.goal} onChange={(event) => updateProfile("goal", event.target.value as UserGoal)} fullWidth>
+                <TextField select label={t("settings.profile.goal")} value={profile.goal} onChange={(event) => handleGoalChange(event.target.value as UserGoal)} fullWidth>
                   <MenuItem value="">{t("settings.profile.goal.unspecified")}</MenuItem>
                   <MenuItem value="MAINTAIN">{t("settings.profile.goal.maintain")}</MenuItem>
                   <MenuItem value="LOSE">{t("settings.profile.goal.lose")}</MenuItem>
                   <MenuItem value="GAIN">{t("settings.profile.goal.gain")}</MenuItem>
                 </TextField>
               </Stack>
+
+              <TextField
+                label={t("settings.profile.calorieDelta")}
+                value={deltaInput}
+                onChange={(event) => handleDeltaChange(event.target.value)}
+                placeholder={t("settings.profile.calorieDeltaPlaceholder")}
+                helperText={t("settings.profile.calorieDeltaHint")}
+                inputProps={{ inputMode: "decimal" }}
+                fullWidth
+              />
             </Stack>
           </>
         ) : null}

@@ -1,7 +1,9 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import { Alert, Button, MenuItem, Stack, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
 import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../features/settings/api/settingsApi";
+import { formatCalorieDelta, getDefaultCalorieDelta, parseCalorieDelta } from "../../features/settings/model/profileDefaults";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
 type UserProfileFormProps = {
@@ -15,9 +17,30 @@ type UserProfileFormProps = {
 
 export function UserProfileForm({ value, isSubmitting, status, onChange, onSave, onRecalculate }: UserProfileFormProps) {
   const { t } = useLanguage();
+  const [deltaInput, setDeltaInput] = useState(formatCalorieDelta(value.calorieDelta));
+
+  useEffect(() => {
+    setDeltaInput(formatCalorieDelta(value.calorieDelta));
+  }, [value.calorieDelta]);
 
   function update<K extends keyof UserProfile>(key: K, nextValue: UserProfile[K]) {
     onChange({ ...value, [key]: nextValue });
+  }
+
+  function handleGoalChange(goal: UserGoal) {
+    onChange({
+      ...value,
+      goal,
+      calorieDelta: getDefaultCalorieDelta(goal)
+    });
+  }
+
+  function handleDeltaChange(nextValue: string) {
+    setDeltaInput(nextValue);
+    const parsed = parseCalorieDelta(nextValue);
+    if (parsed != null || nextValue.trim() === "") {
+      update("calorieDelta", parsed);
+    }
   }
 
   return (
@@ -52,7 +75,7 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
             <MenuItem value="MODERATE">{t("settings.profile.activity.moderate")}</MenuItem>
             <MenuItem value="VERY_ACTIVE">{t("settings.profile.activity.veryActive")}</MenuItem>
           </TextField>
-          <TextField select label={t("settings.profile.goal")} value={value.goal} onChange={(event) => update("goal", event.target.value as UserGoal)} fullWidth>
+          <TextField select label={t("settings.profile.goal")} value={value.goal} onChange={(event) => handleGoalChange(event.target.value as UserGoal)} fullWidth>
             <MenuItem value="">{t("settings.profile.goal.unspecified")}</MenuItem>
             <MenuItem value="MAINTAIN">{t("settings.profile.goal.maintain")}</MenuItem>
             <MenuItem value="LOSE">{t("settings.profile.goal.lose")}</MenuItem>
@@ -60,7 +83,15 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
           </TextField>
         </Stack>
 
-        <TextField label={t("settings.profile.calorieDelta")} type="number" value={value.calorieDelta ?? ""} onChange={(event) => update("calorieDelta", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
+        <TextField
+          label={t("settings.profile.calorieDelta")}
+          value={deltaInput}
+          onChange={(event) => handleDeltaChange(event.target.value)}
+          placeholder={t("settings.profile.calorieDeltaPlaceholder")}
+          helperText={t("settings.profile.calorieDeltaHint")}
+          inputProps={{ inputMode: "decimal" }}
+          fullWidth
+        />
       </Stack>
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="flex-end">
