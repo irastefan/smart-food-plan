@@ -1,5 +1,6 @@
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
@@ -102,7 +103,17 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
           </Stack>
 
           {onDelete ? (
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
+              <Tooltip title={t("recipe.edit")}>
+                <IconButton
+                  size="small"
+                  component={RouterLink}
+                  to={`/recipes/${recipe.id}/edit`}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
               <Tooltip title={t("recipe.delete")}>
                 <IconButton size="small" color="error" onClick={() => onDelete(recipe)}>
                   <DeleteOutlineRoundedIcon fontSize="small" />

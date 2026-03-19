@@ -1,22 +1,26 @@
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import { Avatar, Box, Button, Chip, Stack, Typography } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+import { Avatar, Box, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 
 type RecipeHeroProps = {
   recipe: RecipeDetail;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
-export function RecipeHero({ recipe }: RecipeHeroProps) {
+export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
   const { t } = useLanguage();
+  const theme = useTheme();
+  const hasDarkSurface = Boolean(recipe.photoUrl) || theme.palette.mode === "dark";
 
   return (
     <Box
       sx={{
-        minHeight: { xs: 360, md: 460 },
+        minHeight: recipe.photoUrl ? { xs: 360, md: 460 } : { xs: 260, md: 320 },
         borderRadius: 1.25,
         overflow: "hidden",
         position: "relative",
@@ -25,7 +29,7 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
             ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
             : theme.palette.mode === "dark"
               ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
-              : "linear-gradient(135deg, rgba(12,24,44,0.78) 0%, rgba(16,30,52,0.88) 38%, rgba(17,26,46,0.96) 100%)",
+              : theme.palette.background.paper,
         backgroundSize: recipe.photoUrl ? "cover" : undefined,
         backgroundPosition: recipe.photoUrl ? "center" : undefined
       }}
@@ -34,24 +38,81 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Chip
             label={getRecipeCategoryLabel(recipe.category, t)}
-            sx={{ backdropFilter: "blur(10px)", backgroundColor: "rgba(255,255,255,0.14)", color: "common.white", fontWeight: 700 }}
+            sx={{
+              backdropFilter: "blur(10px)",
+              backgroundColor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.76)",
+              color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.text.primary,
+              fontWeight: 700
+            }}
           />
-          <Button component={RouterLink} to={`/recipes/${recipe.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" color="inherit" sx={{ color: "text.primary", bgcolor: "rgba(255,255,255,0.88)" }}>
-            {t("recipe.edit")}
-          </Button>
+          <Stack direction="row" spacing={0.75}>
+            {onEdit ? (
+              <Tooltip title={t("recipe.edit")}>
+                <IconButton
+                  onClick={onEdit}
+                  sx={{
+                    color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.text.primary,
+                    bgcolor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.82)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid",
+                    borderColor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.16)" : "rgba(148,163,184,0.22)",
+                    "&:hover": {
+                      bgcolor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.96)"
+                    }
+                  }}
+                >
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+            {onDelete ? (
+              <Tooltip title={t("recipe.delete")}>
+                <IconButton
+                  onClick={onDelete}
+                  sx={{
+                    color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "#fecaca" : theme.palette.error.main,
+                    bgcolor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(127,29,29,0.26)" : "rgba(255,255,255,0.82)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid",
+                    borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(248,113,113,0.24)" : "rgba(248,113,113,0.24)",
+                    "&:hover": {
+                      bgcolor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(127,29,29,0.36)" : "rgba(255,255,255,0.96)"
+                    }
+                  }}
+                >
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
+          </Stack>
         </Stack>
 
         <Stack spacing={2.5} sx={{ maxWidth: 720 }}>
-          <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 72 }, lineHeight: 0.96, color: "common.white", fontWeight: 800, letterSpacing: -1.6 }}>
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: 34, md: 72 },
+              lineHeight: 0.96,
+              color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.text.primary,
+              fontWeight: 800,
+              letterSpacing: -1.6
+            }}
+          >
             {recipe.title}
           </Typography>
-          <Typography sx={{ color: "rgba(255,255,255,0.82)", fontSize: { xs: 18, md: 26 }, maxWidth: 620 }}>
+          <Typography
+            sx={{
+              color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.82)" : "rgba(15,23,42,0.72)",
+              fontSize: { xs: 18, md: 26 },
+              maxWidth: 620
+            }}
+          >
             {recipe.description || t("recipe.noDescription")}
           </Typography>
           <Stack direction="row" spacing={1.25} flexWrap="wrap" useFlexGap alignItems="center">
-            <MetricBadge value={`${Math.round(recipe.nutritionPerServing.caloriesKcal)}`} label="kcal" icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#f59e0b" }} />} />
-            <MetricBadge value={`${recipe.servings}`} label={t("recipe.servingsLabel")} />
-            {recipe.cookTimeMinutes ? <MetricBadge value={`${recipe.cookTimeMinutes}`} label={t("recipe.minutesShort")} /> : null}
+            <MetricBadge value={`${Math.round(recipe.nutritionPerServing.caloriesKcal)}`} label="kcal" icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#f59e0b" }} />} darkSurface={hasDarkSurface} />
+            <MetricBadge value={`${recipe.servings}`} label={t("recipe.servingsLabel")} darkSurface={hasDarkSurface} />
+            {recipe.cookTimeMinutes ? <MetricBadge value={`${recipe.cookTimeMinutes}`} label={t("recipe.minutesShort")} darkSurface={hasDarkSurface} /> : null}
           </Stack>
         </Stack>
       </Stack>
@@ -59,12 +120,26 @@ export function RecipeHero({ recipe }: RecipeHeroProps) {
   );
 }
 
-function MetricBadge({ value, label, icon }: { value: string; label: string; icon?: React.ReactNode }) {
+function MetricBadge({ value, label, icon, darkSurface = false }: { value: string; label: string; icon?: React.ReactNode; darkSurface?: boolean }) {
   return (
-    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 1.5, py: 1, borderRadius: 1.25, backdropFilter: "blur(10px)", backgroundColor: "rgba(255,255,255,0.12)", color: "common.white" }}>
-      {icon ? <Avatar sx={{ width: 30, height: 30, bgcolor: "rgba(255,255,255,0.12)" }}>{icon}</Avatar> : null}
+    <Stack
+      direction="row"
+      spacing={1.25}
+      alignItems="center"
+      sx={{
+        px: 1.5,
+        py: 1,
+        borderRadius: 1.25,
+        backdropFilter: "blur(10px)",
+        backgroundColor: darkSurface ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.68)",
+        color: darkSurface ? "common.white" : "text.primary",
+        border: "1px solid",
+        borderColor: darkSurface ? "rgba(255,255,255,0.14)" : "rgba(148,163,184,0.18)"
+      }}
+    >
+      {icon ? <Avatar sx={{ width: 30, height: 30, bgcolor: darkSurface ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.82)" }}>{icon}</Avatar> : null}
       <Typography fontWeight={800}>{value}</Typography>
-      <Typography color="rgba(255,255,255,0.72)">{label}</Typography>
+      <Typography color={darkSurface ? "rgba(255,255,255,0.72)" : "text.secondary"}>{label}</Typography>
     </Stack>
   );
 }

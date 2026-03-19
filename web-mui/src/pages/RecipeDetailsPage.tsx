@@ -1,7 +1,5 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
@@ -147,16 +145,12 @@ export function RecipeDetailsPage() {
         <Button component={RouterLink} to="/recipes" startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
           {t("recipe.back")}
         </Button>
-        <Button component={RouterLink} to={`/recipes/${recipe.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
-          {t("recipe.edit")}
-        </Button>
-        {recipe.isPublic ? null : (
-          <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteOpen(true)} sx={{ alignSelf: "flex-start" }}>
-            {t("recipe.delete")}
-          </Button>
-        )}
       </Stack>
-      <RecipeHero recipe={recipe} />
+      <RecipeHero
+        recipe={recipe}
+        onEdit={recipe.isPublic ? undefined : () => navigate(`/recipes/${recipe.id}/edit`)}
+        onDelete={recipe.isPublic ? undefined : () => setDeleteOpen(true)}
+      />
 
       <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
         <Stack spacing={3} sx={{ flex: 1.3, minWidth: 0 }}>
