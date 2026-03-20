@@ -19,6 +19,29 @@ export type MealPlanAssistantResult = {
   needsConfirmation: boolean;
 };
 
+function containsCyrillic(value: string): boolean {
+  return /[А-Яа-яЁё]/.test(value);
+}
+
+function roundToWhole(value: number): number {
+  return Math.round(value);
+}
+
+function buildPortionNutritionLine(message: string, proposal: MealPlanAssistantProposal): string {
+  const factor = proposal.amount / 100;
+  const calories = roundToWhole(proposal.kcal100 * factor);
+  const protein = roundToWhole(proposal.protein100 * factor);
+  const fat = roundToWhole(proposal.fat100 * factor);
+  const carbs = roundToWhole(proposal.carbs100 * factor);
+  const isRu = containsCyrillic(message) || containsCyrillic(proposal.name);
+
+  if (isRu) {
+    return `Порция ${roundToWhole(proposal.amount)} ${proposal.unit} · ${calories} ккал · Белки ${protein}г · Жиры ${fat}г · Углеводы ${carbs}г`;
+  }
+
+  return `Portion ${roundToWhole(proposal.amount)} ${proposal.unit} · ${calories} kcal · Protein ${protein}g · Fat ${fat}g · Carbs ${carbs}g`;
+}
+
 function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) {
@@ -69,21 +92,21 @@ function enrichMessageWithNutrition(message: string, proposal: MealPlanAssistant
   }
 
   const normalized = message.toLowerCase();
-  const alreadyHasNutrition =
-    normalized.includes("kcal") ||
-    normalized.includes("кал") ||
-    normalized.includes("protein") ||
-    normalized.includes("бел") ||
-    normalized.includes("fat") ||
-    normalized.includes("жир") ||
-    normalized.includes("carb") ||
-    normalized.includes("углев");
+  const nutritionLine = buildPortionNutritionLine(message, proposal);
+  const alreadyHasPortionNutrition =
+    (normalized.includes("protein") || normalized.includes("бел")) &&
+    (normalized.includes("fat") || normalized.includes("жир")) &&
+    (normalized.includes("carb") || normalized.includes("углев")) &&
+    !normalized.includes("kcal/100") &&
+    !normalized.includes("ккал/100") &&
+    !normalized.includes("per 100") &&
+    !normalized.includes("на 100");
 
-  if (alreadyHasNutrition) {
+  if (alreadyHasPortionNutrition) {
     return message;
   }
 
-  return `${message}\n\n${proposal.amount} ${proposal.unit} · ${proposal.kcal100} kcal/100 · Protein ${proposal.protein100}g · Fat ${proposal.fat100}g · Carbs ${proposal.carbs100}g`;
+  return `${message}\n\n${nutritionLine}`;
 }
 
 export async function runMealPlanAssistant(input: {
