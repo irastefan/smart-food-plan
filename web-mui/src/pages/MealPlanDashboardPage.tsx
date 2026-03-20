@@ -1,4 +1,4 @@
-import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -13,6 +13,7 @@ import {
 } from "../features/shopping/api/shoppingApi";
 import {
   addManualItemToMealPlan,
+  addManualItemsToMealPlan,
   addProductToMealPlan,
   addRecipeToMealPlan,
   copyMealPlanSectionToDate,
@@ -58,6 +59,7 @@ export function MealPlanDashboardPage() {
   const [recipeTitle, setRecipeTitle] = useState("");
   const [pendingCopySection, setPendingCopySection] = useState<MealPlanSection | null>(null);
   const [copyTargetDate, setCopyTargetDate] = useState(selectedDate);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -221,9 +223,72 @@ export function MealPlanDashboardPage() {
 
       setDay(nextDay);
       setDialogState(null);
+      setFeedback({ type: "success", message: t("mealPlan.status.itemAdded") });
     } catch (error) {
       console.error("Failed to update meal plan item", error);
       setMutationError(t("mealPlan.dialog.saveError"));
+      setFeedback({ type: "error", message: t("mealPlan.dialog.saveError") });
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleSubmitMultipleManualItems(
+    items: Array<{
+      name: string;
+      amount: number;
+      unit: string;
+      kcal100: number;
+      protein100: number;
+      fat100: number;
+      carbs100: number;
+    }>
+  ) {
+    if (!dialogState || items.length === 0) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setMutationError(null);
+      const nextDay = await addManualItemsToMealPlan(selectedDate, dialogState.sectionId, items);
+      setDay(nextDay);
+      setDialogState(null);
+      setFeedback({ type: "success", message: t("mealPlan.status.itemsAdded") });
+    } catch (error) {
+      console.error("Failed to add multiple meal plan items", error);
+      setMutationError(t("mealPlan.dialog.saveError"));
+      setFeedback({ type: "error", message: t("mealPlan.dialog.saveError") });
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleAppendManualItems(
+    items: Array<{
+      name: string;
+      amount: number;
+      unit: string;
+      kcal100: number;
+      protein100: number;
+      fat100: number;
+      carbs100: number;
+    }>
+  ) {
+    if (!dialogState || items.length === 0) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setMutationError(null);
+      const nextDay = await addManualItemsToMealPlan(selectedDate, dialogState.sectionId, items);
+      setDay(nextDay);
+      setFeedback({ type: "success", message: t("mealPlan.status.itemAdded") });
+    } catch (error) {
+      console.error("Failed to append meal plan items", error);
+      setMutationError(t("mealPlan.dialog.saveError"));
+      setFeedback({ type: "error", message: t("mealPlan.dialog.saveError") });
     } finally {
       setIsMutating(false);
     }
@@ -381,6 +446,8 @@ export function MealPlanDashboardPage() {
         onDataChanged={() => {
           void refresh();
         }}
+        onSubmitMultipleManualItems={handleSubmitMultipleManualItems}
+        onAppendManualItems={handleAppendManualItems}
         onSubmit={handleSubmitDialog}
       />
 
@@ -447,6 +514,12 @@ export function MealPlanDashboardPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={Boolean(feedback)} autoHideDuration={2500} onClose={() => setFeedback(null)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <Alert severity={feedback?.type ?? "success"} onClose={() => setFeedback(null)} sx={{ width: "100%" }}>
+          {feedback?.message}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }

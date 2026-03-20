@@ -1,10 +1,12 @@
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import {
   Alert,
   Autocomplete,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -40,6 +42,8 @@ type MealPlanItemDialogProps = {
   errorMessage: string | null;
   onClose: () => void;
   onDataChanged?: () => void;
+  onSubmitMultipleManualItems?: (items: MealPlanAssistantProposal[]) => void;
+  onAppendManualItems?: (items: MealPlanAssistantProposal[]) => void;
   onSubmit: (payload: {
     type: "product" | "recipe" | "manual";
     product?: ProductSummary;
@@ -56,6 +60,21 @@ type MealPlanItemDialogProps = {
 };
 
 type DialogTab = "ai" | "product" | "recipe" | "manual";
+
+function getProposalTotals(proposal: MealPlanAssistantProposal) {
+  const normalizedUnit = proposal.unit.trim().toLowerCase();
+  const factor =
+    normalizedUnit !== "" && normalizedUnit !== "g" && normalizedUnit !== "gr" && normalizedUnit !== "gram" && normalizedUnit !== "grams" && normalizedUnit !== "ml"
+      ? proposal.amount
+      : proposal.amount / 100;
+
+  return {
+    calories: Math.round(proposal.kcal100 * factor),
+    protein: Math.round(proposal.protein100 * factor),
+    fat: Math.round(proposal.fat100 * factor),
+    carbs: Math.round(proposal.carbs100 * factor)
+  };
+}
 
 function inferManualNutritionPer100(item?: MealPlanItem | null) {
   if (!item?.isManual || item.type !== "product") {
@@ -95,6 +114,8 @@ export function MealPlanItemDialog({
   errorMessage,
   onClose,
   onDataChanged,
+  onSubmitMultipleManualItems,
+  onAppendManualItems,
   onSubmit
 }: MealPlanItemDialogProps) {
   const { t } = useLanguage();
@@ -103,6 +124,8 @@ export function MealPlanItemDialog({
   const agentSettings = getAiAgentSettings();
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [accessMode, setAccessMode] = useState(agentSettings.accessMode);
+  const [batchItems, setBatchItems] = useState<MealPlanAssistantProposal[]>([]);
+  const [singleProposal, setSingleProposal] = useState<MealPlanAssistantProposal | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
@@ -123,6 +146,8 @@ export function MealPlanItemDialog({
 
     setActiveTab(mode === "edit" ? (item?.isManual ? "manual" : item?.type ?? initialItemType) : "ai");
     setAccessMode(getAiAgentSettings().accessMode);
+    setBatchItems([]);
+    setSingleProposal(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
@@ -174,6 +199,22 @@ export function MealPlanItemDialog({
       fat100: source.fat100,
       carbs100: source.carbs100
     });
+  }
+
+  function submitBatch(items: MealPlanAssistantProposal[]) {
+    if (!items.length) {
+      return;
+    }
+
+    onSubmitMultipleManualItems?.(items);
+  }
+
+  function appendItems(items: MealPlanAssistantProposal[]) {
+    if (!items.length) {
+      return;
+    }
+
+    onAppendManualItems?.(items);
   }
 
   const title = mode === "add" ? t("mealPlan.dialog.addTitle", { section: sectionTitle }) : t("mealPlan.dialog.editTitle", { section: sectionTitle });
@@ -261,6 +302,9 @@ export function MealPlanItemDialog({
                   }}
                   onExtraResult={(result) => {
                     const nextProposal = result?.proposal ?? null;
+                    const nextItems = result?.items ?? [];
+                    setBatchItems(nextItems);
+                    setSingleProposal(nextProposal);
 
                     if (nextProposal) {
                       setManualName(nextProposal.name);
@@ -270,10 +314,11 @@ export function MealPlanItemDialog({
                       setManualProtein100(nextProposal.protein100);
                       setManualFat100(nextProposal.fat100);
                       setManualCarbs100(nextProposal.carbs100);
+                    }
 
-                      if (result?.needsConfirmation) {
-                        setActiveTab("manual");
-                      }
+                    if (nextItems.length > 0 && result && !result.needsConfirmation && accessMode === "full") {
+                      submitBatch(nextItems);
+                      onDataChanged?.();
                     }
 
                     if (result?.proposal && !result.needsConfirmation && accessMode === "full") {
@@ -302,7 +347,148 @@ export function MealPlanItemDialog({
                           </Typography>
                         </Stack>
                       </Stack>
+                    </Stack>
+                  )}
+                  renderBottom={() => (
+                    <Stack spacing={1.1} sx={{ pb: 1.75 }}>
+                      {singleProposal && accessMode === "limited" ? (
+                        <Box
+                          sx={{
+                            px: 1.25,
+                            py: 1,
+                            borderRadius: 1.25,
+                            border: "1px solid",
+                            borderColor: "rgba(16,185,129,0.22)",
+                            background: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "linear-gradient(180deg, rgba(18,34,32,0.92), rgba(15,23,42,0.92))"
+                                : "linear-gradient(180deg, rgba(240,253,250,0.92), rgba(255,255,255,0.98))"
+                          }}
+                        >
+                          {(() => {
+                            const totals = getProposalTotals(singleProposal);
 
+                            return (
+                              <Stack direction="row" spacing={1.25} alignItems="center">
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                  <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="center">
+                                    <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
+                                      {singleProposal.name}
+                                    </Typography>
+                                    <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                      {`${Math.round(singleProposal.amount)} ${singleProposal.unit}`}
+                                    </Typography>
+                                  </Stack>
+                                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
+                                    {`${totals.calories} kcal · ${t("mealPlan.macro.protein")} ${totals.protein}g · ${t("mealPlan.macro.fat")} ${totals.fat}g · ${t("mealPlan.macro.carbs")} ${totals.carbs}g`}
+                                  </Typography>
+                                </Box>
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => {
+                                    appendItems([singleProposal]);
+                                    setSingleProposal(null);
+                                  }}
+                                  disabled={isSubmitting}
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    ml: 0.5,
+                                    border: "1px solid",
+                                    borderColor: "rgba(16,185,129,0.28)",
+                                    backgroundColor: "rgba(16,185,129,0.08)"
+                                  }}
+                                >
+                                  {isSubmitting ? <CircularProgress size={16} /> : <AddRoundedIcon sx={{ fontSize: 18 }} />}
+                                </IconButton>
+                              </Stack>
+                            );
+                          })()}
+                        </Box>
+                      ) : null}
+
+                      {batchItems.length > 0 ? (
+                        <Stack spacing={1.25}>
+                          <Typography fontWeight={700}>{t("mealPlan.ai.componentsTitle")}</Typography>
+                          <Stack spacing={1}>
+                            {batchItems.map((entry, index) => {
+                              const totals = getProposalTotals(entry);
+
+                              return (
+                                <Box
+                                  key={`${entry.name}-${index}`}
+                                  sx={{
+                                    px: 1.25,
+                                    py: 1,
+                                    borderRadius: 1.25,
+                                    border: "1px solid",
+                                    borderColor: "rgba(16,185,129,0.16)",
+                                    background: (theme) =>
+                                      theme.palette.mode === "dark"
+                                        ? "linear-gradient(180deg, rgba(25,32,46,0.96), rgba(18,24,37,0.96))"
+                                        : "linear-gradient(180deg, rgba(250,252,255,0.98), rgba(255,255,255,0.98))"
+                                  }}
+                                >
+                                  <Stack direction="row" spacing={1.25} alignItems="center">
+                                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                                      <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="center">
+                                        <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
+                                          {entry.name}
+                                        </Typography>
+                                        <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                          {`${Math.round(entry.amount)} ${entry.unit}`}
+                                        </Typography>
+                                      </Stack>
+                                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
+                                        {`${totals.calories} kcal · ${t("mealPlan.macro.protein")} ${totals.protein}g · ${t("mealPlan.macro.fat")} ${totals.fat}g · ${t("mealPlan.macro.carbs")} ${totals.carbs}g`}
+                                      </Typography>
+                                    </Box>
+                                    {accessMode === "limited" ? (
+                                      <IconButton
+                                        color="primary"
+                                        onClick={() => {
+                                          appendItems([entry]);
+                                          setBatchItems((current) => current.filter((_, currentIndex) => currentIndex !== index));
+                                        }}
+                                        disabled={isSubmitting}
+                                        sx={{
+                                          width: 30,
+                                          height: 30,
+                                          ml: 0.5,
+                                          border: "1px solid",
+                                          borderColor: "rgba(16,185,129,0.24)",
+                                          backgroundColor: "rgba(16,185,129,0.08)"
+                                        }}
+                                      >
+                                        {isSubmitting ? <CircularProgress size={15} /> : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                                      </IconButton>
+                                    ) : null}
+                                  </Stack>
+                                </Box>
+                              );
+                            })}
+                          </Stack>
+                          {accessMode === "limited" ? (
+                            <Box>
+                              <Button
+                                variant="contained"
+                                onClick={() => submitBatch(batchItems)}
+                                disabled={isSubmitting || batchItems.length === 0}
+                                size="small"
+                                sx={{
+                                  px: 1.4,
+                                  py: 0.75,
+                                  borderRadius: 1.25,
+                                  textTransform: "none",
+                                  boxShadow: "none"
+                                }}
+                              >
+                                {t("mealPlan.ai.applyMultiple", { count: batchItems.length, section: sectionTitle })}
+                              </Button>
+                            </Box>
+                          ) : null}
+                        </Stack>
+                      ) : null}
                     </Stack>
                   )}
                 />

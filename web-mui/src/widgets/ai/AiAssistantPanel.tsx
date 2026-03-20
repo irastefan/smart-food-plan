@@ -30,6 +30,7 @@ type AiAssistantPanelProps<TExtra = void> = {
   }) => Promise<{ appendedMessages: AgentMessage[]; extra?: TExtra }>;
   onExtraResult?: (extra: TExtra | undefined) => void;
   renderTop?: (props: AiAssistantPanelRenderProps) => ReactNode;
+  renderBottom?: (props: AiAssistantPanelRenderProps) => ReactNode;
 };
 
 export function AiAssistantPanel<TExtra = void>({
@@ -42,7 +43,8 @@ export function AiAssistantPanel<TExtra = void>({
   onMissingApiKeyAction,
   onRun,
   onExtraResult,
-  renderTop
+  renderTop,
+  renderBottom
 }: AiAssistantPanelProps<TExtra>) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -127,6 +129,7 @@ export function AiAssistantPanel<TExtra = void>({
         >
           <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
         </Box>
+        {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
         <AiAgentComposer
           isSubmitting={isSubmitting}
           placeholder={placeholder}

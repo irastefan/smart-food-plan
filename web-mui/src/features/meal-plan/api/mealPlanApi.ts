@@ -173,6 +173,45 @@ function normalizeProductAmountAndUnit(
   return { amount: safeAmount, unit: "g" };
 }
 
+function normalizeManualItemPayload(item: {
+  name: string;
+  amount: number;
+  unit: string;
+  kcal100: number;
+  protein100: number;
+  fat100: number;
+  carbs100: number;
+}) {
+  const rawUnit = (item.unit ?? "").trim().toLowerCase();
+  const safeAmount = Number.isFinite(item.amount) && item.amount > 0 ? item.amount : 100;
+
+  if (rawUnit === "" || rawUnit === "g" || rawUnit === "gr" || rawUnit === "gram" || rawUnit === "grams") {
+    return {
+      ...item,
+      amount: safeAmount,
+      unit: "g"
+    };
+  }
+
+  if (rawUnit === "ml") {
+    return {
+      ...item,
+      amount: safeAmount,
+      unit: "ml"
+    };
+  }
+
+  return {
+    ...item,
+    amount: 100,
+    unit: "g",
+    kcal100: item.kcal100 * safeAmount,
+    protein100: item.protein100 * safeAmount,
+    fat100: item.fat100 * safeAmount,
+    carbs100: item.carbs100 * safeAmount
+  };
+}
+
 function sectionToSlot(sectionId: string): string {
   const normalized = sectionId.toLowerCase();
   if (normalized === "breakfast") return "BREAKFAST";
@@ -247,20 +286,57 @@ export async function addManualItemToMealPlan(
     carbs100: number;
   }
 ): Promise<MealPlanDay> {
+  const normalized = normalizeManualItemPayload(item);
+
   await apiRequest("/v1/meal-plans/day/entries", {
     method: "POST",
     body: JSON.stringify({
       date,
       slot: sectionToSlot(sectionId),
-      name: item.name,
-      amount: item.amount,
-      unit: item.unit,
-      kcal100: item.kcal100,
-      protein100: item.protein100,
-      fat100: item.fat100,
-      carbs100: item.carbs100
+      name: normalized.name,
+      amount: normalized.amount,
+      unit: normalized.unit,
+      kcal100: normalized.kcal100,
+      protein100: normalized.protein100,
+      fat100: normalized.fat100,
+      carbs100: normalized.carbs100
     })
   });
+
+  return getMealPlanDay(date);
+}
+
+export async function addManualItemsToMealPlan(
+  date: string,
+  sectionId: string,
+  items: Array<{
+    name: string;
+    amount: number;
+    unit: string;
+    kcal100: number;
+    protein100: number;
+    fat100: number;
+    carbs100: number;
+  }>
+): Promise<MealPlanDay> {
+  for (const item of items) {
+    const normalized = normalizeManualItemPayload(item);
+
+    await apiRequest("/v1/meal-plans/day/entries", {
+      method: "POST",
+      body: JSON.stringify({
+        date,
+        slot: sectionToSlot(sectionId),
+        name: normalized.name,
+        amount: normalized.amount,
+        unit: normalized.unit,
+        kcal100: normalized.kcal100,
+        protein100: normalized.protein100,
+        fat100: normalized.fat100,
+        carbs100: normalized.carbs100
+      })
+    });
+  }
 
   return getMealPlanDay(date);
 }
@@ -310,7 +386,7 @@ export async function updateMealPlanItem(
         date,
         slot: sectionToSlot(sectionId),
         ...(item.isManual
-          ? {
+          ? normalizeManualItemPayload({
               name: item.title,
               amount: updates.quantity ?? item.amount ?? 100,
               unit: updates.unit ?? item.unit ?? "g",
@@ -318,7 +394,7 @@ export async function updateMealPlanItem(
               protein100: item.nutritionPer100?.proteinG ?? 0,
               fat100: item.nutritionPer100?.fatG ?? 0,
               carbs100: item.nutritionPer100?.carbsG ?? 0
-            }
+            })
           : {
               productId: item.productId,
               amount: updates.quantity ?? item.amount ?? 100,
@@ -420,13 +496,15 @@ export async function copyMealPlanSectionToDate(section: MealPlanSection, target
       body: JSON.stringify({
         date: targetDate,
         slot: sectionToSlot(section.id),
-        name: item.title,
-        amount: item.type === "recipe" ? 1 : item.amount ?? 100,
-        unit: item.type === "recipe" ? "portion" : item.unit ?? "g",
-        kcal100: Math.round(per100.caloriesKcal),
-        protein100: Math.round(per100.proteinG),
-        fat100: Math.round(per100.fatG),
-        carbs100: Math.round(per100.carbsG)
+        ...normalizeManualItemPayload({
+          name: item.title,
+          amount: item.type === "recipe" ? 1 : item.amount ?? 100,
+          unit: item.type === "recipe" ? "portion" : item.unit ?? "g",
+          kcal100: Math.round(per100.caloriesKcal),
+          protein100: Math.round(per100.proteinG),
+          fat100: Math.round(per100.fatG),
+          carbs100: Math.round(per100.carbsG)
+        })
       })
     });
   }

@@ -16,6 +16,7 @@ export type MealPlanAssistantProposal = {
 export type MealPlanAssistantResult = {
   assistantMessage: AgentMessage;
   proposal: MealPlanAssistantProposal | null;
+  items: MealPlanAssistantProposal[];
   needsConfirmation: boolean;
 };
 
@@ -27,8 +28,13 @@ function roundToWhole(value: number): number {
   return Math.round(value);
 }
 
+function isPerItemUnit(unit: string): boolean {
+  const normalized = unit.trim().toLowerCase();
+  return normalized !== "" && normalized !== "g" && normalized !== "gr" && normalized !== "gram" && normalized !== "grams" && normalized !== "ml";
+}
+
 function buildPortionNutritionLine(message: string, proposal: MealPlanAssistantProposal): string {
-  const factor = proposal.amount / 100;
+  const factor = isPerItemUnit(proposal.unit) ? proposal.amount : proposal.amount / 100;
   const calories = roundToWhole(proposal.kcal100 * factor);
   const protein = roundToWhole(proposal.protein100 * factor);
   const fat = roundToWhole(proposal.fat100 * factor);
@@ -84,6 +90,16 @@ function sanitizeProposal(value: unknown): MealPlanAssistantProposal | null {
     fat100: Math.max(0, toNumber(source.fat100)),
     carbs100: Math.max(0, toNumber(source.carbs100))
   };
+}
+
+function sanitizeProposalList(value: unknown): MealPlanAssistantProposal[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => sanitizeProposal(entry))
+    .filter((entry): entry is MealPlanAssistantProposal => Boolean(entry));
 }
 
 function enrichMessageWithNutrition(message: string, proposal: MealPlanAssistantProposal | null): string {
@@ -142,9 +158,11 @@ export async function runMealPlanAssistant(input: {
     message?: unknown;
     needsConfirmation?: unknown;
     proposal?: unknown;
+    items?: unknown;
   };
 
   const proposal = sanitizeProposal(parsed.proposal);
+  const items = proposal ? [] : sanitizeProposalList(parsed.items);
   const messageBase = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
   const message = enrichMessageWithNutrition(messageBase, proposal);
   const needsConfirmation = typeof parsed.needsConfirmation === "boolean"
@@ -157,6 +175,7 @@ export async function runMealPlanAssistant(input: {
       text: message
     },
     proposal,
+    items,
     needsConfirmation
   };
 }
