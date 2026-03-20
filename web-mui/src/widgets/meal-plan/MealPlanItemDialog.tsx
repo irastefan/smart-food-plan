@@ -61,8 +61,19 @@ type MealPlanItemDialogProps = {
 
 type DialogTab = "ai" | "product" | "recipe" | "manual";
 
+function normalizeUnitKey(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (normalized === "g" || normalized === "gr" || normalized === "gram" || normalized === "grams" || normalized === "г" || normalized === "гр") {
+    return "g";
+  }
+  if (normalized === "ml" || normalized === "мл") {
+    return "ml";
+  }
+  return normalized;
+}
+
 function getProposalTotals(proposal: MealPlanAssistantProposal) {
-  const normalizedUnit = proposal.unit.trim().toLowerCase();
+  const normalizedUnit = normalizeUnitKey(proposal.unit);
   const factor =
     normalizedUnit !== "" && normalizedUnit !== "g" && normalizedUnit !== "gr" && normalizedUnit !== "gram" && normalizedUnit !== "grams" && normalizedUnit !== "ml"
       ? proposal.amount

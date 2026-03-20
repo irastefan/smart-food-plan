@@ -165,8 +165,12 @@ function normalizeProductAmountAndUnit(
 ): { amount: number; unit: string } {
   const safeAmount = Number.isFinite(amount) && (amount as number) > 0 ? (amount as number) : 100;
   const rawUnit = (unit ?? "").trim().toLowerCase();
+  const normalizedUnit =
+    rawUnit === "г" || rawUnit === "гр" ? "g"
+      : rawUnit === "мл" ? "ml"
+      : rawUnit;
 
-  if (rawUnit === "" || rawUnit === "g" || rawUnit === "gr" || rawUnit === "gram" || rawUnit === "grams") {
+  if (normalizedUnit === "" || normalizedUnit === "g" || normalizedUnit === "gr" || normalizedUnit === "gram" || normalizedUnit === "grams") {
     return { amount: safeAmount, unit: "g" };
   }
 
@@ -183,9 +187,13 @@ function normalizeManualItemPayload(item: {
   carbs100: number;
 }) {
   const rawUnit = (item.unit ?? "").trim().toLowerCase();
+  const normalizedUnit =
+    rawUnit === "г" || rawUnit === "гр" ? "g"
+      : rawUnit === "мл" ? "ml"
+      : rawUnit;
   const safeAmount = Number.isFinite(item.amount) && item.amount > 0 ? item.amount : 100;
 
-  if (rawUnit === "" || rawUnit === "g" || rawUnit === "gr" || rawUnit === "gram" || rawUnit === "grams") {
+  if (normalizedUnit === "" || normalizedUnit === "g" || normalizedUnit === "gr" || normalizedUnit === "gram" || normalizedUnit === "grams") {
     return {
       ...item,
       amount: safeAmount,
@@ -193,7 +201,7 @@ function normalizeManualItemPayload(item: {
     };
   }
 
-  if (rawUnit === "ml") {
+  if (normalizedUnit === "ml") {
     return {
       ...item,
       amount: safeAmount,

@@ -28,8 +28,19 @@ function roundToWhole(value: number): number {
   return Math.round(value);
 }
 
-function isPerItemUnit(unit: string): boolean {
+function normalizeUnitKey(unit: string): string {
   const normalized = unit.trim().toLowerCase();
+  if (normalized === "g" || normalized === "gr" || normalized === "gram" || normalized === "grams" || normalized === "г" || normalized === "гр") {
+    return "g";
+  }
+  if (normalized === "ml" || normalized === "мл") {
+    return "ml";
+  }
+  return normalized;
+}
+
+function isPerItemUnit(unit: string): boolean {
+  const normalized = normalizeUnitKey(unit);
   return normalized !== "" && normalized !== "g" && normalized !== "gr" && normalized !== "gram" && normalized !== "grams" && normalized !== "ml";
 }
 
