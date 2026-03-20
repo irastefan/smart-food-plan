@@ -9,3 +9,4 @@ export function getApiBaseUrl(): string {
 
   return raw ? raw.replace(/\/$/, "") : fallback;
 }
+

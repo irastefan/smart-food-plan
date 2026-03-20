@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from "react";
 import type { Language, TranslationKey } from "../../shared/i18n/messages";
 import { messages } from "../../shared/i18n/messages";
 
@@ -31,7 +31,7 @@ export function LanguageProvider({ children }: PropsWithChildren) {
     }
   }
 
-  function t(key: TranslationKey, params?: Record<string, string | number>): string {
+  const t = useCallback((key: TranslationKey, params?: Record<string, string | number>): string => {
     const template: string = messages[language][key] ?? messages.en[key] ?? key;
     if (!params) {
       return template;
@@ -41,9 +41,11 @@ export function LanguageProvider({ children }: PropsWithChildren) {
       (result, [paramKey, value]) => result.replace(`{{${paramKey}}}`, String(value)),
       template
     );
-  }
+  }, [language]);
 
-  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
+  const contextValue = useMemo(() => ({ language, setLanguage, t }), [language, t]);
+
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage(): LanguageContextValue {

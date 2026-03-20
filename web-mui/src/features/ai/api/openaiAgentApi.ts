@@ -1,4 +1,5 @@
 import { callMcpTool, type McpTool } from "./mcpApi";
+import { buildAgentSystemPrompt } from "../model/agentSystemPrompt";
 
 export type AgentMessage = {
   id: string;
@@ -110,13 +111,7 @@ export async function runAgentTurn(input: {
     Authorization: `Bearer ${input.apiKey}`
   };
 
-  const systemPrompt = [
-    "You are SmartFood AI inside a nutrition planning app.",
-    "Use tools whenever they can provide concrete backend data or complete an action.",
-    "When you call a tool, be precise with arguments and avoid guessing IDs.",
-    "Keep final answers concise and actionable.",
-    input.userInstructions?.trim() ? `Additional user instructions: ${input.userInstructions.trim()}` : ""
-  ].join(" ");
+  const systemPrompt = buildAgentSystemPrompt(input.userInstructions);
 
   const baseInput = [
     { role: "system", content: systemPrompt },
@@ -136,11 +131,12 @@ export async function runAgentTurn(input: {
     }
   ];
   const toolMessages: AgentMessage[] = [];
+  const seenToolCalls = new Set<string>();
   let previousResponseId: string | undefined;
   let currentInput: unknown = baseInput;
   let latestPayload: OpenAiResponse | null = null;
 
-  for (let step = 0; step < 5; step += 1) {
+  for (let step = 0; step < 3; step += 1) {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers,
@@ -149,7 +145,7 @@ export async function runAgentTurn(input: {
         input: currentInput,
         previous_response_id: previousResponseId,
         tools: openAiTools,
-        reasoning: { effort: "medium" }
+        reasoning: { effort: "low" }
       })
     });
 
@@ -174,8 +170,19 @@ export async function runAgentTurn(input: {
       }
 
       const parsedArgs = call.arguments ? (JSON.parse(call.arguments) as Record<string, unknown>) : {};
-      const result = await callMcpTool(tool.name, parsedArgs);
-      const output = JSON.stringify(result, null, 2);
+      const callSignature = JSON.stringify({ name: tool.name, args: parsedArgs });
+      let output: string;
+
+      if (seenToolCalls.has(callSignature)) {
+        output = JSON.stringify({
+          skipped: true,
+          reason: "Duplicate tool call blocked to prevent loops."
+        }, null, 2);
+      } else {
+        seenToolCalls.add(callSignature);
+        const result = await callMcpTool(tool.name, parsedArgs);
+        output = JSON.stringify(result, null, 2);
+      }
 
       toolMessages.push({
         id: crypto.randomUUID(),
@@ -189,6 +196,10 @@ export async function runAgentTurn(input: {
         call_id: String(call.call_id),
         output
       });
+    }
+
+    if (toolOutputs.every((entry) => entry.output.includes("\"skipped\": true"))) {
+      break;
     }
 
     previousResponseId = payload.id;
