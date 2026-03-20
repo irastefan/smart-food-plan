@@ -20,10 +20,32 @@ export type MealPlanAssistantResult = {
 
 type OpenAiResponse = {
   output_text?: string;
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
   error?: {
     message?: string;
   };
 };
+
+function extractResponseText(payload: OpenAiResponse): string {
+  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
+    return payload.output_text.trim();
+  }
+
+  const outputText = (payload.output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .filter((item) => item.type === "output_text" && typeof item.text === "string")
+    .map((item) => item.text?.trim() ?? "")
+    .filter(Boolean)
+    .join("\n\n");
+
+  return outputText;
+}
 
 function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -118,7 +140,7 @@ export async function runMealPlanAssistant(input: {
     throw new Error(payload.error?.message?.trim() || "Meal plan AI request failed.");
   }
 
-  const rawText = payload.output_text?.trim() || "";
+  const rawText = extractResponseText(payload);
   const parsed = JSON.parse(extractJson(rawText)) as {
     message?: unknown;
     needsConfirmation?: unknown;
