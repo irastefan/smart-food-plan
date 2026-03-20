@@ -1,17 +1,15 @@
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Button, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Link as RouterLink, useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../features/ai/api/mcpApi";
-import { runAgentTurn, type AgentMessage } from "../features/ai/api/openaiAgentApi";
+import { runAgentTurn } from "../features/ai/api/openaiAgentApi";
 import { getAiAgentSettings } from "../shared/config/aiAgent";
-import { getOpenAiApiKey } from "../shared/config/openai";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
-import { AiAgentComposer } from "../widgets/ai/AiAgentComposer";
-import { AiAgentConversation } from "../widgets/ai/AiAgentConversation";
+import { AiAssistantPanel } from "../widgets/ai/AiAssistantPanel";
 
 type LayoutContext = {
   openSidebar: () => void;
@@ -22,11 +20,8 @@ export function AiAgentPage() {
   const { t } = useLanguage();
   const { openSidebar } = useOutletContext<LayoutContext>();
   const [tools, setTools] = useState<McpTool[]>([]);
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
+  const [status, setStatus] = useState<{ type: "error"; message: string } | null>(null);
   const [agentSettings, setAgentSettings] = useState(getAiAgentSettings());
   const quickPrompts = [
     t("aiAgent.prompt.analyzeDay"),
@@ -66,67 +61,12 @@ export function AiAgentPage() {
     };
   }, [t]);
 
-  async function handleSend(payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) {
-    const apiKey = getOpenAiApiKey();
-    if (!apiKey) {
-      setStatus({ type: "info", message: t("aiAgent.status.missingApiKey") });
-      return;
-    }
-
-    const normalizedText = payload.text.trim();
-    const messageText =
-      normalizedText.length > 0
-        ? payload.images.length > 0
-          ? `${normalizedText}\n\n[${t("aiAgent.imagesAttached", { count: payload.images.length })}]`
-          : normalizedText
-        : `[${t("aiAgent.imagesAttached", { count: payload.images.length })}]`;
-
-    const userMessage: AgentMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: messageText
-    };
-
-    const nextHistory = [...messages, userMessage];
-    setMessages(nextHistory);
-
-    try {
-      setIsSubmitting(true);
-      setStatus(null);
-      const result = await runAgentTurn({
-        apiKey,
-        tools,
-        history: messages,
-        userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
-        images: payload.images,
-        model: agentSettings.model,
-        userInstructions: agentSettings.userInstructions
-      });
-      setMessages([...nextHistory, ...result.toolMessages, result.assistantMessage]);
-    } catch (error) {
-      console.error("Failed to run AI agent", error);
-      setStatus({
-        type: "error",
-        message: error instanceof Error && error.message.trim().length > 0 ? error.message : t("aiAgent.status.runError")
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  function handleQuickPrompt(prompt: string) {
-    setDraft(prompt);
-  }
-
   return (
     <Stack spacing={3}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("aiAgent.title")} subtitle={t("aiAgent.subtitle")} />
 
       {status ? (
-        <Alert
-          severity={status.type}
-          action={status.type === "info" ? <Button component={RouterLink} to="/settings">{t("aiAgent.openSettings")}</Button> : undefined}
-        >
+        <Alert severity={status.type}>
           {status.message}
         </Alert>
       ) : null}
@@ -212,45 +152,61 @@ export function AiAgentPage() {
                 </Stack>
               </AccordionDetails>
             </Accordion>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                overflowX: "auto",
-                overflowY: "hidden",
-                flexWrap: "nowrap",
-                pb: 0.5,
-                scrollSnapType: "x proximity",
-                WebkitOverflowScrolling: "touch",
-                "&::-webkit-scrollbar": {
-                  display: "none"
-                },
-                scrollbarWidth: "none"
-              }}
-            >
-              {quickPrompts.map((prompt) => (
-                <Chip
-                  key={prompt}
-                  label={prompt}
-                  variant="outlined"
-                  clickable
-                  onClick={() => handleQuickPrompt(prompt)}
-                  sx={{ height: 32, flexShrink: 0, scrollSnapAlign: "start" }}
-                />
-              ))}
-            </Stack>
-            <AiAgentConversation
-              messages={agentSettings.showToolOutput ? messages : messages.filter((message) => message.role !== "tool")}
-              isSubmitting={isSubmitting}
-            />
-            <AiAgentComposer
-              isSubmitting={isSubmitting}
+            <AiAssistantPanel
+              speechLanguage={agentSettings.speechLanguage}
+              showToolOutput={agentSettings.showToolOutput}
               placeholder={t("aiAgent.placeholder")}
               submitLabel={t("aiAgent.send")}
-              value={draft}
-              speechLanguage={agentSettings.speechLanguage}
-              onValueChange={setDraft}
-              onSubmit={handleSend}
+              missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
+              missingApiKeyActionLabel={t("aiAgent.openSettings")}
+              onMissingApiKeyAction={() => {
+                window.location.href = "/settings";
+              }}
+              onRun={async ({ apiKey, payload, messages }) => {
+                const normalizedText = payload.text.trim();
+                const result = await runAgentTurn({
+                  apiKey,
+                  tools,
+                  history: messages,
+                  userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
+                  images: payload.images,
+                  model: agentSettings.model,
+                  userInstructions: agentSettings.userInstructions
+                });
+
+                return {
+                  appendedMessages: [...result.toolMessages, result.assistantMessage]
+                };
+              }}
+              renderTop={({ setDraft }) => (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                    flexWrap: "nowrap",
+                    pb: 0.5,
+                    scrollSnapType: "x proximity",
+                    WebkitOverflowScrolling: "touch",
+                    "&::-webkit-scrollbar": {
+                      display: "none"
+                    },
+                    scrollbarWidth: "none"
+                  }}
+                >
+                  {quickPrompts.map((prompt) => (
+                    <Chip
+                      key={prompt}
+                      label={prompt}
+                      variant="outlined"
+                      clickable
+                      onClick={() => setDraft(prompt)}
+                      sx={{ height: 32, flexShrink: 0, scrollSnapAlign: "start" }}
+                    />
+                  ))}
+                </Stack>
+              )}
             />
           </Stack>
         </Paper>

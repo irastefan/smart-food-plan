@@ -23,11 +23,8 @@ import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import type { MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
-import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
-import { getOpenAiApiKey } from "../../shared/config/openai";
-import { AiAgentComposer } from "../ai/AiAgentComposer";
-import { AiAgentConversation } from "../ai/AiAgentConversation";
+import { AiAssistantPanel } from "../ai/AiAssistantPanel";
 
 type MealPlanItemDialogProps = {
   open: boolean;
@@ -82,10 +79,6 @@ export function MealPlanItemDialog({
   const agentSettings = getAiAgentSettings();
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [accessMode, setAccessMode] = useState(agentSettings.accessMode);
-  const [aiMessages, setAiMessages] = useState<AgentMessage[]>([]);
-  const [aiDraft, setAiDraft] = useState("");
-  const [aiSubmitting, setAiSubmitting] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<MealPlanAssistantProposal | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
@@ -106,9 +99,6 @@ export function MealPlanItemDialog({
 
     setActiveTab(mode === "edit" ? (item?.isManual ? "manual" : item?.type ?? initialItemType) : "ai");
     setAccessMode(getAiAgentSettings().accessMode);
-    setAiMessages([]);
-    setAiDraft("");
-    setAiError(null);
     setProposal(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
@@ -162,71 +152,6 @@ export function MealPlanItemDialog({
     });
   }
 
-  async function handleAiSubmit(payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) {
-    const apiKey = getOpenAiApiKey();
-    if (!apiKey) {
-      setAiError(t("aiAgent.status.missingApiKey"));
-      return;
-    }
-
-    const normalizedText = payload.text.trim();
-    const userText =
-      normalizedText.length > 0
-        ? normalizedText
-        : payload.images.length > 0
-          ? t("aiAgent.imageOnlyPrompt")
-          : "";
-
-    if (!userText) {
-      return;
-    }
-
-    const userMessage: AgentMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      text: userText
-    };
-
-    setAiMessages((current) => [...current, userMessage]);
-
-    try {
-      setAiSubmitting(true);
-      setAiError(null);
-      const result = await runMealPlanAssistant({
-        apiKey,
-        model: agentSettings.model,
-        sectionTitle,
-        existingItems,
-        accessMode,
-        userText,
-        images: payload.images,
-        userInstructions: agentSettings.userInstructions
-      });
-
-      setAiMessages((current) => [...current, result.assistantMessage]);
-      setProposal(result.proposal);
-
-      if (result.proposal) {
-        setManualName(result.proposal.name);
-        setQuantity(result.proposal.amount);
-        setManualUnit(result.proposal.unit);
-        setManualKcal100(result.proposal.kcal100);
-        setManualProtein100(result.proposal.protein100);
-        setManualFat100(result.proposal.fat100);
-        setManualCarbs100(result.proposal.carbs100);
-      }
-
-      if (result.proposal && !result.needsConfirmation && accessMode === "full") {
-        submitManual(result.proposal);
-      }
-    } catch (error) {
-      console.error("Failed to run meal plan assistant", error);
-      setAiError(error instanceof Error && error.message.trim() ? error.message : t("aiAgent.status.runError"));
-    } finally {
-      setAiSubmitting(false);
-    }
-  }
-
   const title = mode === "add" ? t("mealPlan.dialog.addTitle", { section: sectionTitle }) : t("mealPlan.dialog.editTitle", { section: sectionTitle });
 
   return (
@@ -268,58 +193,99 @@ export function MealPlanItemDialog({
           <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2.5 }}>
             {activeTab === "ai" ? (
               <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto" }}>
-                <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-                  <Stack spacing={0.5}>
-                    <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
-                    <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexShrink: 0 }}>
-                    <Typography variant="body2" color="text.secondary">{t("mealPlan.ai.accessMode")}</Typography>
-                    <Typography variant="body2" color={accessMode === "limited" ? "text.primary" : "text.secondary"}>
-                      {t("mealPlan.ai.mode.limited")}
-                    </Typography>
-                    <Switch
-                      checked={accessMode === "full"}
-                      onChange={(event) => setAccessMode(event.target.checked ? "full" : "limited")}
-                    />
-                    <Typography variant="body2" color={accessMode === "full" ? "text.primary" : "text.secondary"}>
-                      {t("mealPlan.ai.mode.full")}
-                    </Typography>
-                  </Stack>
-                </Stack>
-
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-                {aiError ? <Alert severity="error">{aiError}</Alert> : null}
-
-                {proposal ? (
-                  <Alert
-                    severity="success"
-                    action={
-                      <Button color="inherit" size="small" onClick={() => submitManual(proposal)} disabled={isSubmitting}>
-                        {t("mealPlan.ai.apply", { section: sectionTitle })}
-                      </Button>
-                    }
-                  >
-                    <Stack spacing={0.35}>
-                      <Typography fontWeight={700}>{t("mealPlan.ai.ready")}</Typography>
-                      <Typography variant="body2">
-                        {`${proposal.name} · ${formatWhole(proposal.amount)} ${proposal.unit} · ${formatWhole(proposal.kcal100)} kcal/100 · P ${formatWhole(proposal.protein100)}g · F ${formatWhole(proposal.fat100)}g · C ${formatWhole(proposal.carbs100)}g`}
-                      </Typography>
-                    </Stack>
-                  </Alert>
-                ) : (
-                  <Alert severity="info">{t("mealPlan.ai.empty")}</Alert>
-                )}
-
-                <AiAgentConversation messages={aiMessages} isSubmitting={aiSubmitting} />
-                <AiAgentComposer
-                  isSubmitting={aiSubmitting || isSubmitting}
+                <AiAssistantPanel
+                  speechLanguage={agentSettings.speechLanguage}
+                  showToolOutput={false}
                   placeholder={t("aiAgent.placeholder")}
                   submitLabel={t("aiAgent.send")}
-                  value={aiDraft}
-                  speechLanguage={agentSettings.speechLanguage}
-                  onValueChange={setAiDraft}
-                  onSubmit={handleAiSubmit}
+                  missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
+                  onRun={async ({ apiKey, payload }) => {
+                    const normalizedText = payload.text.trim();
+                    const userText =
+                      normalizedText.length > 0
+                        ? normalizedText
+                        : payload.images.length > 0
+                          ? t("aiAgent.imageOnlyPrompt")
+                          : "";
+
+                    const result = await runMealPlanAssistant({
+                      apiKey,
+                      model: agentSettings.model,
+                      sectionTitle,
+                      existingItems,
+                      accessMode,
+                      userText,
+                      images: payload.images,
+                      userInstructions: agentSettings.userInstructions
+                    });
+
+                    return {
+                      appendedMessages: [result.assistantMessage],
+                      extra: result
+                    };
+                  }}
+                  onExtraResult={(result) => {
+                    const nextProposal = result?.proposal ?? null;
+                    setProposal(nextProposal);
+
+                    if (nextProposal) {
+                      setManualName(nextProposal.name);
+                      setQuantity(nextProposal.amount);
+                      setManualUnit(nextProposal.unit);
+                      setManualKcal100(nextProposal.kcal100);
+                      setManualProtein100(nextProposal.protein100);
+                      setManualFat100(nextProposal.fat100);
+                      setManualCarbs100(nextProposal.carbs100);
+                    }
+
+                    if (result?.proposal && !result.needsConfirmation && accessMode === "full") {
+                      submitManual(result.proposal);
+                    }
+                  }}
+                  renderTop={() => (
+                    <Stack spacing={2.5}>
+                      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
+                        <Stack spacing={0.5}>
+                          <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
+                          <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexShrink: 0 }}>
+                          <Typography variant="body2" color="text.secondary">{t("mealPlan.ai.accessMode")}</Typography>
+                          <Typography variant="body2" color={accessMode === "limited" ? "text.primary" : "text.secondary"}>
+                            {t("mealPlan.ai.mode.limited")}
+                          </Typography>
+                          <Switch
+                            checked={accessMode === "full"}
+                            onChange={(event) => setAccessMode(event.target.checked ? "full" : "limited")}
+                          />
+                          <Typography variant="body2" color={accessMode === "full" ? "text.primary" : "text.secondary"}>
+                            {t("mealPlan.ai.mode.full")}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+
+                      {proposal ? (
+                        <Alert
+                          severity="success"
+                          action={
+                            <Button color="inherit" size="small" onClick={() => submitManual(proposal)} disabled={isSubmitting}>
+                              {t("mealPlan.ai.apply", { section: sectionTitle })}
+                            </Button>
+                          }
+                        >
+                          <Stack spacing={0.35}>
+                            <Typography fontWeight={700}>{t("mealPlan.ai.ready")}</Typography>
+                            <Typography variant="body2">
+                              {`${proposal.name} · ${formatWhole(proposal.amount)} ${proposal.unit} · ${formatWhole(proposal.kcal100)} kcal/100 · P ${formatWhole(proposal.protein100)}g · F ${formatWhole(proposal.fat100)}g · C ${formatWhole(proposal.carbs100)}g`}
+                            </Typography>
+                          </Stack>
+                        </Alert>
+                      ) : (
+                        <Alert severity="info">{t("mealPlan.ai.empty")}</Alert>
+                      )}
+                    </Stack>
+                  )}
                 />
               </Stack>
             ) : null}
