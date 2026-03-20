@@ -377,6 +377,8 @@ export function MealPlanDashboardPage() {
         onClose={() => {
           setDialogState(null);
           setMutationError(null);
+        }}
+        onDataChanged={() => {
           void refresh();
         }}
         onSubmit={handleSubmitDialog}

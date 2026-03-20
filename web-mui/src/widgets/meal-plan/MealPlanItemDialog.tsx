@@ -1,13 +1,14 @@
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import {
   Alert,
   Autocomplete,
   Box,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Stack,
   Switch,
   Tab,
@@ -38,6 +39,7 @@ type MealPlanItemDialogProps = {
   isSubmitting: boolean;
   errorMessage: string | null;
   onClose: () => void;
+  onDataChanged?: () => void;
   onSubmit: (payload: {
     type: "product" | "recipe" | "manual";
     product?: ProductSummary;
@@ -92,6 +94,7 @@ export function MealPlanItemDialog({
   isSubmitting,
   errorMessage,
   onClose,
+  onDataChanged,
   onSubmit
 }: MealPlanItemDialogProps) {
   const { t } = useLanguage();
@@ -100,7 +103,6 @@ export function MealPlanItemDialog({
   const agentSettings = getAiAgentSettings();
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [accessMode, setAccessMode] = useState(agentSettings.accessMode);
-  const [proposal, setProposal] = useState<MealPlanAssistantProposal | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
@@ -121,7 +123,6 @@ export function MealPlanItemDialog({
 
     setActiveTab(mode === "edit" ? (item?.isManual ? "manual" : item?.type ?? initialItemType) : "ai");
     setAccessMode(getAiAgentSettings().accessMode);
-    setProposal(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
@@ -197,7 +198,16 @@ export function MealPlanItemDialog({
             }
       }}
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={{ pr: 2 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <IconButton onClick={onClose} edge="start" size="small">
+            <ArrowBackRoundedIcon />
+          </IconButton>
+          <Typography component="span" variant="h6" fontWeight={800}>
+            {title}
+          </Typography>
+        </Stack>
+      </DialogTitle>
       <DialogContent sx={{ px: { xs: 0, md: 2 }, pb: 0 }}>
         <Stack sx={{ height: "100%" }}>
           <Tabs
@@ -251,7 +261,6 @@ export function MealPlanItemDialog({
                   }}
                   onExtraResult={(result) => {
                     const nextProposal = result?.proposal ?? null;
-                    setProposal(nextProposal);
 
                     if (nextProposal) {
                       setManualName(nextProposal.name);
@@ -261,10 +270,15 @@ export function MealPlanItemDialog({
                       setManualProtein100(nextProposal.protein100);
                       setManualFat100(nextProposal.fat100);
                       setManualCarbs100(nextProposal.carbs100);
+
+                      if (result?.needsConfirmation) {
+                        setActiveTab("manual");
+                      }
                     }
 
                     if (result?.proposal && !result.needsConfirmation && accessMode === "full") {
                       submitManual(result.proposal);
+                      onDataChanged?.();
                     }
                   }}
                   renderTop={() => (
@@ -312,6 +326,11 @@ export function MealPlanItemDialog({
                   value={quantity}
                   onChange={(event) => setQuantity(Math.max(0.1, Number(event.target.value) || 0.1))}
                 />
+                <Box>
+                  <Button onClick={submitProduct} variant="contained" disabled={isSubmitting || !selectedProduct}>
+                    {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
+                  </Button>
+                </Box>
               </Stack>
             ) : null}
 
@@ -332,6 +351,11 @@ export function MealPlanItemDialog({
                   value={servings}
                   onChange={(event) => setServings(Math.max(1, Number(event.target.value) || 1))}
                 />
+                <Box>
+                  <Button onClick={submitRecipe} variant="contained" disabled={isSubmitting || !selectedRecipe}>
+                    {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
+                  </Button>
+                </Box>
               </Stack>
             ) : null}
 
@@ -358,34 +382,16 @@ export function MealPlanItemDialog({
                   <TextField label={t("recipe.form.fatPer100")} type="number" value={manualFat100} onChange={(event) => setManualFat100(Number(event.target.value) || 0)} fullWidth />
                   <TextField label={t("recipe.form.carbsPer100")} type="number" value={manualCarbs100} onChange={(event) => setManualCarbs100(Number(event.target.value) || 0)} fullWidth />
                 </Stack>
+                <Box>
+                  <Button onClick={() => submitManual()} variant="contained" disabled={isSubmitting || !manualName.trim()}>
+                    {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
+                  </Button>
+                </Box>
               </Stack>
             ) : null}
           </Box>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: { xs: 2, md: 3 }, py: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Button onClick={onClose}>{t("mealPlan.dialog.cancel")}</Button>
-        {activeTab === "ai" && proposal ? (
-          <Button onClick={() => submitManual(proposal)} variant="contained" disabled={isSubmitting}>
-            {t("mealPlan.ai.apply", { section: sectionTitle })}
-          </Button>
-        ) : null}
-        {activeTab === "product" ? (
-          <Button onClick={submitProduct} variant="contained" disabled={isSubmitting || !selectedProduct}>
-            {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
-          </Button>
-        ) : null}
-        {activeTab === "recipe" ? (
-          <Button onClick={submitRecipe} variant="contained" disabled={isSubmitting || !selectedRecipe}>
-            {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
-          </Button>
-        ) : null}
-        {activeTab === "manual" ? (
-          <Button onClick={() => submitManual()} variant="contained" disabled={isSubmitting || !manualName.trim()}>
-            {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
-          </Button>
-        ) : null}
-      </DialogActions>
     </Dialog>
   );
 }
