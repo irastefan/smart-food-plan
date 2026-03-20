@@ -55,8 +55,29 @@ type MealPlanItemDialogProps = {
 
 type DialogTab = "ai" | "product" | "recipe" | "manual";
 
-function formatWhole(value: number): string {
-  return String(Math.round(value));
+function inferManualNutritionPer100(item?: MealPlanItem | null) {
+  if (!item?.isManual || item.type !== "product") {
+    return { kcal100: 0, protein100: 0, fat100: 0, carbs100: 0 };
+  }
+
+  if (item.nutritionPer100) {
+    return {
+      kcal100: item.nutritionPer100.caloriesKcal ?? 0,
+      protein100: item.nutritionPer100.proteinG ?? 0,
+      fat100: item.nutritionPer100.fatG ?? 0,
+      carbs100: item.nutritionPer100.carbsG ?? 0
+    };
+  }
+
+  const amount = item.amount ?? 0;
+  const factor = amount > 0 ? 100 / amount : 0;
+
+  return {
+    kcal100: Math.round(item.nutritionTotal.caloriesKcal * factor),
+    protein100: Math.round(item.nutritionTotal.proteinG * factor),
+    fat100: Math.round(item.nutritionTotal.fatG * factor),
+    carbs100: Math.round(item.nutritionTotal.carbsG * factor)
+  };
 }
 
 export function MealPlanItemDialog({
@@ -85,12 +106,13 @@ export function MealPlanItemDialog({
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
   const [quantity, setQuantity] = useState(item?.type === "product" ? item.amount ?? 100 : 100);
   const [servings, setServings] = useState(item?.type === "recipe" ? item.servings ?? 1 : 1);
+  const initialManualNutrition = inferManualNutritionPer100(item);
   const [manualName, setManualName] = useState(item?.isManual ? item.title : "");
   const [manualUnit, setManualUnit] = useState(item?.isManual ? item.unit ?? "g" : "g");
-  const [manualKcal100, setManualKcal100] = useState(item?.isManual ? item.nutritionPer100?.caloriesKcal ?? 0 : 0);
-  const [manualProtein100, setManualProtein100] = useState(item?.isManual ? item.nutritionPer100?.proteinG ?? 0 : 0);
-  const [manualFat100, setManualFat100] = useState(item?.isManual ? item.nutritionPer100?.fatG ?? 0 : 0);
-  const [manualCarbs100, setManualCarbs100] = useState(item?.isManual ? item.nutritionPer100?.carbsG ?? 0 : 0);
+  const [manualKcal100, setManualKcal100] = useState(item?.isManual ? initialManualNutrition.kcal100 : 0);
+  const [manualProtein100, setManualProtein100] = useState(item?.isManual ? initialManualNutrition.protein100 : 0);
+  const [manualFat100, setManualFat100] = useState(item?.isManual ? initialManualNutrition.fat100 : 0);
+  const [manualCarbs100, setManualCarbs100] = useState(item?.isManual ? initialManualNutrition.carbs100 : 0);
 
   useEffect(() => {
     if (!open) {
@@ -106,10 +128,11 @@ export function MealPlanItemDialog({
     setServings(item?.type === "recipe" ? item.servings ?? 1 : 1);
     setManualName(item?.isManual ? item.title : "");
     setManualUnit(item?.isManual ? item.unit ?? "g" : "g");
-    setManualKcal100(item?.isManual ? item.nutritionPer100?.caloriesKcal ?? 0 : 0);
-    setManualProtein100(item?.isManual ? item.nutritionPer100?.proteinG ?? 0 : 0);
-    setManualFat100(item?.isManual ? item.nutritionPer100?.fatG ?? 0 : 0);
-    setManualCarbs100(item?.isManual ? item.nutritionPer100?.carbsG ?? 0 : 0);
+    const nextManualNutrition = inferManualNutritionPer100(item);
+    setManualKcal100(item?.isManual ? nextManualNutrition.kcal100 : 0);
+    setManualProtein100(item?.isManual ? nextManualNutrition.protein100 : 0);
+    setManualFat100(item?.isManual ? nextManualNutrition.fat100 : 0);
+    setManualCarbs100(item?.isManual ? nextManualNutrition.carbs100 : 0);
   }, [initialItemType, item, mode, open]);
 
   const selectedProduct = useMemo(() => products.find((entry) => entry.id === selectedProductId) ?? null, [products, selectedProductId]);
@@ -200,7 +223,7 @@ export function MealPlanItemDialog({
                   placeholder={t("aiAgent.placeholder")}
                   submitLabel={t("aiAgent.send")}
                   missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-                  onRun={async ({ apiKey, payload }) => {
+                  onRun={async ({ apiKey, payload, messages }) => {
                     const normalizedText = payload.text.trim();
                     const userText =
                       normalizedText.length > 0
@@ -212,6 +235,7 @@ export function MealPlanItemDialog({
                     const result = await runMealPlanAssistant({
                       apiKey,
                       model: agentSettings.model,
+                      history: messages,
                       sectionTitle,
                       existingItems,
                       accessMode,
@@ -265,25 +289,6 @@ export function MealPlanItemDialog({
                         </Stack>
                       </Stack>
 
-                      {proposal ? (
-                        <Alert
-                          severity="success"
-                          action={
-                            <Button color="inherit" size="small" onClick={() => submitManual(proposal)} disabled={isSubmitting}>
-                              {t("mealPlan.ai.apply", { section: sectionTitle })}
-                            </Button>
-                          }
-                        >
-                          <Stack spacing={0.35}>
-                            <Typography fontWeight={700}>{t("mealPlan.ai.ready")}</Typography>
-                            <Typography variant="body2">
-                              {`${proposal.name} · ${formatWhole(proposal.amount)} ${proposal.unit} · ${formatWhole(proposal.kcal100)} kcal/100 · P ${formatWhole(proposal.protein100)}g · F ${formatWhole(proposal.fat100)}g · C ${formatWhole(proposal.carbs100)}g`}
-                            </Typography>
-                          </Stack>
-                        </Alert>
-                      ) : (
-                        <Alert severity="info">{t("mealPlan.ai.empty")}</Alert>
-                      )}
                     </Stack>
                   )}
                 />
@@ -360,6 +365,11 @@ export function MealPlanItemDialog({
       </DialogContent>
       <DialogActions sx={{ px: { xs: 2, md: 3 }, py: 2, borderTop: "1px solid", borderColor: "divider" }}>
         <Button onClick={onClose}>{t("mealPlan.dialog.cancel")}</Button>
+        {activeTab === "ai" && proposal ? (
+          <Button onClick={() => submitManual(proposal)} variant="contained" disabled={isSubmitting}>
+            {t("mealPlan.ai.apply", { section: sectionTitle })}
+          </Button>
+        ) : null}
         {activeTab === "product" ? (
           <Button onClick={submitProduct} variant="contained" disabled={isSubmitting || !selectedProduct}>
             {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}

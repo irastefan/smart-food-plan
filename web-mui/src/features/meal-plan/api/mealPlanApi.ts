@@ -93,10 +93,10 @@ function toNumber(value: unknown): number {
 function normalizeTotals(input?: Record<string, unknown>): NutritionTotals {
   const source = input ?? {};
   return {
-    caloriesKcal: toNumber(source.caloriesKcal ?? source.calories ?? source.kcal),
-    proteinG: toNumber(source.proteinG ?? source.protein),
-    fatG: toNumber(source.fatG ?? source.fat),
-    carbsG: toNumber(source.carbsG ?? source.carbs)
+    caloriesKcal: toNumber(source.caloriesKcal ?? source.calories ?? source.kcal ?? source.kcal100),
+    proteinG: toNumber(source.proteinG ?? source.protein ?? source.protein100),
+    fatG: toNumber(source.fatG ?? source.fat ?? source.fat100),
+    carbsG: toNumber(source.carbsG ?? source.carbs ?? source.carbs100)
   };
 }
 
@@ -107,6 +107,9 @@ function slotTitle(slot: string): string {
 function mapEntry(slot: string, entry: BackendEntry): MealPlanItem {
   const type = String(entry.type ?? "").toUpperCase() === "RECIPE" || entry.recipe ? "recipe" : "product";
   const title = entry.name ?? entry.product?.name ?? entry.recipe?.title ?? entry.recipe?.name ?? "Item";
+  const isManual =
+    Boolean(entry.isManual) ||
+    (type === "product" && !entry.productId && !entry.product?.id && !entry.recipeId && !entry.recipe?.id);
   const nutritionTotal = normalizeTotals((entry.nutritionTotal ?? entry.nutrition) as Record<string, unknown> | undefined);
   const nutritionPer100 = type === "product"
     ? normalizeTotals(entry.nutritionPer100 as Record<string, unknown> | undefined)
@@ -116,7 +119,7 @@ function mapEntry(slot: string, entry: BackendEntry): MealPlanItem {
     id: entry.id ?? `${slot}-${title}`,
     slot,
     type,
-    isManual: Boolean(entry.isManual),
+    isManual,
     title,
     productId: type === "product" ? entry.productId ?? entry.product?.id ?? null : null,
     recipeId: type === "recipe" ? entry.recipeId ?? entry.recipe?.id ?? null : null,

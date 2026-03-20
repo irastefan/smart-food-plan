@@ -20,6 +20,7 @@ import {
   updateMealPlanItem
 } from "../features/meal-plan/api/mealPlanApi";
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
+import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
 import { MealPlanItemDialog } from "../widgets/meal-plan/MealPlanItemDialog";
@@ -35,7 +36,7 @@ type LayoutContext = {
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
   const { openSidebar } = useOutletContext<LayoutContext>();
-  const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage } = useMealPlanDashboard();
+  const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage, refresh } = useMealPlanDashboard();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [dialogState, setDialogState] = useState<{
@@ -49,6 +50,7 @@ export function MealPlanDashboardPage() {
   const [isMutating, setIsMutating] = useState(false);
   const [targetCalories, setTargetCalories] = useState<number>(0);
   const [targetMacros, setTargetMacros] = useState({ protein: 0, fat: 0, carbs: 0 });
+  const [pendingDelete, setPendingDelete] = useState<{ sectionId: string; item: MealPlanItem } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -216,17 +218,22 @@ export function MealPlanDashboardPage() {
     }
   }
 
-  async function handleDelete(_sectionId: string, item: MealPlanItem) {
+  async function handleDeleteConfirmed() {
+    if (!pendingDelete) {
+      return;
+    }
+
     try {
       setIsMutating(true);
       setMutationError(null);
-      const nextDay = await removeMealPlanItem(selectedDate, item);
+      const nextDay = await removeMealPlanItem(selectedDate, pendingDelete.item);
       setDay(nextDay);
     } catch (error) {
       console.error("Failed to delete meal plan item", error);
       setMutationError(t("mealPlan.dialog.deleteError"));
     } finally {
       setIsMutating(false);
+      setPendingDelete(null);
     }
   }
 
@@ -291,7 +298,7 @@ export function MealPlanDashboardPage() {
             onCreateShoppingCategory={handleCreateShoppingCategory}
             onAddItem={(sectionId, sectionTitle) => setDialogState({ mode: "add", sectionId, sectionTitle })}
             onEditItem={(sectionId, sectionTitle, item) => setDialogState({ mode: "edit", sectionId, sectionTitle, item })}
-            onDeleteItem={handleDelete}
+            onDeleteItem={(sectionId, item) => setPendingDelete({ sectionId, item })}
             onAddToShoppingItem={handleAddMealPlanItemToShopping}
           />
         </Grid>
@@ -311,8 +318,18 @@ export function MealPlanDashboardPage() {
         onClose={() => {
           setDialogState(null);
           setMutationError(null);
+          void refresh();
         }}
         onSubmit={handleSubmitDialog}
+      />
+
+      <ConfirmActionDialog
+        open={Boolean(pendingDelete)}
+        title={t("mealPlan.actions.delete")}
+        message={t("mealPlan.confirmDelete", { name: pendingDelete?.item.title ?? "" })}
+        isSubmitting={isMutating}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => void handleDeleteConfirmed()}
       />
     </Stack>
   );

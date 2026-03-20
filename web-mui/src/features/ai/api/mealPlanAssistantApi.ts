@@ -1,4 +1,5 @@
-import type { AgentImageInput, AgentMessage } from "./openaiAgentApi";
+import { listMcpTools } from "./mcpApi";
+import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiAgentApi";
 import { buildMealPlanAssistantPrompt } from "../model/mealPlanAssistantPrompt";
 import type { AiAgentSettings } from "../../../shared/config/aiAgent";
 
@@ -17,35 +18,6 @@ export type MealPlanAssistantResult = {
   proposal: MealPlanAssistantProposal | null;
   needsConfirmation: boolean;
 };
-
-type OpenAiResponse = {
-  output_text?: string;
-  output?: Array<{
-    type?: string;
-    content?: Array<{
-      type?: string;
-      text?: string;
-    }>;
-  }>;
-  error?: {
-    message?: string;
-  };
-};
-
-function extractResponseText(payload: OpenAiResponse): string {
-  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
-    return payload.output_text.trim();
-  }
-
-  const outputText = (payload.output ?? [])
-    .flatMap((item) => item.content ?? [])
-    .filter((item) => item.type === "output_text" && typeof item.text === "string")
-    .map((item) => item.text?.trim() ?? "")
-    .filter(Boolean)
-    .join("\n\n");
-
-  return outputText;
-}
 
 function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -117,6 +89,7 @@ function enrichMessageWithNutrition(message: string, proposal: MealPlanAssistant
 export async function runMealPlanAssistant(input: {
   apiKey: string;
   model: string;
+  history: AgentMessage[];
   sectionTitle: string;
   existingItems: string[];
   accessMode: AiAgentSettings["accessMode"];
@@ -124,46 +97,24 @@ export async function runMealPlanAssistant(input: {
   userInstructions?: string;
   images?: AgentImageInput[];
 }): Promise<MealPlanAssistantResult> {
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${input.apiKey}`
-    },
-    body: JSON.stringify({
-      model: input.model?.trim() || "gpt-5-mini",
-      reasoning: { effort: "low" },
-      input: [
-        {
-          role: "system",
-          content: buildMealPlanAssistantPrompt({
-            sectionTitle: input.sectionTitle,
-            existingItems: input.existingItems,
-            accessMode: input.accessMode,
-            userInstructions: input.userInstructions
-          })
-        },
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: input.userText.trim() || "Suggest a suitable item for this slot." },
-            ...(input.images ?? []).map((image) => ({
-              type: "input_image" as const,
-              image_url: image.dataUrl,
-              detail: "auto" as const
-            }))
-          ]
-        }
-      ]
+  const tools = await listMcpTools();
+  const result = await runAgentTurn({
+    apiKey: input.apiKey,
+    tools,
+    history: input.history,
+    userText: input.userText.trim() || "Suggest a suitable item for this slot.",
+    images: input.images,
+    model: input.model,
+    userInstructions: input.userInstructions,
+    systemPrompt: buildMealPlanAssistantPrompt({
+      sectionTitle: input.sectionTitle,
+      existingItems: input.existingItems,
+      accessMode: input.accessMode,
+      userInstructions: input.userInstructions
     })
   });
 
-  const payload = (await response.json()) as OpenAiResponse;
-  if (!response.ok) {
-    throw new Error(payload.error?.message?.trim() || "Meal plan AI request failed.");
-  }
-
-  const rawText = extractResponseText(payload);
+  const rawText = result.assistantMessage.text;
   const parsed = JSON.parse(extractJson(rawText)) as {
     message?: unknown;
     needsConfirmation?: unknown;
@@ -179,8 +130,7 @@ export async function runMealPlanAssistant(input: {
 
   return {
     assistantMessage: {
-      id: crypto.randomUUID(),
-      role: "assistant",
+      ...result.assistantMessage,
       text: message
     },
     proposal,
