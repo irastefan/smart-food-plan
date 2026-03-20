@@ -5,13 +5,15 @@ export type AiAgentSettings = {
   userInstructions: string;
   showToolOutput: boolean;
   speechLanguage: "interface" | "en" | "ru";
+  accessMode: "limited" | "full";
 };
 
 const defaultSettings: AiAgentSettings = {
   model: "gpt-5-mini",
   userInstructions: "",
   showToolOutput: false,
-  speechLanguage: "interface"
+  speechLanguage: "interface",
+  accessMode: "limited"
 };
 
 export function getAiAgentSettings(): AiAgentSettings {
@@ -35,7 +37,11 @@ export function getAiAgentSettings(): AiAgentSettings {
       speechLanguage:
         parsed.speechLanguage === "en" || parsed.speechLanguage === "ru" || parsed.speechLanguage === "interface"
           ? parsed.speechLanguage
-          : defaultSettings.speechLanguage
+          : defaultSettings.speechLanguage,
+      accessMode:
+        parsed.accessMode === "full" || parsed.accessMode === "limited"
+          ? parsed.accessMode
+          : defaultSettings.accessMode
     };
   } catch {
     return defaultSettings;

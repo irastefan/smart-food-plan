@@ -305,6 +305,7 @@ export function MealPlanDashboardPage() {
         item={dialogState?.item}
         recipes={recipes}
         products={products}
+        existingItems={day?.sections.find((section) => section.id === dialogState?.sectionId)?.items.map((entry) => entry.title) ?? []}
         isSubmitting={isMutating}
         errorMessage={mutationError}
         onClose={() => {
