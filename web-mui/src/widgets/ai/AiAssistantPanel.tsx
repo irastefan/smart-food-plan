@@ -1,4 +1,4 @@
-import { Alert, Button, Stack } from "@mui/material";
+import { Alert, Box, Button, Stack } from "@mui/material";
 import { useState, type ReactNode } from "react";
 import { getOpenAiApiKey } from "../../shared/config/openai";
 import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
@@ -90,7 +90,13 @@ export function AiAssistantPanel<TExtra = void>({
   }
 
   return (
-    <Stack spacing={2.5}>
+    <Stack
+      spacing={{ xs: 1, md: 1.5 }}
+      sx={{
+        flex: 1,
+        minHeight: 0
+      }}
+    >
       {status ? (
         <Alert
           severity={status.type}
@@ -104,16 +110,33 @@ export function AiAssistantPanel<TExtra = void>({
         </Alert>
       ) : null}
       {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
-      <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
-      <AiAgentComposer
-        isSubmitting={isSubmitting}
-        placeholder={placeholder}
-        submitLabel={submitLabel}
-        value={draft}
-        speechLanguage={speechLanguage}
-        onValueChange={setDraft}
-        onSubmit={handleSubmit}
-      />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            pb: { xs: 1, md: 1.25 }
+          }}
+        >
+          <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
+        </Box>
+        <AiAgentComposer
+          isSubmitting={isSubmitting}
+          placeholder={placeholder}
+          submitLabel={submitLabel}
+          value={draft}
+          speechLanguage={speechLanguage}
+          onValueChange={setDraft}
+          onSubmit={handleSubmit}
+        />
+      </Box>
     </Stack>
   );
 }

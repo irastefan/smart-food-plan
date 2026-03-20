@@ -62,7 +62,7 @@ export function AiAgentPage() {
   }, [t]);
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={{ xs: 1.5, md: 2 }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("aiAgent.title")} subtitle={t("aiAgent.subtitle")} />
 
       {status ? (
@@ -78,21 +78,21 @@ export function AiAgentPage() {
       ) : (
         <Paper
           sx={{
-            p: { xs: 1.25, md: 2.5 },
+            p: { xs: 0.75, md: 1.5 },
             borderRadius: 1,
             border: "1px solid",
             borderColor: "divider",
-            minHeight: { xs: "calc(100vh - 170px)", xl: "calc(100vh - 150px)" },
+            minHeight: { xs: "calc(100vh - 132px)", xl: "calc(100vh - 138px)" },
             background: (theme) =>
               theme.palette.mode === "dark"
                 ? "linear-gradient(180deg, rgba(17,26,39,0.98), rgba(13,20,31,0.98))"
                 : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))"
           }}
         >
-          <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ maxWidth: 980, mx: "auto", minHeight: "100%" }}>
+          <Stack spacing={{ xs: 0.75, md: 1.25 }} sx={{ maxWidth: 920, mx: "auto", minHeight: "100%" }}>
             <Paper
               sx={{
-                p: { xs: 2, md: 2.5 },
+                p: { xs: 1.2, md: 1.5 },
                 borderRadius: 1,
                 border: "1px solid",
                 borderColor: "divider",
@@ -102,13 +102,13 @@ export function AiAgentPage() {
                     : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.96))"
               }}
             >
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Avatar sx={{ width: 44, height: 44, bgcolor: "primary.main", color: "primary.contrastText" }}>
-                  <SmartToyRoundedIcon />
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Avatar sx={{ width: { xs: 34, md: 38 }, height: { xs: 34, md: 38 }, bgcolor: "primary.main", color: "primary.contrastText" }}>
+                  <SmartToyRoundedIcon sx={{ fontSize: 20 }} />
                 </Avatar>
                 <Stack spacing={0.25}>
-                  <Typography fontWeight={800}>{t("aiAgent.hero.title")}</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography fontWeight={800} sx={{ fontSize: { xs: 15, md: 16 } }}>{t("aiAgent.hero.title")}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.hero.subtitle")}
                   </Typography>
                 </Stack>
@@ -126,27 +126,27 @@ export function AiAgentPage() {
                 "&::before": { display: "none" }
               }}
             >
-              <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: 1.5, minHeight: 44 }}>
+              <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: 1.25, minHeight: 40 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <HelpOutlineRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                  <Typography fontWeight={700}>{t("aiAgent.guide.title")}</Typography>
+                  <Typography fontWeight={700} sx={{ fontSize: { xs: 13, md: 14 } }}>{t("aiAgent.guide.title")}</Typography>
                 </Stack>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
-                <Stack spacing={1}>
-                  <Typography variant="body2" color="text.secondary">
+              <AccordionDetails sx={{ pt: 0, px: 1.25, pb: 1.25 }}>
+                <Stack spacing={0.6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.guide.intro")}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.guide.itemMeal")}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.guide.itemShopping")}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.guide.itemRecipes")}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
                     {t("aiAgent.guide.itemAnalysis")}
                   </Typography>
                 </Stack>
@@ -181,12 +181,12 @@ export function AiAgentPage() {
               renderTop={({ setDraft }) => (
                 <Stack
                   direction="row"
-                  spacing={1}
+                  spacing={0.75}
                   sx={{
                     overflowX: "auto",
                     overflowY: "hidden",
                     flexWrap: "nowrap",
-                    pb: 0.5,
+                    pb: 0.25,
                     scrollSnapType: "x proximity",
                     WebkitOverflowScrolling: "touch",
                     "&::-webkit-scrollbar": {
@@ -202,7 +202,7 @@ export function AiAgentPage() {
                       variant="outlined"
                       clickable
                       onClick={() => setDraft(prompt)}
-                      sx={{ height: 32, flexShrink: 0, scrollSnapAlign: "start" }}
+                      sx={{ height: { xs: 28, md: 30 }, fontSize: { xs: 12, md: 13 }, flexShrink: 0, scrollSnapAlign: "start" }}
                     />
                   ))}
                 </Stack>

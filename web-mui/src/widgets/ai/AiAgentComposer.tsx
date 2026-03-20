@@ -4,7 +4,8 @@ import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import StopRoundedIcon from "@mui/icons-material/StopRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import { Avatar, Button, IconButton, Paper, Stack, TextField, Tooltip } from "@mui/material";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { Avatar, IconButton, InputBase, Menu, MenuItem, Paper, Stack, Tooltip } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -45,7 +46,7 @@ type ComposerImage = {
 export function AiAgentComposer({
   isSubmitting,
   placeholder,
-  submitLabel,
+  submitLabel: _submitLabel,
   value,
   speechLanguage,
   onValueChange,
@@ -60,6 +61,7 @@ export function AiAgentComposer({
   const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const [attachAnchor, setAttachAnchor] = useState<HTMLElement | null>(null);
   const SpeechRecognitionApi = useMemo(
     () => (typeof window !== "undefined" ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null : null),
     []
@@ -138,6 +140,13 @@ export function AiAgentComposer({
     onValueChange("");
   }
 
+  function handleComposerKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void handleSubmit();
+    }
+  }
+
   function handleVoiceToggle() {
     if (!SpeechRecognitionApi) {
       return;
@@ -207,19 +216,21 @@ export function AiAgentComposer({
   return (
     <Paper
       sx={{
-        p: { xs: 1.25, md: 1.5 },
+        px: { xs: 0.6, md: 0.75 },
+        py: { xs: 0.28, md: 0.34 },
         borderRadius: 1,
         border: "1px solid",
-        borderColor: "divider",
+        borderColor: "rgba(16,185,129,0.72)",
         position: "sticky",
-        bottom: 16,
-        zIndex: 2,
-        backdropFilter: "blur(18px)",
+        bottom: { xs: 8, md: 12 },
+        zIndex: 6,
+        backdropFilter: "blur(14px)",
         backgroundColor: (theme) =>
-          theme.palette.mode === "dark" ? "rgba(20,31,45,0.86)" : "rgba(255,255,255,0.88)"
+          theme.palette.mode === "dark" ? "rgba(26, 31, 42, 0.96)" : "rgba(255,255,255,0.97)",
+        boxShadow: "none"
       }}
     >
-      <Stack spacing={1.25}>
+      <Stack spacing={0.6}>
         {images.length > 0 ? (
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             {images.map((image) => (
@@ -227,8 +238,8 @@ export function AiAgentComposer({
                 key={image.id}
                 spacing={0.5}
                 sx={{
-                  width: 88,
-                  p: 0.75,
+                  width: 72,
+                  p: 0.5,
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1,
@@ -247,74 +258,84 @@ export function AiAgentComposer({
                   variant="rounded"
                   src={image.previewUrl}
                   alt={image.file.name}
-                  sx={{ width: 72, height: 72, borderRadius: 1, bgcolor: "action.hover" }}
+                  sx={{ width: 60, height: 60, borderRadius: 1, bgcolor: "action.hover" }}
                 />
               </Stack>
             ))}
           </Stack>
         ) : null}
 
-        <TextField
-          value={value}
-          onChange={(event) => onValueChange(event.target.value)}
-          placeholder={placeholder}
-          multiline
-          minRows={2}
-          maxRows={8}
-          fullWidth
-          helperText={isRecording ? t("aiAgent.voice.listening") : " "}
+        <input
+          ref={uploadInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          onChange={(event) => {
+            appendFiles(event.target.files);
+            event.target.value = "";
+          }}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          hidden
+          onChange={(event) => {
+            appendFiles(event.target.files);
+            event.target.value = "";
+          }}
         />
 
-        <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <input
-              ref={uploadInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(event) => {
-                appendFiles(event.target.files);
-                event.target.value = "";
-              }}
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              hidden
-              onChange={(event) => {
-                appendFiles(event.target.files);
-                event.target.value = "";
-              }}
-            />
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{
+            minHeight: 50,
+            pr: 0.35,
+            py: 0,
+            mt: 0,
+            mb: 0
+          }}
+        >
+          <Tooltip title={t("aiAgent.image.upload")}>
+            <span>
+              <IconButton
+                onClick={(event) => setAttachAnchor(event.currentTarget)}
+                disabled={isSubmitting || isRecording}
+                size="small"
+                sx={{ alignSelf: "center", width: 34, height: 34 }}
+              >
+                <AddRoundedIcon sx={{ fontSize: 21 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
 
-            <Tooltip title={t("aiAgent.image.upload")}>
-              <span>
-                <IconButton
-                  onClick={() => uploadInputRef.current?.click()}
-                  disabled={isSubmitting || isRecording}
-                  sx={{ border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}
-                >
-                  <AddPhotoAlternateRoundedIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
+          <InputBase
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+            onKeyDown={handleComposerKeyDown}
+            placeholder={placeholder}
+            multiline
+            minRows={1}
+            maxRows={6}
+            fullWidth
+            sx={{
+              flex: 1,
+              fontSize: { xs: 14, md: 15 },
+              lineHeight: 1.45,
+              alignSelf: "center",
+              mt: 0,
+              "& .MuiInputBase-inputMultiline": {
+                py: 0.58
+              }
+            }}
+          />
 
-            <Tooltip title={t("aiAgent.image.camera")}>
-              <span>
-                <IconButton
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={isSubmitting || isRecording}
-                  sx={{ border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}
-                >
-                  <PhotoCameraRoundedIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-
+          <Stack direction="row" spacing={0.45} alignItems="center" sx={{ alignSelf: "center", pr: 0.25 }}>
             <Tooltip
               title={
                 SpeechRecognitionApi
@@ -328,29 +349,65 @@ export function AiAgentComposer({
                 <IconButton
                   onClick={handleVoiceToggle}
                   disabled={!SpeechRecognitionApi || isSubmitting}
+                  size="small"
                   color={isRecording ? "error" : "default"}
-                  sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    bgcolor: isRecording ? "rgba(239,68,68,0.12)" : "background.paper"
-                  }}
+                  sx={{ width: 36, height: 36 }}
                 >
-                  {isRecording ? <StopRoundedIcon /> : <MicRoundedIcon />}
+                  {isRecording ? <StopRoundedIcon sx={{ fontSize: 20 }} /> : <MicRoundedIcon sx={{ fontSize: 20 }} />}
                 </IconButton>
               </span>
             </Tooltip>
+            <IconButton
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting || (!value.trim() && images.length === 0) || isRecording}
+              size="small"
+              sx={{
+                width: 34,
+                height: 34,
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                "&:hover": { bgcolor: "primary.dark" },
+                "&.Mui-disabled": {
+                  bgcolor: "action.disabledBackground",
+                  color: "action.disabled"
+                }
+              }}
+            >
+              <SendRoundedIcon sx={{ fontSize: 19 }} />
+            </IconButton>
           </Stack>
-
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            endIcon={<SendRoundedIcon />}
-            disabled={isSubmitting || (!value.trim() && images.length === 0) || isRecording}
-            sx={{ minWidth: { xs: 112, md: 124 } }}
-          >
-            {submitLabel}
-          </Button>
         </Stack>
+
+        <Menu
+          anchorEl={attachAnchor}
+          open={Boolean(attachAnchor)}
+          onClose={() => setAttachAnchor(null)}
+          anchorOrigin={{ vertical: "top", horizontal: "left" }}
+          transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <MenuItem
+            onClick={() => {
+              setAttachAnchor(null);
+              uploadInputRef.current?.click();
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <AddPhotoAlternateRoundedIcon sx={{ fontSize: 18 }} />
+              <span>{t("aiAgent.image.upload")}</span>
+            </Stack>
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setAttachAnchor(null);
+              cameraInputRef.current?.click();
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} />
+              <span>{t("aiAgent.image.camera")}</span>
+            </Stack>
+          </MenuItem>
+        </Menu>
       </Stack>
     </Paper>
   );

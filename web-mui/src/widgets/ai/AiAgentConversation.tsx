@@ -19,37 +19,37 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
   }
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={{ xs: 1, md: 1.5 }}>
       {messages.map((message) => (
         <Stack
           key={message.id}
           direction="row"
-          spacing={1.5}
+          spacing={{ xs: 0.75, md: 1 }}
           justifyContent={message.role === "user" ? "flex-end" : "flex-start"}
           alignItems="flex-start"
         >
           {message.role !== "user" ? (
             <Avatar
               sx={{
-                width: 34,
-                height: 34,
+                width: { xs: 28, md: 32 },
+                height: { xs: 28, md: 32 },
                 bgcolor: message.role === "tool" ? "action.selected" : "primary.main",
                 color: message.role === "tool" ? "text.primary" : "primary.contrastText",
-                mt: 0.5
+                mt: 0.25
               }}
             >
-              {message.role === "assistant" ? <SmartToyRoundedIcon sx={{ fontSize: 18 }} /> : <TerminalRoundedIcon sx={{ fontSize: 18 }} />}
+              {message.role === "assistant" ? <SmartToyRoundedIcon sx={{ fontSize: 16 }} /> : <TerminalRoundedIcon sx={{ fontSize: 16 }} />}
             </Avatar>
           ) : null}
 
           <Paper
             sx={{
-              p: 2.25,
+              p: { xs: 1.2, md: 1.5 },
               borderRadius: 1,
               border: "1px solid",
               borderColor: message.role === "user" ? "rgba(4, 120, 87, 0.35)" : "divider",
               width: "100%",
-              maxWidth: message.role === "tool" ? 860 : 760,
+              maxWidth: message.role === "tool" ? 820 : 720,
               background: (theme) =>
                 message.role === "user"
                   ? theme.palette.mode === "dark"
@@ -61,14 +61,14 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
               color: message.role === "user" ? "text.primary" : "text.primary"
             }}
           >
-            <Stack spacing={1.25}>
+            <Stack spacing={0.75}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.9, fontWeight: 800 }}>
+                <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
                   {message.role === "tool" ? message.toolName : message.role}
                 </Typography>
                 {message.role === "user" ? (
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: "rgba(255,255,255,0.18)", color: "#ffffff" }}>
-                    <PersonRoundedIcon sx={{ fontSize: 16 }} />
+                  <Avatar sx={{ width: 24, height: 24, bgcolor: "rgba(255,255,255,0.18)", color: "#ffffff" }}>
+                    <PersonRoundedIcon sx={{ fontSize: 14 }} />
                   </Avatar>
                 ) : null}
               </Stack>
@@ -102,16 +102,16 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                   <AccordionDetails sx={{ px: 0, pt: 0.5, pb: 0 }}>
                     <Box
                       component="pre"
-                      sx={{
-                        m: 0,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                        fontSize: 13,
-                        lineHeight: 1.65,
-                        overflowX: "auto"
-                      }}
-                    >
+                    sx={{
+                      m: 0,
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                      fontSize: { xs: 12, md: 13 },
+                      lineHeight: 1.55,
+                      overflowX: "auto"
+                    }}
+                  >
                       {message.text}
                     </Box>
                   </AccordionDetails>
@@ -124,8 +124,8 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
                     fontFamily: "inherit",
-                    fontSize: 15,
-                    lineHeight: 1.65,
+                    fontSize: { xs: 14, md: 15 },
+                    lineHeight: 1.55,
                     overflowX: "auto"
                   }}
                 >
@@ -144,13 +144,13 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
       ))}
 
       {isSubmitting ? (
-        <Stack direction="row" spacing={1.5} justifyContent="flex-start" alignItems="flex-start">
-          <Avatar sx={{ width: 34, height: 34, bgcolor: "primary.main", color: "primary.contrastText", mt: 0.5 }}>
-            <SmartToyRoundedIcon sx={{ fontSize: 18 }} />
+        <Stack direction="row" spacing={{ xs: 0.75, md: 1 }} justifyContent="flex-start" alignItems="flex-start">
+          <Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 }, bgcolor: "primary.main", color: "primary.contrastText", mt: 0.25 }}>
+            <SmartToyRoundedIcon sx={{ fontSize: 16 }} />
           </Avatar>
           <Paper
             sx={{
-              p: 2,
+              p: { xs: 1.1, md: 1.4 },
               borderRadius: 1,
               border: "1px solid",
               borderColor: "divider",
