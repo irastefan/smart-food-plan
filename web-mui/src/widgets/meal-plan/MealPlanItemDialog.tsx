@@ -13,7 +13,9 @@ import {
   Tab,
   Tabs,
   TextField,
-  Typography
+  Typography,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import type { ProductSummary } from "../../features/products/api/productsApi";
@@ -56,6 +58,10 @@ type MealPlanItemDialogProps = {
 
 type DialogTab = "ai" | "product" | "recipe" | "manual";
 
+function formatWhole(value: number): string {
+  return String(Math.round(value));
+}
+
 export function MealPlanItemDialog({
   open,
   mode,
@@ -71,6 +77,8 @@ export function MealPlanItemDialog({
   onSubmit
 }: MealPlanItemDialogProps) {
   const { t } = useLanguage();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const agentSettings = getAiAgentSettings();
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [accessMode, setAccessMode] = useState(agentSettings.accessMode);
@@ -222,7 +230,25 @@ export function MealPlanItemDialog({
   const title = mode === "add" ? t("mealPlan.dialog.addTitle", { section: sectionTitle }) : t("mealPlan.dialog.editTitle", { section: sectionTitle });
 
   return (
-    <Dialog open={open} onClose={onClose} fullScreen fullWidth maxWidth={false}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullScreen={isMobile}
+      fullWidth
+      maxWidth={false}
+      PaperProps={{
+        sx: isMobile
+          ? undefined
+          : {
+              width: "76vw",
+              maxWidth: 1180,
+              height: "84vh",
+              maxHeight: "84vh",
+              borderRadius: 1.5,
+              overflow: "hidden"
+            }
+      }}
+    >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ px: { xs: 0, md: 2 }, pb: 0 }}>
         <Stack sx={{ height: "100%" }}>
@@ -277,7 +303,7 @@ export function MealPlanItemDialog({
                     <Stack spacing={0.35}>
                       <Typography fontWeight={700}>{t("mealPlan.ai.ready")}</Typography>
                       <Typography variant="body2">
-                        {`${proposal.name} · ${proposal.amount} ${proposal.unit} · ${proposal.kcal100} kcal/100`}
+                        {`${proposal.name} · ${formatWhole(proposal.amount)} ${proposal.unit} · ${formatWhole(proposal.kcal100)} kcal/100 · P ${formatWhole(proposal.protein100)}g · F ${formatWhole(proposal.fat100)}g · C ${formatWhole(proposal.carbs100)}g`}
                       </Typography>
                     </Stack>
                   </Alert>

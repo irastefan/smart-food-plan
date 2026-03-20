@@ -27,7 +27,7 @@ export function ProductNutritionCard({ nutrition }: ProductNutritionCardProps) {
         <MacroRingRow
           items={metrics.map((metric) => ({
             ...metric,
-            footer: `${metric.value.toFixed(1)} g`
+            footer: `${Math.round(metric.value)} g`
           }))}
           variant="detail"
         />

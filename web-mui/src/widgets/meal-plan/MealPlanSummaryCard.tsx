@@ -15,7 +15,7 @@ type MealPlanSummaryCardProps = {
 };
 
 function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return String(Math.round(value));
 }
 
 export function MealPlanSummaryCard({

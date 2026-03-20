@@ -51,9 +51,9 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             <Metric label="kcal" value={Math.round(value.calories).toString()} />
-            <Metric label={t("product.macros.protein")} value={`${value.protein.toFixed(1)} g`} />
-            <Metric label={t("product.macros.fat")} value={`${value.fat.toFixed(1)} g`} />
-            <Metric label={t("product.macros.carbs")} value={`${value.carbs.toFixed(1)} g`} />
+            <Metric label={t("product.macros.protein")} value={`${Math.round(value.protein)} g`} />
+            <Metric label={t("product.macros.fat")} value={`${Math.round(value.fat)} g`} />
+            <Metric label={t("product.macros.carbs")} value={`${Math.round(value.carbs)} g`} />
           </Stack>
           <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
             {submitLabel}

@@ -134,7 +134,7 @@ function MacroStat({ label, value, color }: { label: string; value: number; colo
         {label}
       </Typography>
       <Typography fontWeight={800} sx={{ fontSize: { xs: "0.92rem", sm: "1rem" } }}>
-        {value.toFixed(1)}g
+        {Math.round(value)}g
       </Typography>
     </Box>
   );

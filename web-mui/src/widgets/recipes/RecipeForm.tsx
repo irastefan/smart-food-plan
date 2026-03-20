@@ -230,9 +230,9 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             <SummaryMetric label="kcal" value={Math.round(totalNutrition.caloriesKcal).toString()} />
-            <SummaryMetric label={t("recipe.macros.protein")} value={`${totalNutrition.proteinG.toFixed(1)} g`} />
-            <SummaryMetric label={t("recipe.macros.fat")} value={`${totalNutrition.fatG.toFixed(1)} g`} />
-            <SummaryMetric label={t("recipe.macros.carbs")} value={`${totalNutrition.carbsG.toFixed(1)} g`} />
+            <SummaryMetric label={t("recipe.macros.protein")} value={`${Math.round(totalNutrition.proteinG)} g`} />
+            <SummaryMetric label={t("recipe.macros.fat")} value={`${Math.round(totalNutrition.fatG)} g`} />
+            <SummaryMetric label={t("recipe.macros.carbs")} value={`${Math.round(totalNutrition.carbsG)} g`} />
           </Stack>
           <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
             {submitLabel}
