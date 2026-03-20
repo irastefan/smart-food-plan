@@ -1,5 +1,7 @@
 import { apiRequest } from "../../../shared/api/http";
 import type { ProductSummary } from "../../products/api/productsApi";
+import { createRecipe } from "../../recipes/api/recipesApi";
+import type { RecipeFormValues } from "../../recipes/model/recipeTypes";
 import type { RecipeSummary } from "../../recipes/model/recipeTypes";
 
 export type NutritionTotals = {
@@ -179,6 +181,38 @@ function sectionToSlot(sectionId: string): string {
   return "SNACK";
 }
 
+function inferNutritionPer100(item: MealPlanItem): NutritionPer100 {
+  if (item.nutritionPer100) {
+    return item.nutritionPer100;
+  }
+
+  if (item.type === "product" && item.amount && item.amount > 0) {
+    const factor = 100 / item.amount;
+    return {
+      caloriesKcal: item.nutritionTotal.caloriesKcal * factor,
+      proteinG: item.nutritionTotal.proteinG * factor,
+      fatG: item.nutritionTotal.fatG * factor,
+      carbsG: item.nutritionTotal.carbsG * factor
+    };
+  }
+
+  if (item.type === "recipe") {
+    return {
+      caloriesKcal: item.nutritionTotal.caloriesKcal * 100,
+      proteinG: item.nutritionTotal.proteinG * 100,
+      fatG: item.nutritionTotal.fatG * 100,
+      carbsG: item.nutritionTotal.carbsG * 100
+    };
+  }
+
+  return {
+    caloriesKcal: 0,
+    proteinG: 0,
+    fatG: 0,
+    carbsG: 0
+  };
+}
+
 export async function addProductToMealPlan(
   date: string,
   sectionId: string,
@@ -305,6 +339,97 @@ export async function updateMealPlanItem(
   }
 
   return getMealPlanDay(date);
+}
+
+export async function saveMealPlanSectionAsRecipe(section: MealPlanSection, recipeTitle: string) {
+  const normalizedCategory = section.id.toLowerCase();
+  const payload: RecipeFormValues = {
+    title: recipeTitle.trim(),
+    description: "",
+    category: normalizedCategory,
+    servings: 1,
+    steps: [],
+    ingredients: section.items.map((item) => {
+      const per100 = inferNutritionPer100(item);
+
+      if (item.type === "product" && !item.isManual && item.productId) {
+        return {
+          id: item.id,
+          isManual: false,
+          productId: item.productId,
+          name: item.title,
+          amount: item.amount ?? 100,
+          unit: item.unit ?? "g",
+          kcal100: Math.round(per100.caloriesKcal),
+          protein100: Math.round(per100.proteinG),
+          fat100: Math.round(per100.fatG),
+          carbs100: Math.round(per100.carbsG)
+        };
+      }
+
+      return {
+        id: item.id,
+        isManual: true,
+        productId: undefined,
+        name: item.title,
+        amount: item.type === "recipe" ? 1 : item.amount ?? 100,
+        unit: item.type === "recipe" ? "portion" : item.unit ?? "g",
+        kcal100: Math.round(per100.caloriesKcal),
+        protein100: Math.round(per100.proteinG),
+        fat100: Math.round(per100.fatG),
+        carbs100: Math.round(per100.carbsG)
+      };
+    })
+  };
+
+  return createRecipe(payload);
+}
+
+export async function copyMealPlanSectionToDate(section: MealPlanSection, targetDate: string): Promise<void> {
+  for (const item of section.items) {
+    if (item.type === "recipe" && item.recipeId) {
+      await apiRequest("/v1/meal-plans/day/entries", {
+        method: "POST",
+        body: JSON.stringify({
+          date: targetDate,
+          slot: sectionToSlot(section.id),
+          recipeId: item.recipeId,
+          servings: item.servings ?? 1
+        })
+      });
+      continue;
+    }
+
+    if (item.type === "product" && !item.isManual && item.productId) {
+      await apiRequest("/v1/meal-plans/day/entries", {
+        method: "POST",
+        body: JSON.stringify({
+          date: targetDate,
+          slot: sectionToSlot(section.id),
+          productId: item.productId,
+          amount: item.amount ?? 100,
+          unit: item.unit ?? "g"
+        })
+      });
+      continue;
+    }
+
+    const per100 = inferNutritionPer100(item);
+    await apiRequest("/v1/meal-plans/day/entries", {
+      method: "POST",
+      body: JSON.stringify({
+        date: targetDate,
+        slot: sectionToSlot(section.id),
+        name: item.title,
+        amount: item.type === "recipe" ? 1 : item.amount ?? 100,
+        unit: item.type === "recipe" ? "portion" : item.unit ?? "g",
+        kcal100: Math.round(per100.caloriesKcal),
+        protein100: Math.round(per100.proteinG),
+        fat100: Math.round(per100.fatG),
+        carbs100: Math.round(per100.carbsG)
+      })
+    });
+  }
 }
 
 export function getTodayIsoDate(): string {

@@ -2,10 +2,12 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import { Box, Button, Card, Divider, IconButton, Stack, Typography } from "@mui/material";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import { Box, Button, Card, Divider, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
-import type { MealPlanDay, MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
+import type { MealPlanDay, MealPlanItem, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
 import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type MealPlanSectionsCardProps = {
@@ -24,6 +26,8 @@ type MealPlanSectionsCardProps = {
   onDeleteItem: (sectionId: string, item: MealPlanItem) => void;
   onEditItem: (sectionId: string, sectionTitle: string, item: MealPlanItem) => void;
   onAddToShoppingItem: (sectionId: string, item: MealPlanItem, categoryName: string) => void;
+  onSaveSectionAsRecipe: (section: MealPlanSection) => void;
+  onCopySection: (section: MealPlanSection) => void;
 };
 
 function formatNumber(value: number): string {
@@ -56,9 +60,14 @@ export function MealPlanSectionsCard({
   onAddItem,
   onEditItem,
   onDeleteItem,
-  onAddToShoppingItem
+  onAddToShoppingItem,
+  onSaveSectionAsRecipe,
+  onCopySection
 }: MealPlanSectionsCardProps) {
   const { t } = useLanguage();
+  const [menuState, setMenuState] = useState<{ sectionId: string; anchorEl: HTMLElement } | null>(null);
+
+  const activeSection = day?.sections.find((section) => section.id === menuState?.sectionId) ?? null;
 
   return (
     <Stack spacing={2}>
@@ -181,13 +190,53 @@ export function MealPlanSectionsCard({
             <Divider />
 
             <Box sx={{ px: 3, py: 1.5 }}>
-              <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
-                {addLabel}
-              </Button>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
+                  {addLabel}
+                </Button>
+                <IconButton
+                  size="small"
+                  onClick={(event) => setMenuState({ sectionId: section.id, anchorEl: event.currentTarget })}
+                  title={t("mealPlan.actions.more")}
+                >
+                  <MoreHorizRoundedIcon fontSize="small" />
+                </IconButton>
+              </Stack>
             </Box>
           </Card>
         ))}
       </Box>
+
+      <Menu
+        anchorEl={menuState?.anchorEl ?? null}
+        open={Boolean(menuState)}
+        onClose={() => setMenuState(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <MenuItem
+          disabled={!activeSection || activeSection.items.length === 0}
+          onClick={() => {
+            if (activeSection) {
+              onSaveSectionAsRecipe(activeSection);
+            }
+            setMenuState(null);
+          }}
+        >
+          {t("mealPlan.actions.saveAsRecipe")}
+        </MenuItem>
+        <MenuItem
+          disabled={!activeSection || activeSection.items.length === 0}
+          onClick={() => {
+            if (activeSection) {
+              onCopySection(activeSection);
+            }
+            setMenuState(null);
+          }}
+        >
+          {t("mealPlan.actions.copyMeal")}
+        </MenuItem>
+      </Menu>
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { Alert, CircularProgress, Grid, Stack, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -15,8 +15,11 @@ import {
   addManualItemToMealPlan,
   addProductToMealPlan,
   addRecipeToMealPlan,
+  copyMealPlanSectionToDate,
   removeMealPlanItem,
+  saveMealPlanSectionAsRecipe,
   type MealPlanItem,
+  type MealPlanSection,
   updateMealPlanItem
 } from "../features/meal-plan/api/mealPlanApi";
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
@@ -51,6 +54,10 @@ export function MealPlanDashboardPage() {
   const [targetCalories, setTargetCalories] = useState<number>(0);
   const [targetMacros, setTargetMacros] = useState({ protein: 0, fat: 0, carbs: 0 });
   const [pendingDelete, setPendingDelete] = useState<{ sectionId: string; item: MealPlanItem } | null>(null);
+  const [pendingSaveRecipe, setPendingSaveRecipe] = useState<MealPlanSection | null>(null);
+  const [recipeTitle, setRecipeTitle] = useState("");
+  const [pendingCopySection, setPendingCopySection] = useState<MealPlanSection | null>(null);
+  const [copyTargetDate, setCopyTargetDate] = useState(selectedDate);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +127,10 @@ export function MealPlanDashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setCopyTargetDate(selectedDate);
+  }, [selectedDate]);
 
   if (isLoading) {
     return (
@@ -251,6 +262,46 @@ export function MealPlanDashboardPage() {
     setShoppingCategories((current) => Array.from(new Set([...current, name])).sort((a, b) => a.localeCompare(b)));
   }
 
+  async function handleSaveSectionAsRecipe() {
+    if (!pendingSaveRecipe || !recipeTitle.trim()) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setMutationError(null);
+      await saveMealPlanSectionAsRecipe(pendingSaveRecipe, recipeTitle);
+      setPendingSaveRecipe(null);
+      setRecipeTitle("");
+    } catch (error) {
+      console.error("Failed to save meal plan section as recipe", error);
+      setMutationError(t("mealPlan.status.saveRecipeError"));
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleCopySection() {
+    if (!pendingCopySection || !copyTargetDate) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setMutationError(null);
+      await copyMealPlanSectionToDate(pendingCopySection, copyTargetDate);
+      setPendingCopySection(null);
+      if (copyTargetDate === selectedDate) {
+        await refresh();
+      }
+    } catch (error) {
+      console.error("Failed to copy meal plan section", error);
+      setMutationError(t("mealPlan.status.copyMealError"));
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   return (
     <Stack spacing={3} flex={1}>
       <DashboardTopbar
@@ -300,6 +351,14 @@ export function MealPlanDashboardPage() {
             onEditItem={(sectionId, sectionTitle, item) => setDialogState({ mode: "edit", sectionId, sectionTitle, item })}
             onDeleteItem={(sectionId, item) => setPendingDelete({ sectionId, item })}
             onAddToShoppingItem={handleAddMealPlanItemToShopping}
+            onSaveSectionAsRecipe={(section) => {
+              setRecipeTitle(`${section.title} ${selectedDate}`);
+              setPendingSaveRecipe(section);
+            }}
+            onCopySection={(section) => {
+              setCopyTargetDate(selectedDate);
+              setPendingCopySection(section);
+            }}
           />
         </Grid>
       </Grid>
@@ -331,6 +390,61 @@ export function MealPlanDashboardPage() {
         onClose={() => setPendingDelete(null)}
         onConfirm={() => void handleDeleteConfirmed()}
       />
+
+      <Dialog open={Boolean(pendingSaveRecipe)} onClose={isMutating ? undefined : () => setPendingSaveRecipe(null)} fullWidth maxWidth="sm">
+        <DialogTitle>{t("mealPlan.actions.saveAsRecipe")}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography color="text.secondary">
+              {t("mealPlan.saveRecipe.description", { section: pendingSaveRecipe?.title ?? "" })}
+            </Typography>
+            <TextField
+              autoFocus
+              label={t("recipe.form.title")}
+              value={recipeTitle}
+              onChange={(event) => setRecipeTitle(event.target.value)}
+              disabled={isMutating}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setPendingSaveRecipe(null)} disabled={isMutating}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="contained" onClick={() => void handleSaveSectionAsRecipe()} disabled={isMutating || recipeTitle.trim().length === 0}>
+            {t("recipe.form.create")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(pendingCopySection)} onClose={isMutating ? undefined : () => setPendingCopySection(null)} fullWidth maxWidth="xs">
+        <DialogTitle>{t("mealPlan.actions.copyMeal")}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography color="text.secondary">
+              {t("mealPlan.copyMeal.description", { section: pendingCopySection?.title ?? "" })}
+            </Typography>
+            <TextField
+              type="date"
+              label={t("mealPlan.dayNav.selectDay")}
+              value={copyTargetDate}
+              onChange={(event) => setCopyTargetDate(event.target.value)}
+              disabled={isMutating}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setPendingCopySection(null)} disabled={isMutating}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="contained" onClick={() => void handleCopySection()} disabled={isMutating || !copyTargetDate}>
+            {t("mealPlan.copyMeal.confirm")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }
