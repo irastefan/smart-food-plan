@@ -91,6 +91,29 @@ function sanitizeProposal(value: unknown): MealPlanAssistantProposal | null {
   };
 }
 
+function enrichMessageWithNutrition(message: string, proposal: MealPlanAssistantProposal | null): string {
+  if (!proposal) {
+    return message;
+  }
+
+  const normalized = message.toLowerCase();
+  const alreadyHasNutrition =
+    normalized.includes("kcal") ||
+    normalized.includes("кал") ||
+    normalized.includes("protein") ||
+    normalized.includes("бел") ||
+    normalized.includes("fat") ||
+    normalized.includes("жир") ||
+    normalized.includes("carb") ||
+    normalized.includes("углев");
+
+  if (alreadyHasNutrition) {
+    return message;
+  }
+
+  return `${message}\n\n${proposal.amount} ${proposal.unit} · ${proposal.kcal100} kcal/100 · Protein ${proposal.protein100}g · Fat ${proposal.fat100}g · Carbs ${proposal.carbs100}g`;
+}
+
 export async function runMealPlanAssistant(input: {
   apiKey: string;
   model: string;
@@ -147,8 +170,9 @@ export async function runMealPlanAssistant(input: {
     proposal?: unknown;
   };
 
-  const message = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
   const proposal = sanitizeProposal(parsed.proposal);
+  const messageBase = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
+  const message = enrichMessageWithNutrition(messageBase, proposal);
   const needsConfirmation = typeof parsed.needsConfirmation === "boolean"
     ? parsed.needsConfirmation
     : input.accessMode === "limited";
