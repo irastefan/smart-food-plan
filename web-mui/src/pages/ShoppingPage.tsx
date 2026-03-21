@@ -1,6 +1,4 @@
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CreateNewFolderRoundedIcon from "@mui/icons-material/CreateNewFolderRounded";
-import { Alert, Button, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -16,6 +14,8 @@ import {
   type ShoppingList
 } from "../features/shopping/api/shoppingApi";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { FilterChipRow } from "../shared/ui/FilterChipRow";
+import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ShoppingAddDialog } from "../widgets/shopping/ShoppingAddDialog";
 import { ShoppingCategoryDialog } from "../widgets/shopping/ShoppingCategoryDialog";
@@ -203,25 +203,22 @@ export function ShoppingPage() {
     <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
 
-      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-          <Chip label={t("shopping.filters.all")} clickable color={filter === "all" ? "primary" : "default"} onClick={() => setFilter("all")} />
-          {categoryNames.map((category) => (
-            <Chip
-              key={category}
-              label={category}
-              clickable
-              color={filter === category ? "primary" : "default"}
-              onClick={() => setFilter(category)}
-              onDelete={
-                categoryByName.get(category)
-                  ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(category)!.id, categoryName: category })
-                  : undefined
-              }
-            />
-          ))}
-        </Stack>
-      </Stack>
+      <FilterChipRow
+        value={filter}
+        onChange={setFilter}
+        items={[
+          { value: "all", label: t("shopping.filters.all") },
+          ...categoryNames.map((category) => ({
+            value: category,
+            label: category,
+            onDelete: categoryByName.get(category)
+              ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(category)!.id, categoryName: category })
+              : undefined
+          }))
+        ]}
+        addLabel={t("shopping.addCategory")}
+        onAdd={() => setCategoryDialogOpen(true)}
+      />
 
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
@@ -289,29 +286,10 @@ export function ShoppingPage() {
         }}
       />
 
-      <Paper
-        elevation={6}
-        sx={{
-          position: "fixed",
-          right: { xs: 16, md: 24 },
-          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
-          zIndex: 1200,
-          p: 1,
-          borderRadius: 1.25,
-          border: "1px solid",
-          borderColor: "divider",
-          backgroundColor: "background.paper"
-        }}
-      >
-        <Stack spacing={1} sx={{ minWidth: { xs: 180, md: 200 } }}>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>
-            {t("shopping.add")}
-          </Button>
-          <Button variant="outlined" startIcon={<CreateNewFolderRoundedIcon />} onClick={() => setCategoryDialogOpen(true)}>
-            {t("shopping.addCategory")}
-          </Button>
-        </Stack>
-      </Paper>
+      <FloatingActionMenu
+        tooltip={t("shopping.add")}
+        onClick={() => setDialogOpen(true)}
+      />
     </Stack>
   );
 }

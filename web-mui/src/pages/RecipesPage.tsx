@@ -1,12 +1,14 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import { Alert, Box, Button, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import { Alert, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { deleteRecipe, getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeCategoryKey, RecipeSummary } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeCard } from "../widgets/recipes/RecipeCard";
 import { RecipeCategoryTabs } from "../widgets/recipes/RecipeCategoryTabs";
@@ -19,6 +21,7 @@ type LayoutContext = {
 export function RecipesPage() {
   const { t } = useLanguage();
   const { openSidebar } = useOutletContext<LayoutContext>();
+  const navigate = useNavigate();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -139,18 +142,23 @@ export function RecipesPage() {
         onConfirm={() => void handleConfirmDelete()}
       />
 
-      <Box
-        sx={{
-          position: "fixed",
-          right: { xs: 16, md: 24 },
-          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
-          zIndex: 1200
-        }}
-      >
-        <Button component={RouterLink} to="/recipes/new" variant="contained" startIcon={<AddRoundedIcon />}>
-          {t("recipes.add")}
-        </Button>
-      </Box>
+      <FloatingActionMenu
+        tooltip={t("recipes.add")}
+        items={[
+          {
+            key: "recipe",
+            label: t("recipes.add"),
+            icon: <AddRoundedIcon fontSize="small" />,
+            onClick: () => navigate("/recipes/new")
+          },
+          {
+            key: "ai",
+            label: t("nav.aiAgent"),
+            icon: <SmartToyRoundedIcon fontSize="small" />,
+            onClick: () => navigate("/ai-agent")
+          }
+        ]}
+      />
     </Stack>
   );
 }
