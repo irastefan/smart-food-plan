@@ -29,7 +29,7 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
             ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
             : theme.palette.mode === "dark"
               ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
-              : theme.palette.background.paper,
+              : "linear-gradient(180deg, rgba(241,245,249,0.98), rgba(232,240,248,0.96) 46%, rgba(221,232,243,0.94) 100%)",
         backgroundSize: recipe.photoUrl ? "cover" : undefined,
         backgroundPosition: recipe.photoUrl ? "center" : undefined
       }}
@@ -40,9 +40,15 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
             label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{
               backdropFilter: "blur(10px)",
-              backgroundColor: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.76)",
+              backgroundColor: (theme) =>
+                hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.14)" : "rgba(248,250,252,0.96)",
               color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.text.primary,
-              fontWeight: 700
+              fontWeight: 700,
+              border: "1px solid",
+              borderColor: (theme) =>
+                hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.14)" : "rgba(148,163,184,0.2)",
+              boxShadow: (theme) =>
+                hasDarkSurface || theme.palette.mode === "dark" ? "none" : "0 6px 18px rgba(15,23,42,0.08)"
             }}
           />
           <Stack direction="row" spacing={0.9} sx={{ ml: { xs: 1, md: 2 }, flexShrink: 0 }}>
