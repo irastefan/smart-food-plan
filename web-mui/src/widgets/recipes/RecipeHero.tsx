@@ -35,7 +35,7 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
       }}
     >
       <Stack justifyContent="space-between" sx={{ position: "relative", zIndex: 1, minHeight: "100%", p: { xs: 3, md: 4 } }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={{ xs: 2.5, md: 3.5 }}>
           <Chip
             label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{
@@ -45,7 +45,7 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
               fontWeight: 700
             }}
           />
-          <Stack direction="row" spacing={0.75}>
+          <Stack direction="row" spacing={0.9} sx={{ ml: { xs: 1, md: 2 }, flexShrink: 0 }}>
             {onEdit ? (
               <Tooltip title={t("recipe.edit")}>
                 <IconButton
@@ -87,15 +87,22 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
           </Stack>
         </Stack>
 
-        <Stack spacing={2.5} sx={{ maxWidth: 720 }}>
+        <Stack
+          spacing={2.25}
+          sx={{
+            maxWidth: { xs: "100%", md: 980 },
+            width: { xs: "100%", md: "min(980px, calc(100% - 140px))" },
+            pt: { xs: 1.5, md: 1.5 }
+          }}
+        >
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: 34, md: 72 },
-              lineHeight: 0.96,
+              fontSize: { xs: 26, md: 42 },
+              lineHeight: { xs: 1.06, md: 1.02 },
               color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.text.primary,
               fontWeight: 800,
-              letterSpacing: -1.6
+              letterSpacing: { xs: -0.6, md: -0.9 }
             }}
           >
             {recipe.title}
@@ -103,8 +110,9 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
           <Typography
             sx={{
               color: (theme) => hasDarkSurface || theme.palette.mode === "dark" ? "rgba(255,255,255,0.82)" : "rgba(15,23,42,0.72)",
-              fontSize: { xs: 18, md: 26 },
-              maxWidth: 620
+              fontSize: { xs: 15, md: 16 },
+              lineHeight: 1.45,
+              maxWidth: { xs: "100%", md: 900 }
             }}
           >
             {recipe.description || t("recipe.noDescription")}
@@ -138,8 +146,10 @@ function MetricBadge({ value, label, icon, darkSurface = false }: { value: strin
       }}
     >
       {icon ? <Avatar sx={{ width: 30, height: 30, bgcolor: darkSurface ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.82)" }}>{icon}</Avatar> : null}
-      <Typography fontWeight={800}>{value}</Typography>
-      <Typography color={darkSurface ? "rgba(255,255,255,0.72)" : "text.secondary"}>{label}</Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: { xs: 15, md: 16 } }}>{value}</Typography>
+      <Typography sx={{ fontSize: { xs: 13, md: 14 } }} color={darkSurface ? "rgba(255,255,255,0.72)" : "text.secondary"}>
+        {label}
+      </Typography>
     </Stack>
   );
 }

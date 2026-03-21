@@ -27,7 +27,7 @@ export function RecipeNutritionCard({ totals }: RecipeNutritionCardProps) {
           <Typography variant="caption" color="text.secondary">
             kcal / serving
           </Typography>
-          <Typography variant="h3" fontWeight={800}>
+          <Typography sx={{ fontSize: { xs: 28, md: 32 }, lineHeight: 1.05, fontWeight: 800 }}>
             {Math.round(totals.caloriesKcal)}
           </Typography>
         </Box>

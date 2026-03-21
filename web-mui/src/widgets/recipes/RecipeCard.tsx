@@ -3,7 +3,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -16,6 +16,8 @@ type RecipeCardProps = {
 
 export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
   const { t } = useLanguage();
+  const theme = useTheme();
+  const hasDarkSurface = Boolean(recipe.photoUrl) || theme.palette.mode === "dark";
 
   return (
     <Card
@@ -37,7 +39,7 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
               ? `linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.72)), url(${recipe.photoUrl})`
               : theme.palette.mode === "dark"
                 ? "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(14,165,233,0.08) 35%, rgba(15,23,42,0.86) 100%)"
-                : "linear-gradient(180deg, rgba(10,20,38,0.18), rgba(12,22,40,0.50) 34%, rgba(14,23,42,0.92) 100%)",
+                : theme.palette.background.paper,
           backgroundSize: recipe.photoUrl ? "cover" : undefined,
           backgroundPosition: recipe.photoUrl ? "center" : undefined
         }}
@@ -47,8 +49,8 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
             label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{
               backdropFilter: "blur(10px)",
-              backgroundColor: "rgba(255,255,255,0.78)",
-              color: "text.primary",
+              backgroundColor: hasDarkSurface ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.82)",
+              color: hasDarkSurface ? "common.white" : "text.primary",
               fontWeight: 700
             }}
           />

@@ -10,6 +10,7 @@ import { useLanguage } from "../app/providers/LanguageProvider";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
+import { RecipeAssistantDialog } from "../widgets/recipes/RecipeAssistantDialog";
 import { RecipeCard } from "../widgets/recipes/RecipeCard";
 import { RecipeCategoryTabs } from "../widgets/recipes/RecipeCategoryTabs";
 
@@ -28,6 +29,7 @@ export function RecipesPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<RecipeCategoryKey>("all");
   const [deleteTarget, setDeleteTarget] = useState<RecipeSummary | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,12 +155,14 @@ export function RecipesPage() {
           },
           {
             key: "ai",
-            label: t("nav.aiAgent"),
+            label: t("recipe.ai.title"),
             icon: <SmartToyRoundedIcon fontSize="small" />,
-            onClick: () => navigate("/ai-agent")
+            onClick: () => setAssistantOpen(true)
           }
         ]}
       />
+
+      <RecipeAssistantDialog open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </Stack>
   );
 }
