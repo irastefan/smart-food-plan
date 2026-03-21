@@ -32,7 +32,7 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
     >
       <Box
         sx={{
-          height: 220,
+          height: recipe.photoUrl ? 220 : { xs: 132, sm: 168, md: 220 },
           position: "relative",
           background: (theme) =>
             recipe.photoUrl
