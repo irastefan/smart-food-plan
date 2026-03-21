@@ -26,6 +26,7 @@ import {
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
+import { MealPlanAnalysisDialog } from "../widgets/meal-plan/MealPlanAnalysisDialog";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
 import { MealPlanItemDialog } from "../widgets/meal-plan/MealPlanItemDialog";
 import { MealPlanMacroBalanceCard } from "../widgets/meal-plan/MealPlanMacroBalanceCard";
@@ -60,6 +61,11 @@ export function MealPlanDashboardPage() {
   const [pendingCopySection, setPendingCopySection] = useState<MealPlanSection | null>(null);
   const [copyTargetDate, setCopyTargetDate] = useState(selectedDate);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [analysisTarget, setAnalysisTarget] = useState<
+    | { scope: "day"; label: string }
+    | { scope: "section"; label: string; section: MealPlanSection }
+    | null
+  >(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -217,7 +223,12 @@ export function MealPlanDashboardPage() {
         nextDay = await updateMealPlanItem(selectedDate, dialogState.sectionId, dialogState.item, {
           quantity: payload.type === "product" || payload.type === "manual" ? payload.quantity : undefined,
           unit: payload.type === "product" || payload.type === "manual" ? payload.unit ?? "g" : undefined,
-          servings: payload.type === "recipe" ? payload.servings : undefined
+          servings: payload.type === "recipe" ? payload.servings : undefined,
+          name: payload.type === "manual" ? payload.name : undefined,
+          kcal100: payload.type === "manual" ? payload.kcal100 : undefined,
+          protein100: payload.type === "manual" ? payload.protein100 : undefined,
+          fat100: payload.type === "manual" ? payload.fat100 : undefined,
+          carbs100: payload.type === "manual" ? payload.carbs100 : undefined
         });
       }
 
@@ -389,6 +400,7 @@ export function MealPlanDashboardPage() {
             goalLabel={t("mealPlan.cards.goal")}
             usedLabel={t("mealPlan.cards.used")}
             remainingLabel={t("mealPlan.cards.remaining")}
+            onAnalyze={() => setAnalysisTarget({ scope: "day", label: t("mealPlan.analysis.dayLabel") })}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 5 }}>
@@ -416,6 +428,7 @@ export function MealPlanDashboardPage() {
             onEditItem={(sectionId, sectionTitle, item) => setDialogState({ mode: "edit", sectionId, sectionTitle, item })}
             onDeleteItem={(sectionId, item) => setPendingDelete({ sectionId, item })}
             onAddToShoppingItem={handleAddMealPlanItemToShopping}
+            onAnalyzeSection={(section) => setAnalysisTarget({ scope: "section", label: section.title, section })}
             onSaveSectionAsRecipe={(section) => {
               setRecipeTitle(`${section.title} ${selectedDate}`);
               setPendingSaveRecipe(section);
@@ -520,6 +533,21 @@ export function MealPlanDashboardPage() {
           {feedback?.message}
         </Alert>
       </Snackbar>
+
+      <MealPlanAnalysisDialog
+        open={Boolean(analysisTarget)}
+        scope={analysisTarget?.scope ?? "day"}
+        label={analysisTarget?.label ?? ""}
+        day={analysisTarget?.scope === "day" ? day : undefined}
+        section={analysisTarget?.scope === "section" ? analysisTarget.section : undefined}
+        targets={{
+          calories: targetCalories,
+          protein: targetMacros.protein,
+          fat: targetMacros.fat,
+          carbs: targetMacros.carbs
+        }}
+        onClose={() => setAnalysisTarget(null)}
+      />
     </Stack>
   );
 }

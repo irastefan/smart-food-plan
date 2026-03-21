@@ -2,8 +2,9 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import { Box, Button, Card, Divider, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, Divider, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -28,6 +29,7 @@ type MealPlanSectionsCardProps = {
   onAddToShoppingItem: (sectionId: string, item: MealPlanItem, categoryName: string) => void;
   onSaveSectionAsRecipe: (section: MealPlanSection) => void;
   onCopySection: (section: MealPlanSection) => void;
+  onAnalyzeSection: (section: MealPlanSection) => void;
 };
 
 function formatNumber(value: number): string {
@@ -62,7 +64,8 @@ export function MealPlanSectionsCard({
   onDeleteItem,
   onAddToShoppingItem,
   onSaveSectionAsRecipe,
-  onCopySection
+  onCopySection,
+  onAnalyzeSection
 }: MealPlanSectionsCardProps) {
   const { t } = useLanguage();
   const [menuState, setMenuState] = useState<{ sectionId: string; anchorEl: HTMLElement } | null>(null);
@@ -191,9 +194,22 @@ export function MealPlanSectionsCard({
 
             <Box sx={{ px: 3, py: 1.5 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
-                  {addLabel}
-                </Button>
+                <Stack direction="row" spacing={1.75} alignItems="center">
+                  <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
+                    {addLabel}
+                  </Button>
+                  <Tooltip title={t("mealPlan.analysis.tooltip.section", { section: section.title })}>
+                    <Button
+                      size="small"
+                      variant="text"
+                      startIcon={<InsightsRoundedIcon fontSize="small" />}
+                      onClick={() => onAnalyzeSection(section)}
+                      sx={{ px: 1 }}
+                    >
+                      {t("mealPlan.actions.analyzeWithAi")}
+                    </Button>
+                  </Tooltip>
+                </Stack>
                 <IconButton
                   size="small"
                   onClick={(event) => setMenuState({ sectionId: section.id, anchorEl: event.currentTarget })}

@@ -1,7 +1,9 @@
 import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
-import { Box, Card, CardContent, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ReactNode } from "react";
 
 type MealPlanSummaryCardProps = {
@@ -12,6 +14,7 @@ type MealPlanSummaryCardProps = {
   goalLabel: string;
   usedLabel: string;
   remainingLabel: string;
+  onAnalyze?: () => void;
 };
 
 function formatNumber(value: number): string {
@@ -25,8 +28,10 @@ export function MealPlanSummaryCard({
   remainingValue,
   goalLabel,
   usedLabel,
-  remainingLabel
+  remainingLabel,
+  onAnalyze
 }: MealPlanSummaryCardProps) {
+  const { t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
@@ -43,9 +48,27 @@ export function MealPlanSummaryCard({
       }}
     >
       <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
-        <Typography variant="h5" mb={0.75} sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
-          {title}
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1} mb={0.75}>
+          <Typography variant="h5" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
+            {title}
+          </Typography>
+          {onAnalyze ? (
+            <Tooltip title={t("mealPlan.analysis.tooltip.day")}>
+              <IconButton
+                size="small"
+                onClick={onAnalyze}
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark" ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.08)"
+                }}
+              >
+                <InsightsRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+        </Stack>
         <Typography variant="body2" color="text.secondary" mb={{ xs: 2, sm: 3 }} sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
           {`${remainingLabel} = ${goalLabel} - ${usedLabel}`}
         </Typography>

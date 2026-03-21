@@ -381,7 +381,16 @@ export async function updateMealPlanItem(
   date: string,
   sectionId: string,
   item: MealPlanItem,
-  updates: { quantity?: number; unit?: string; servings?: number }
+  updates: {
+    quantity?: number;
+    unit?: string;
+    servings?: number;
+    name?: string;
+    kcal100?: number;
+    protein100?: number;
+    fat100?: number;
+    carbs100?: number;
+  }
 ): Promise<MealPlanDay> {
   if (item.entryId) {
     await apiRequest(`/v1/meal-plans/day/entries/${item.entryId}`, { method: "DELETE" });
@@ -395,13 +404,13 @@ export async function updateMealPlanItem(
         slot: sectionToSlot(sectionId),
         ...(item.isManual
           ? normalizeManualItemPayload({
-              name: item.title,
+              name: updates.name?.trim() || item.title,
               amount: updates.quantity ?? item.amount ?? 100,
               unit: updates.unit ?? item.unit ?? "g",
-              kcal100: item.nutritionPer100?.caloriesKcal ?? 0,
-              protein100: item.nutritionPer100?.proteinG ?? 0,
-              fat100: item.nutritionPer100?.fatG ?? 0,
-              carbs100: item.nutritionPer100?.carbsG ?? 0
+              kcal100: updates.kcal100 ?? item.nutritionPer100?.caloriesKcal ?? 0,
+              protein100: updates.protein100 ?? item.nutritionPer100?.proteinG ?? 0,
+              fat100: updates.fat100 ?? item.nutritionPer100?.fatG ?? 0,
+              carbs100: updates.carbs100 ?? item.nutritionPer100?.carbsG ?? 0
             })
           : {
               productId: item.productId,
