@@ -1,5 +1,19 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
-import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanNutritionAnalysis } from "../../features/ai/api/mealPlanAnalysisApi";
@@ -32,6 +46,8 @@ export function MealPlanAnalysisDialog({
   onClose
 }: MealPlanAnalysisDialogProps) {
   const { language, t } = useLanguage();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -79,16 +95,37 @@ export function MealPlanAnalysisDialog({
   }, [open, scope, label, day, section, targets.calories, targets.protein, targets.fat, targets.carbs, language]);
 
   return (
-    <Dialog open={open} onClose={isLoading ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={isLoading ? undefined : onClose}
+      fullScreen={isMobile}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: isMobile
+          ? undefined
+          : {
+              width: "76vw",
+              maxWidth: 980,
+              height: "84vh",
+              maxHeight: "84vh",
+              borderRadius: 1.5,
+              overflow: "hidden"
+            }
+      }}
+    >
+      <DialogTitle sx={{ pr: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
+          <IconButton onClick={onClose} edge="start" size="small" disabled={isLoading}>
+            <ArrowBackRoundedIcon />
+          </IconButton>
           <InsightsRoundedIcon color="primary" />
           <Typography component="span" variant="h6" fontWeight={800}>
             {scope === "day" ? t("mealPlan.analysis.dayTitle") : t("mealPlan.analysis.sectionTitle", { section: label })}
           </Typography>
         </Stack>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ pb: 3 }}>
         <Stack spacing={2}>
           <Paper
             sx={{
@@ -128,16 +165,14 @@ export function MealPlanAnalysisDialog({
               <Typography sx={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{analysis}</Typography>
             )}
           </Paper>
+
+          <Stack direction="row" justifyContent="flex-end">
+            <Button onClick={() => void loadAnalysis()} disabled={isLoading} variant="contained">
+              {t("mealPlan.analysis.retry")}
+            </Button>
+          </Stack>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} disabled={isLoading}>
-          {t("common.cancel")}
-        </Button>
-        <Button onClick={() => void loadAnalysis()} disabled={isLoading} variant="contained">
-          {t("mealPlan.analysis.retry")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
