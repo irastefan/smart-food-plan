@@ -198,25 +198,29 @@ export function MealPlanSectionsCard({
                   <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
                     {addLabel}
                   </Button>
-                  <Tooltip title={t("mealPlan.analysis.tooltip.section", { section: section.title })}>
-                    <Button
-                      size="small"
-                      variant="text"
-                      startIcon={<InsightsRoundedIcon fontSize="small" />}
-                      onClick={() => onAnalyzeSection(section)}
-                      sx={{ px: 1 }}
-                    >
-                      {t("mealPlan.actions.analyzeWithAi")}
-                    </Button>
-                  </Tooltip>
+                  {section.items.length > 0 ? (
+                    <Tooltip title={t("mealPlan.analysis.tooltip.section", { section: section.title })}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<InsightsRoundedIcon fontSize="small" />}
+                        onClick={() => onAnalyzeSection(section)}
+                        sx={{ px: 1 }}
+                      >
+                        {t("mealPlan.actions.analyzeWithAi")}
+                      </Button>
+                    </Tooltip>
+                  ) : null}
                 </Stack>
-                <IconButton
-                  size="small"
-                  onClick={(event) => setMenuState({ sectionId: section.id, anchorEl: event.currentTarget })}
-                  title={t("mealPlan.actions.more")}
-                >
-                  <MoreHorizRoundedIcon fontSize="small" />
-                </IconButton>
+                {section.items.length > 0 ? (
+                  <IconButton
+                    size="small"
+                    onClick={(event) => setMenuState({ sectionId: section.id, anchorEl: event.currentTarget })}
+                    title={t("mealPlan.actions.more")}
+                  >
+                    <MoreHorizRoundedIcon fontSize="small" />
+                  </IconButton>
+                ) : null}
               </Stack>
             </Box>
           </Card>

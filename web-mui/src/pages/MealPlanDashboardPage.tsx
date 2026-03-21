@@ -174,6 +174,7 @@ export function MealPlanDashboardPage() {
   ];
   const usedCalories = day?.totals.caloriesKcal ?? 0;
   const remainingCalories = targetCalories - usedCalories;
+  const hasAnyMealItems = Boolean(day?.sections.some((section) => section.items.length > 0));
 
   async function handleSubmitDialog(payload: {
     type: "product" | "recipe" | "manual";
@@ -400,6 +401,7 @@ export function MealPlanDashboardPage() {
             goalLabel={t("mealPlan.cards.goal")}
             usedLabel={t("mealPlan.cards.used")}
             remainingLabel={t("mealPlan.cards.remaining")}
+            showAnalyze={hasAnyMealItems}
             onAnalyze={() => setAnalysisTarget({ scope: "day", label: t("mealPlan.analysis.dayLabel") })}
           />
         </Grid>

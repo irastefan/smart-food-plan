@@ -14,6 +14,7 @@ type MealPlanSummaryCardProps = {
   goalLabel: string;
   usedLabel: string;
   remainingLabel: string;
+  showAnalyze?: boolean;
   onAnalyze?: () => void;
 };
 
@@ -29,6 +30,7 @@ export function MealPlanSummaryCard({
   goalLabel,
   usedLabel,
   remainingLabel,
+  showAnalyze = true,
   onAnalyze
 }: MealPlanSummaryCardProps) {
   const { t } = useLanguage();
@@ -52,7 +54,7 @@ export function MealPlanSummaryCard({
           <Typography variant="h5" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" } }}>
             {title}
           </Typography>
-          {onAnalyze ? (
+          {onAnalyze && showAnalyze ? (
             <Tooltip title={t("mealPlan.analysis.tooltip.day")}>
               <IconButton
                 size="small"
