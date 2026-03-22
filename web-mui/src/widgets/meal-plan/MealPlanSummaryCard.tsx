@@ -1,7 +1,6 @@
 import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import { Box, Card, CardContent, CircularProgress, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ReactNode } from "react";
@@ -37,7 +36,7 @@ export function MealPlanSummaryCard({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
-  const ringSize = isMobile ? 140 : 168;
+  const ringSize = isMobile ? 128 : 168;
 
   return (
     <Card
@@ -131,11 +130,6 @@ export function MealPlanSummaryCard({
               icon={<ChecklistRoundedIcon sx={{ color: "#62b4ff" }} />}
               label={usedLabel}
               value={`${formatNumber(usedValue)} kcal`}
-            />
-            <SummaryStat
-              icon={<ScheduleRoundedIcon sx={{ color: "#a78bfa" }} />}
-              label={remainingLabel}
-              value={`${formatNumber(remainingValue)} kcal`}
             />
           </Stack>
         </Stack>
