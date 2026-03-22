@@ -245,7 +245,7 @@ export function MealPlanItemDialog({
             }
       }}
     >
-      <DialogTitle sx={{ pr: 2 }}>
+      <DialogTitle sx={{ pr: 2, pb: { xs: 0.75, md: 1.5 } }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <IconButton onClick={onClose} edge="start" size="small">
             <ArrowBackRoundedIcon />
@@ -255,7 +255,7 @@ export function MealPlanItemDialog({
           </Typography>
         </Stack>
       </DialogTitle>
-      <DialogContent sx={{ px: { xs: 0, md: 2 }, pb: 0 }}>
+      <DialogContent sx={{ px: { xs: 0, md: 2 }, pt: 0, pb: 0 }}>
         <Stack sx={{ height: "100%" }}>
           <Tabs
             value={activeTab}
@@ -270,7 +270,7 @@ export function MealPlanItemDialog({
             <Tab value="manual" label={t("mealPlan.dialog.manual")} />
           </Tabs>
 
-          <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2.5 }}>
+          <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: { xs: 1.5, md: 2.5 } }}>
             {activeTab === "ai" ? (
               <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto" }}>
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}

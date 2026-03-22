@@ -129,7 +129,9 @@ export function AiAssistantPanel<TExtra = void>({
           }}
         >
           <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
-          {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
+          <Box sx={{ pt: { xs: 1.5, md: 2 } }}>
+            {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
+          </Box>
         </Box>
         <AiAgentComposer
           isSubmitting={isSubmitting}
