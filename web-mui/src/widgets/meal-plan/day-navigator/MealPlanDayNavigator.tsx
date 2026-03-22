@@ -43,6 +43,7 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
         selectedDate={selectedDate}
         selectedLabel={selected}
         todayLabel={t("mealPlan.dayNav.today")}
+        selectedShortLabel={t("mealPlan.dayNav.selected")}
         selectDayLabel={t("mealPlan.dayNav.selectDay")}
         onDateChange={onDateChange}
       />
