@@ -386,13 +386,15 @@ export function MealPlanDashboardPage() {
         title={t("mealPlan.dashboard.title")}
         subtitle={t("mealPlan.dashboard.subtitle")}
       />
-      <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       {mutationError ? <Alert severity="error">{mutationError}</Alert> : null}
 
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <MealPlanSummaryCard
             title={t("mealPlan.cards.totalCalories")}
             goalValue={targetCalories}
@@ -405,7 +407,7 @@ export function MealPlanDashboardPage() {
             onAnalyze={() => setAnalysisTarget({ scope: "day", label: t("mealPlan.analysis.dayLabel") })}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 5 }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <MealPlanMacroBalanceCard
             title={t("mealPlan.section.macroBalance")}
             items={macroDistribution}

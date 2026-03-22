@@ -28,11 +28,12 @@ export function DayNavigatorDayCard({
     <Box
       onClick={() => onSelect(day)}
       sx={{
-        minWidth: active ? { xs: 82, sm: 96, md: 112 } : { xs: 70, sm: 82, md: 96 },
-        width: active ? { xs: 82, sm: 96, md: 112 } : { xs: 70, sm: 82, md: 96 },
-        px: active ? { xs: 1.05, sm: 1.25 } : { xs: 0.85, sm: 1.05 },
-        py: active ? { xs: 1.05, sm: 1.2 } : { xs: 0.9, sm: 1.05 },
-        borderRadius: active ? 1.25 : 1,
+        minWidth: active ? { xs: 72, sm: 82, md: 90 } : { xs: 64, sm: 72, md: 80 },
+        width: active ? { xs: 72, sm: 82, md: 90 } : { xs: 64, sm: 72, md: 80 },
+        minHeight: active ? { xs: 82, md: 92 } : { xs: 74, md: 84 },
+        px: { xs: 0.8, sm: 0.95 },
+        py: { xs: 0.7, sm: 0.8 },
+        borderRadius: 1.15,
         border: "1px solid",
         borderColor: active ? "primary.main" : today ? "rgba(16, 185, 129, 0.5)" : "divider",
         background: (theme) =>
@@ -48,6 +49,7 @@ export function DayNavigatorDayCard({
                 ? "rgba(31,36,54,0.92)"
                 : "#ffffff",
         cursor: "pointer",
+        position: "relative",
         transition: "all 160ms ease",
         boxShadow: active
           ? "0 14px 28px rgba(16, 185, 129, 0.14)"
@@ -57,7 +59,7 @@ export function DayNavigatorDayCard({
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
-        justifyContent: "flex-start",
+        justifyContent: "center",
         overflow: "visible",
         scrollSnapAlign: { xs: "start", md: "unset" },
         "&:hover": {
@@ -66,12 +68,38 @@ export function DayNavigatorDayCard({
         }
       }}
     >
+      {(active || today) ? (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            px: active ? { xs: 0.55, md: 0.8 } : { xs: 0.45, md: 0.65 },
+            minHeight: { xs: 16, md: 18 },
+            borderRadius: 999,
+            background: active
+              ? "linear-gradient(135deg, #60d5b0 0%, #10b981 100%)"
+              : "rgba(16,185,129,0.12)",
+            color: active ? "primary.contrastText" : "primary.main",
+            fontSize: { xs: 8, md: 9 },
+            fontWeight: 800,
+            lineHeight: 1,
+            zIndex: 1
+          }}
+        >
+          {active ? (today ? todayLabel : selectedLabel) : todayShortLabel}
+        </Box>
+      ) : null}
+
       <Typography
         variant={active ? "body1" : "caption"}
         color={active || today ? "primary.main" : "text.secondary"}
         fontWeight={800}
         sx={{
-          fontSize: active ? { xs: 9, md: 12 } : { xs: 8, md: 10 },
+          fontSize: active ? { xs: 8, md: 10 } : { xs: 7.5, md: 9 },
           letterSpacing: -0.2
         }}
       >
@@ -82,8 +110,8 @@ export function DayNavigatorDayCard({
         fontWeight={800}
         sx={{
           lineHeight: 1.05,
-          mt: 0.2,
-          fontSize: active ? { xs: 28, sm: 34, md: 42 } : { xs: 22, sm: 26, md: 32 }
+          mt: 0.05,
+          fontSize: active ? { xs: 24, sm: 28, md: 32 } : { xs: 20, sm: 22, md: 26 }
         }}
       >
         {new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date)}
@@ -92,67 +120,12 @@ export function DayNavigatorDayCard({
         variant={active ? "h5" : "body2"}
         color="text.secondary"
         sx={{
-          mt: 0.2,
-          fontSize: active ? { xs: 10, md: 14 } : { xs: 9, md: 12 }
+          mt: 0.1,
+          fontSize: active ? { xs: 9, md: 11 } : { xs: 8, md: 10 }
         }}
       >
         {new Intl.DateTimeFormat(locale, { month: "short" }).format(date)}
       </Typography>
-
-      <Box sx={{ flex: 1 }} />
-
-      {active ? (
-        <Box
-          sx={{
-            alignSelf: "center",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            px: { xs: 0.7, md: 1.15 },
-            minHeight: { xs: 18, md: 22 },
-            borderRadius: 999,
-            background: "linear-gradient(135deg, #60d5b0 0%, #10b981 100%)",
-            color: "primary.contrastText",
-            fontSize: { xs: 10, md: 12 },
-            fontWeight: 800,
-            lineHeight: 1
-          }}
-        >
-          {today ? todayLabel : selectedLabel}
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: { xs: 22, md: 22 },
-            pt: 0.25,
-            pb: 0.25
-          }}
-        >
-          {today ? (
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                px: { xs: 0.7, md: 1 },
-                minHeight: { xs: 18, md: 20 },
-                borderRadius: 999,
-                backgroundColor: "rgba(16,185,129,0.12)",
-                color: "primary.main",
-                fontSize: { xs: 9, md: 11 },
-                fontWeight: 800,
-                lineHeight: 1
-              }}
-            >
-              {todayShortLabel}
-            </Box>
-          ) : null}
-        </Box>
-      )}
     </Box>
   );
 }
