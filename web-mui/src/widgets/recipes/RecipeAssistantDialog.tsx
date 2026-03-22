@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Paper,
   Stack,
   Typography,
   useMediaQuery,
@@ -159,15 +158,17 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                 }}
                 renderBottom={() =>
                   draft ? (
-                    <Paper
+                    <Box
                       sx={{
                         mt: 1,
                         mb: 2.5,
                         p: { xs: 1.5, md: 2 },
-                        borderRadius: 1.25,
-                        border: "1px solid",
-                        borderColor: "rgba(16,185,129,0.24)",
-                        background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(14,165,233,0.05))"
+                        borderRadius: 1.5,
+                        backgroundColor: (theme) => (theme.palette.mode === "dark" ? "rgba(20, 28, 42, 0.96)" : "rgba(255,255,255,0.98)"),
+                        boxShadow: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                            : "0 8px 24px rgba(15,23,42,0.06)"
                       }}
                     >
                       <Stack spacing={1.5}>
@@ -207,13 +208,16 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                           {draft.ingredients.map((ingredient) => {
                             const ingredientTotals = getIngredientTotals(ingredient);
                             return (
-                              <Paper
+                              <Box
                                 key={ingredient.id}
-                                variant="outlined"
                                 sx={{
-                                  p: 1.25,
-                                  borderRadius: 1.25,
-                                  backgroundColor: "background.paper"
+                                  p: 1.3,
+                                  borderRadius: 1.5,
+                                  backgroundColor: (theme) => (theme.palette.mode === "dark" ? "rgba(20, 28, 42, 0.92)" : "rgba(255,255,255,0.96)"),
+                                  boxShadow: (theme) =>
+                                    theme.palette.mode === "dark"
+                                      ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                                      : "0 8px 24px rgba(15,23,42,0.05)"
                                 }}
                               >
                                 <Stack spacing={0.35}>
@@ -227,7 +231,7 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                                     {ingredientTotals.calories} kcal · {t("recipe.macros.protein")} {ingredientTotals.protein}g · {t("recipe.macros.fat")} {ingredientTotals.fat}g · {t("recipe.macros.carbs")} {ingredientTotals.carbs}g
                                   </Typography>
                                 </Stack>
-                              </Paper>
+                              </Box>
                             );
                           })}
                         </Stack>
@@ -251,12 +255,13 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                             startIcon={<SaveRoundedIcon />}
                             onClick={() => void handleCreate()}
                             disabled={isCreating}
+                            sx={{ boxShadow: "none" }}
                           >
                             {t("recipe.ai.confirm")}
                           </Button>
                         </Box>
                       </Stack>
-                    </Paper>
+                    </Box>
                   ) : null
                 }
               />
@@ -269,5 +274,15 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
 }
 
 function MetricChip({ label }: { label: string }) {
-  return <Chip size="small" variant="outlined" label={label} sx={{ fontWeight: 700 }} />;
+  return (
+    <Chip
+      size="small"
+      label={label}
+      sx={{
+        fontWeight: 700,
+        bgcolor: "action.hover",
+        borderRadius: 1
+      }}
+    />
+  );
 }

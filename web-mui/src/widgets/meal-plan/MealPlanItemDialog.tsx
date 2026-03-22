@@ -270,7 +270,35 @@ export function MealPlanItemDialog({
             <Tab value="manual" label={t("mealPlan.dialog.manual")} />
           </Tabs>
 
-          <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: { xs: 1.5, md: 2.5 } }}>
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              px: { xs: 2, md: 0 },
+              py: { xs: 1.5, md: 2.5 },
+              pr: { xs: 1.25, md: 0.5 },
+              scrollbarWidth: "thin",
+              scrollbarColor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(148,163,184,0.34) transparent" : "rgba(100,116,139,0.24) transparent",
+              "&::-webkit-scrollbar": {
+                width: 10
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "transparent"
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "rgba(148,163,184,0.28)" : "rgba(100,116,139,0.22)",
+                borderRadius: 999,
+                border: "3px solid transparent",
+                backgroundClip: "padding-box"
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "rgba(148,163,184,0.42)" : "rgba(100,116,139,0.34)"
+              }
+            }}
+          >
             {activeTab === "ai" ? (
               <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto" }}>
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
@@ -334,15 +362,14 @@ export function MealPlanItemDialog({
                       {singleProposal ? (
                         <Box
                           sx={{
-                            px: 1.25,
-                            py: 1,
-                            borderRadius: 1.25,
-                            border: "1px solid",
-                            borderColor: "rgba(16,185,129,0.22)",
-                            background: (theme) =>
+                            px: 1.4,
+                            py: 1.15,
+                            borderRadius: 1.5,
+                            backgroundColor: (theme) => (theme.palette.mode === "dark" ? "rgba(20, 28, 42, 0.96)" : "rgba(255,255,255,0.98)"),
+                            boxShadow: (theme) =>
                               theme.palette.mode === "dark"
-                                ? "linear-gradient(180deg, rgba(18,34,32,0.92), rgba(15,23,42,0.92))"
-                                : "linear-gradient(180deg, rgba(240,253,250,0.92), rgba(255,255,255,0.98))"
+                                ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                                : "0 8px 24px rgba(15,23,42,0.06)"
                           }}
                         >
                           {(() => {
@@ -371,12 +398,15 @@ export function MealPlanItemDialog({
                                   }}
                                   disabled={isSubmitting}
                                   sx={{
-                                    width: 32,
-                                    height: 32,
-                                    ml: 0.5,
-                                    border: "1px solid",
-                                    borderColor: "rgba(16,185,129,0.28)",
-                                    backgroundColor: "rgba(16,185,129,0.08)"
+                                    width: 34,
+                                    height: 34,
+                                    ml: 0.75,
+                                    bgcolor: "primary.main",
+                                    color: "primary.contrastText",
+                                    boxShadow: "none",
+                                    "&:hover": {
+                                      bgcolor: "primary.dark"
+                                    }
                                   }}
                                 >
                                   {isSubmitting ? <CircularProgress size={16} /> : <AddRoundedIcon sx={{ fontSize: 18 }} />}
@@ -398,15 +428,14 @@ export function MealPlanItemDialog({
                                 <Box
                                   key={`${entry.name}-${index}`}
                                   sx={{
-                                    px: 1.25,
-                                    py: 1,
-                                    borderRadius: 1.25,
-                                    border: "1px solid",
-                                    borderColor: "rgba(16,185,129,0.16)",
-                                    background: (theme) =>
+                                    px: 1.4,
+                                    py: 1.1,
+                                    borderRadius: 1.5,
+                                    backgroundColor: (theme) => (theme.palette.mode === "dark" ? "rgba(20, 28, 42, 0.92)" : "rgba(255,255,255,0.98)"),
+                                    boxShadow: (theme) =>
                                       theme.palette.mode === "dark"
-                                        ? "linear-gradient(180deg, rgba(25,32,46,0.96), rgba(18,24,37,0.96))"
-                                        : "linear-gradient(180deg, rgba(250,252,255,0.98), rgba(255,255,255,0.98))"
+                                        ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                                        : "0 8px 24px rgba(15,23,42,0.05)"
                                   }}
                                 >
                                   <Stack direction="row" spacing={1.25} alignItems="center">
@@ -431,12 +460,15 @@ export function MealPlanItemDialog({
                                       }}
                                       disabled={isSubmitting}
                                       sx={{
-                                        width: 30,
-                                        height: 30,
-                                        ml: 0.5,
-                                        border: "1px solid",
-                                        borderColor: "rgba(16,185,129,0.24)",
-                                        backgroundColor: "rgba(16,185,129,0.08)"
+                                        width: 32,
+                                        height: 32,
+                                        ml: 0.75,
+                                        bgcolor: "primary.main",
+                                        color: "primary.contrastText",
+                                        boxShadow: "none",
+                                        "&:hover": {
+                                          bgcolor: "primary.dark"
+                                        }
                                       }}
                                     >
                                       {isSubmitting ? <CircularProgress size={15} /> : <AddRoundedIcon sx={{ fontSize: 17 }} />}

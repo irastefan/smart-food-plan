@@ -125,7 +125,28 @@ export function AiAssistantPanel<TExtra = void>({
             flex: 1,
             minHeight: 0,
             overflowY: "auto",
-            pb: { xs: 1, md: 1.25 }
+            pb: { xs: 1, md: 1.25 },
+            pr: 0.5,
+            scrollbarWidth: "thin",
+            scrollbarColor: (theme) =>
+              theme.palette.mode === "dark" ? "rgba(148,163,184,0.34) transparent" : "rgba(100,116,139,0.24) transparent",
+            "&::-webkit-scrollbar": {
+              width: 10
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent"
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(148,163,184,0.28)" : "rgba(100,116,139,0.22)",
+              borderRadius: 999,
+              border: "3px solid transparent",
+              backgroundClip: "padding-box"
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(148,163,184,0.42)" : "rgba(100,116,139,0.34)"
+            }
           }}
         >
           <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
