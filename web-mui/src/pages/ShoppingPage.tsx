@@ -179,6 +179,10 @@ export function ShoppingPage() {
     }
   }
 
+  async function handleCreateCategorySilently(name: string) {
+    await addShoppingCategory(name);
+  }
+
   async function handleDeleteCategory(categoryId: string, categoryName: string) {
     try {
       setIsMutating(true);
@@ -273,6 +277,7 @@ export function ShoppingPage() {
         categories={categoryNames}
         isSubmitting={isMutating}
         onClose={() => setDialogOpen(false)}
+        onCreateCategory={handleCreateCategorySilently}
         onSubmit={handleAdd}
       />
       <ShoppingCategoryDialog

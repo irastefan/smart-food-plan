@@ -6,19 +6,14 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Snackbar,
-  Stack,
-  TextField,
   Tooltip,
-  Typography
+  Stack
 } from "@mui/material";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { ShoppingCategorySelector } from "./ShoppingCategorySelector";
 
 type ShoppingCategoryPickerButtonProps = {
   categories: string[];
@@ -121,49 +116,16 @@ export function ShoppingCategoryPickerButton({
       <Dialog open={pickerOpen} onClose={handleClose} fullWidth maxWidth="xs">
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth size="small" disabled={isSubmitting || uniqueCategories.length === 0}>
-              <InputLabel id="shopping-category-picker-label">{t("shopping.dialog.category")}</InputLabel>
-              <Select
-                labelId="shopping-category-picker-label"
-                value={selectedCategory}
-                label={t("shopping.dialog.category")}
-                onChange={(event) => setSelectedCategory(event.target.value)}
-              >
-                {uniqueCategories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {uniqueCategories.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                {t("shopping.picker.noCategories")}
-              </Typography>
-            ) : null}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setIsCreatingCategory((current) => !current)}
-                disabled={isSubmitting}
-                sx={{ flexShrink: 0, minHeight: 40 }}
-              >
-                {t("shopping.addCategory")}
-              </Button>
-              {isCreatingCategory ? (
-                <TextField
-                  fullWidth
-                  size="small"
-                  label={t("shopping.categoryDialog.name")}
-                  value={newCategoryName}
-                  onChange={(event) => setNewCategoryName(event.target.value)}
-                  disabled={isSubmitting}
-                  autoFocus
-                  sx={{ "& .MuiInputBase-root": { minHeight: 40 } }}
-                />
-              ) : null}
-            </Stack>
+            <ShoppingCategorySelector
+              categories={uniqueCategories}
+              selectedCategory={selectedCategory}
+              onSelectedCategoryChange={setSelectedCategory}
+              isCreatingCategory={isCreatingCategory}
+              onToggleCreateCategory={() => setIsCreatingCategory((current) => !current)}
+              newCategoryName={newCategoryName}
+              onNewCategoryNameChange={setNewCategoryName}
+              disabled={isSubmitting}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>

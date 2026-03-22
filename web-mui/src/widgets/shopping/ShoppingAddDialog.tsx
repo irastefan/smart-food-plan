@@ -10,9 +10,10 @@ import {
   Stack,
   TextField
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ProductSummary } from "../../features/products/api/productsApi";
+import { ShoppingCategorySelector } from "./ShoppingCategorySelector";
 
 type ShoppingAddDialogProps = {
   open: boolean;
@@ -20,6 +21,7 @@ type ShoppingAddDialogProps = {
   categories: string[];
   isSubmitting: boolean;
   onClose: () => void;
+  onCreateCategory: (name: string) => Promise<void> | void;
   onSubmit: (payload: {
     mode: "product" | "custom";
     product?: ProductSummary;
@@ -37,25 +39,44 @@ export function ShoppingAddDialog({
   categories,
   isSubmitting,
   onClose,
+  onCreateCategory,
   onSubmit
 }: ShoppingAddDialogProps) {
   const { t } = useLanguage();
   const [inputValue, setInputValue] = useState("");
   const [amount, setAmount] = useState("1");
   const [unit, setUnit] = useState("pcs");
-  const [categoryName, setCategoryName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [note, setNote] = useState("");
+
+  const uniqueCategories = useMemo(
+    () => Array.from(new Set(categories)).sort((left, right) => left.localeCompare(right)),
+    [categories]
+  );
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.title.toLowerCase() === inputValue.trim().toLowerCase()),
     [inputValue, products]
   );
 
+  useEffect(() => {
+    setSelectedCategory((current) => {
+      if (current && uniqueCategories.includes(current)) {
+        return current;
+      }
+      return uniqueCategories[0] ?? "";
+    });
+  }, [uniqueCategories]);
+
   function reset() {
     setInputValue("");
     setAmount("1");
     setUnit("pcs");
-    setCategoryName("");
+    setSelectedCategory("");
+    setIsCreatingCategory(false);
+    setNewCategoryName("");
     setNote("");
   }
 
@@ -68,13 +89,20 @@ export function ShoppingAddDialog({
   }
 
   async function handleSubmit() {
+    const trimmedCategoryName = newCategoryName.trim();
+    const nextCategoryName = trimmedCategoryName || selectedCategory;
+
+    if (trimmedCategoryName) {
+      await onCreateCategory(trimmedCategoryName);
+    }
+
     await onSubmit({
       mode: selectedProduct ? "product" : "custom",
       product: selectedProduct,
       customName: selectedProduct ? undefined : inputValue.trim(),
       amount: amount.trim().length > 0 ? Number(amount) : undefined,
       unit,
-      categoryName,
+      categoryName: nextCategoryName,
       note
     });
     reset();
@@ -111,19 +139,15 @@ export function ShoppingAddDialog({
             <TextField label={t("shopping.dialog.unit")} value={unit} onChange={(event) => setUnit(event.target.value)} fullWidth />
           </Stack>
 
-          <Autocomplete
-            freeSolo
-            options={categories}
-            value={categoryName}
-            onInputChange={(_, value) => setCategoryName(value)}
-            onChange={(_, value) => setCategoryName(typeof value === "string" ? value : "")}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={t("shopping.dialog.category")}
-                placeholder={t("shopping.dialog.categoryPlaceholder")}
-              />
-            )}
+          <ShoppingCategorySelector
+            categories={uniqueCategories}
+            selectedCategory={selectedCategory}
+            onSelectedCategoryChange={setSelectedCategory}
+            isCreatingCategory={isCreatingCategory}
+            onToggleCreateCategory={() => setIsCreatingCategory((current) => !current)}
+            newCategoryName={newCategoryName}
+            onNewCategoryNameChange={setNewCategoryName}
+            disabled={isSubmitting}
           />
 
           <TextField
@@ -141,7 +165,7 @@ export function ShoppingAddDialog({
           onClick={() => void handleSubmit()}
           variant="contained"
           startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <AddShoppingCartRoundedIcon />}
-          disabled={isSubmitting || inputValue.trim().length === 0}
+          disabled={isSubmitting || inputValue.trim().length === 0 || (!selectedCategory && newCategoryName.trim().length === 0)}
         >
           {t("shopping.dialog.add")}
         </Button>
