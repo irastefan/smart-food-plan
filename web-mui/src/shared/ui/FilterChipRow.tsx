@@ -15,13 +15,14 @@ type FilterChipRowProps = {
   onChange: (value: string) => void;
   addLabel?: string;
   onAdd?: () => void;
+  wrapOnDesktop?: boolean;
 };
 
-export function FilterChipRow({ value, items, onChange, addLabel, onAdd }: FilterChipRowProps) {
+export function FilterChipRow({ value, items, onChange, addLabel, onAdd, wrapOnDesktop = false }: FilterChipRowProps) {
   return (
     <Box
       sx={{
-        overflowX: "auto",
+        overflowX: { xs: "auto", md: wrapOnDesktop ? "visible" : "auto" },
         overflowY: "hidden",
         pb: 0.5,
         WebkitOverflowScrolling: "touch",
@@ -29,7 +30,17 @@ export function FilterChipRow({ value, items, onChange, addLabel, onAdd }: Filte
         scrollbarWidth: "none"
       }}
     >
-      <Stack direction="row" spacing={1} sx={{ width: "max-content", pr: 0.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          flexWrap: { xs: "nowrap", md: wrapOnDesktop ? "wrap" : "nowrap" },
+          width: { xs: "max-content", md: wrapOnDesktop ? "auto" : "max-content" },
+          minWidth: 0,
+          pr: 0.5
+        }}
+      >
         {items.map((item) => (
           <Chip
             key={item.value}
@@ -82,7 +93,7 @@ export function FilterChipRow({ value, items, onChange, addLabel, onAdd }: Filte
             }}
           />
         ) : null}
-      </Stack>
+      </Box>
     </Box>
   );
 }

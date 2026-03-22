@@ -12,7 +12,6 @@ import {
   DialogTitle,
   IconButton,
   Stack,
-  Switch,
   Tab,
   Tabs,
   TextField,
@@ -41,7 +40,6 @@ type MealPlanItemDialogProps = {
   isSubmitting: boolean;
   errorMessage: string | null;
   onClose: () => void;
-  onDataChanged?: () => void;
   onSubmitMultipleManualItems?: (items: MealPlanAssistantProposal[]) => void;
   onAppendManualItems?: (items: MealPlanAssistantProposal[]) => void;
   onSubmit: (payload: {
@@ -124,7 +122,6 @@ export function MealPlanItemDialog({
   isSubmitting,
   errorMessage,
   onClose,
-  onDataChanged,
   onSubmitMultipleManualItems,
   onAppendManualItems,
   onSubmit
@@ -134,7 +131,6 @@ export function MealPlanItemDialog({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const agentSettings = getAiAgentSettings();
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
-  const [accessMode, setAccessMode] = useState(agentSettings.accessMode);
   const [batchItems, setBatchItems] = useState<MealPlanAssistantProposal[]>([]);
   const [singleProposal, setSingleProposal] = useState<MealPlanAssistantProposal | null>(null);
 
@@ -156,7 +152,6 @@ export function MealPlanItemDialog({
     }
 
     setActiveTab(mode === "edit" ? (item?.isManual ? "manual" : item?.type ?? initialItemType) : "ai");
-    setAccessMode(getAiAgentSettings().accessMode);
     setBatchItems([]);
     setSingleProposal(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
@@ -300,7 +295,6 @@ export function MealPlanItemDialog({
                       history: messages,
                       sectionTitle,
                       existingItems,
-                      accessMode,
                       userText,
                       images: payload.images,
                       userInstructions: agentSettings.userInstructions
@@ -326,43 +320,18 @@ export function MealPlanItemDialog({
                       setManualFat100(nextProposal.fat100);
                       setManualCarbs100(nextProposal.carbs100);
                     }
-
-                    if (nextItems.length > 0 && result && !result.needsConfirmation && accessMode === "full") {
-                      submitBatch(nextItems);
-                      onDataChanged?.();
-                    }
-
-                    if (result?.proposal && !result.needsConfirmation && accessMode === "full") {
-                      submitManual(result.proposal);
-                      onDataChanged?.();
-                    }
                   }}
                   renderTop={() => (
                     <Stack spacing={2.5}>
-                      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-                        <Stack spacing={0.5}>
-                          <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
-                          <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexShrink: 0 }}>
-                          <Typography variant="body2" color="text.secondary">{t("mealPlan.ai.accessMode")}</Typography>
-                          <Typography variant="body2" color={accessMode === "limited" ? "text.primary" : "text.secondary"}>
-                            {t("mealPlan.ai.mode.limited")}
-                          </Typography>
-                          <Switch
-                            checked={accessMode === "full"}
-                            onChange={(event) => setAccessMode(event.target.checked ? "full" : "limited")}
-                          />
-                          <Typography variant="body2" color={accessMode === "full" ? "text.primary" : "text.secondary"}>
-                            {t("mealPlan.ai.mode.full")}
-                          </Typography>
-                        </Stack>
+                      <Stack spacing={0.5}>
+                        <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
+                        <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
                       </Stack>
                     </Stack>
                   )}
                   renderBottom={() => (
                     <Stack spacing={1.1} sx={{ pb: 1.75 }}>
-                      {singleProposal && accessMode === "limited" ? (
+                      {singleProposal ? (
                         <Box
                           sx={{
                             px: 1.25,
@@ -454,50 +423,46 @@ export function MealPlanItemDialog({
                                         {`${totals.calories} kcal · ${t("mealPlan.macro.protein")} ${totals.protein}g · ${t("mealPlan.macro.fat")} ${totals.fat}g · ${t("mealPlan.macro.carbs")} ${totals.carbs}g`}
                                       </Typography>
                                     </Box>
-                                    {accessMode === "limited" ? (
-                                      <IconButton
-                                        color="primary"
-                                        onClick={() => {
-                                          appendItems([entry]);
-                                          setBatchItems((current) => current.filter((_, currentIndex) => currentIndex !== index));
-                                        }}
-                                        disabled={isSubmitting}
-                                        sx={{
-                                          width: 30,
-                                          height: 30,
-                                          ml: 0.5,
-                                          border: "1px solid",
-                                          borderColor: "rgba(16,185,129,0.24)",
-                                          backgroundColor: "rgba(16,185,129,0.08)"
-                                        }}
-                                      >
-                                        {isSubmitting ? <CircularProgress size={15} /> : <AddRoundedIcon sx={{ fontSize: 17 }} />}
-                                      </IconButton>
-                                    ) : null}
+                                    <IconButton
+                                      color="primary"
+                                      onClick={() => {
+                                        appendItems([entry]);
+                                        setBatchItems((current) => current.filter((_, currentIndex) => currentIndex !== index));
+                                      }}
+                                      disabled={isSubmitting}
+                                      sx={{
+                                        width: 30,
+                                        height: 30,
+                                        ml: 0.5,
+                                        border: "1px solid",
+                                        borderColor: "rgba(16,185,129,0.24)",
+                                        backgroundColor: "rgba(16,185,129,0.08)"
+                                      }}
+                                    >
+                                      {isSubmitting ? <CircularProgress size={15} /> : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                                    </IconButton>
                                   </Stack>
                                 </Box>
                               );
                             })}
                           </Stack>
-                          {accessMode === "limited" ? (
-                            <Box>
-                              <Button
-                                variant="contained"
-                                onClick={() => submitBatch(batchItems)}
-                                disabled={isSubmitting || batchItems.length === 0}
-                                size="small"
-                                sx={{
-                                  px: 1.4,
-                                  py: 0.75,
-                                  borderRadius: 1.25,
-                                  textTransform: "none",
-                                  boxShadow: "none"
-                                }}
-                              >
-                                {t("mealPlan.ai.applyMultiple", { count: batchItems.length, section: sectionTitle })}
-                              </Button>
-                            </Box>
-                          ) : null}
+                          <Box>
+                            <Button
+                              variant="contained"
+                              onClick={() => submitBatch(batchItems)}
+                              disabled={isSubmitting || batchItems.length === 0}
+                              size="small"
+                              sx={{
+                                px: 1.4,
+                                py: 0.75,
+                                borderRadius: 1.25,
+                                textTransform: "none",
+                                boxShadow: "none"
+                              }}
+                            >
+                              {t("mealPlan.ai.applyMultiple", { count: batchItems.length, section: sectionTitle })}
+                            </Button>
+                          </Box>
                         </Stack>
                       ) : null}
                     </Stack>

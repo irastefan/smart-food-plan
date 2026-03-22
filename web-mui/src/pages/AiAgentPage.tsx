@@ -1,13 +1,13 @@
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Chip, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../features/ai/api/mcpApi";
 import { runAgentTurn } from "../features/ai/api/openaiAgentApi";
 import { getAiAgentSettings } from "../shared/config/aiAgent";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAssistantPanel } from "../widgets/ai/AiAssistantPanel";
 
@@ -64,6 +64,7 @@ export function AiAgentPage() {
   return (
     <Stack spacing={{ xs: 1.5, md: 2 }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("aiAgent.title")} subtitle={t("aiAgent.subtitle")} />
+      <PageTitle title={t("aiAgent.title")} />
 
       {status ? (
         <Alert severity={status.type}>
@@ -85,36 +86,11 @@ export function AiAgentPage() {
             minHeight: { xs: "calc(100vh - 132px)", xl: "calc(100vh - 138px)" },
             background: (theme) =>
               theme.palette.mode === "dark"
-                ? "linear-gradient(180deg, rgba(17,26,39,0.98), rgba(13,20,31,0.98))"
-                : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))"
+              ? "linear-gradient(180deg, rgba(17,26,39,0.98), rgba(13,20,31,0.98))"
+              : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))"
           }}
         >
-          <Stack spacing={{ xs: 0.75, md: 1.25 }} sx={{ maxWidth: 920, mx: "auto", minHeight: "100%" }}>
-            <Paper
-              sx={{
-                p: { xs: 1.2, md: 1.5 },
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-                background: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? "linear-gradient(180deg, rgba(20,31,45,0.96), rgba(12,20,30,0.96))"
-                    : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.96))"
-              }}
-            >
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Avatar sx={{ width: { xs: 34, md: 38 }, height: { xs: 34, md: 38 }, bgcolor: "primary.main", color: "primary.contrastText" }}>
-                  <SmartToyRoundedIcon sx={{ fontSize: 20 }} />
-                </Avatar>
-                <Stack spacing={0.25}>
-                  <Typography fontWeight={800} sx={{ fontSize: { xs: 15, md: 16 } }}>{t("aiAgent.hero.title")}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, md: 13 } }}>
-                    {t("aiAgent.hero.subtitle")}
-                  </Typography>
-                </Stack>
-              </Stack>
-            </Paper>
-
+          <Stack spacing={{ xs: 0.75, md: 1.25 }} sx={{ maxWidth: 1180, mx: "auto", minHeight: "100%" }}>
             <Accordion
               disableGutters
               elevation={0}

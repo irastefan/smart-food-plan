@@ -66,11 +66,6 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                 <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
                   {message.role === "tool" ? message.toolName : message.role}
                 </Typography>
-                {message.role === "user" ? (
-                  <Avatar sx={{ width: 24, height: 24, bgcolor: "rgba(255,255,255,0.18)", color: "#ffffff" }}>
-                    <PersonRoundedIcon sx={{ fontSize: 14 }} />
-                  </Avatar>
-                ) : null}
               </Stack>
 
               {message.role === "tool" ? (
@@ -136,8 +131,8 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
           </Paper>
 
           {message.role === "user" ? (
-            <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(16,185,129,0.9)", color: "#ffffff", mt: 0.5 }}>
-              <PersonRoundedIcon sx={{ fontSize: 18 }} />
+            <Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 }, bgcolor: "rgba(16,185,129,0.9)", color: "#ffffff", mt: 0.25 }}>
+              <PersonRoundedIcon sx={{ fontSize: 16 }} />
             </Avatar>
           ) : null}
         </Stack>
@@ -148,47 +143,41 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
           <Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 }, bgcolor: "primary.main", color: "primary.contrastText", mt: 0.25 }}>
             <SmartToyRoundedIcon sx={{ fontSize: 16 }} />
           </Avatar>
-          <Paper
+          <Box
             sx={{
-              p: { xs: 1.1, md: 1.4 },
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "divider",
-              width: "100%",
-              maxWidth: 260,
-              backgroundColor: "background.paper"
+              minHeight: { xs: 28, md: 32 },
+              display: "flex",
+              alignItems: "center",
+              pl: 0.25
             }}
           >
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Stack direction="row" spacing={0.6} alignItems="center" sx={{ minWidth: 28 }}>
-                {[0, 1, 2].map((index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      backgroundColor: "text.secondary",
-                      opacity: 0.35,
-                      animation: "aiTyping 1.2s infinite ease-in-out",
-                      animationDelay: `${index * 0.18}s`,
-                      "@keyframes aiTyping": {
-                        "0%, 80%, 100%": {
-                          transform: "translateY(0)",
-                          opacity: 0.28
-                        },
-                        "40%": {
-                          transform: "translateY(-4px)",
-                          opacity: 1
-                        }
+            <Stack direction="row" spacing={0.6} alignItems="center" sx={{ minWidth: 28 }}>
+              {[0, 1, 2].map((index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    backgroundColor: "text.secondary",
+                    opacity: 0.35,
+                    animation: "aiTyping 1.2s infinite ease-in-out",
+                    animationDelay: `${index * 0.18}s`,
+                    "@keyframes aiTyping": {
+                      "0%, 80%, 100%": {
+                        transform: "translateY(0)",
+                        opacity: 0.28
+                      },
+                      "40%": {
+                        transform: "translateY(-4px)",
+                        opacity: 1
                       }
-                    }}
-                  />
-                ))}
-              </Stack>
-              <Typography color="text.secondary">{t("aiAgent.loadingResponse")}</Typography>
+                    }
+                  }}
+                />
+              ))}
             </Stack>
-          </Paper>
+          </Box>
         </Stack>
       ) : null}
     </Stack>

@@ -2,6 +2,7 @@ import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRound
 import {
   Autocomplete,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -59,12 +60,15 @@ export function ShoppingAddDialog({
   }
 
   function handleClose() {
+    if (isSubmitting) {
+      return;
+    }
     reset();
     onClose();
   }
 
-  function handleSubmit() {
-    onSubmit({
+  async function handleSubmit() {
+    await onSubmit({
       mode: selectedProduct ? "product" : "custom",
       product: selectedProduct,
       customName: selectedProduct ? undefined : inputValue.trim(),
@@ -132,8 +136,13 @@ export function ShoppingAddDialog({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={handleClose}>{t("shopping.dialog.cancel")}</Button>
-        <Button onClick={handleSubmit} variant="contained" startIcon={<AddShoppingCartRoundedIcon />} disabled={isSubmitting || inputValue.trim().length === 0}>
+        <Button onClick={handleClose} disabled={isSubmitting}>{t("shopping.dialog.cancel")}</Button>
+        <Button
+          onClick={() => void handleSubmit()}
+          variant="contained"
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <AddShoppingCartRoundedIcon />}
+          disabled={isSubmitting || inputValue.trim().length === 0}
+        >
           {t("shopping.dialog.add")}
         </Button>
       </DialogActions>

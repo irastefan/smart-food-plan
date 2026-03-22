@@ -1,4 +1,4 @@
-import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -25,6 +25,7 @@ import {
 } from "../features/meal-plan/api/mealPlanApi";
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanAnalysisDialog } from "../widgets/meal-plan/MealPlanAnalysisDialog";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
@@ -386,15 +387,20 @@ export function MealPlanDashboardPage() {
         title={t("mealPlan.dashboard.title")}
         subtitle={t("mealPlan.dashboard.subtitle")}
       />
+      <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", lg: "center" }} spacing={2}>
+        <Box sx={{ display: { xs: "none", lg: "block" } }}>
+          <PageTitle title={t("mealPlan.dashboard.title")} />
+        </Box>
+        <Box sx={{ width: { xs: "100%", lg: 420 }, maxWidth: { lg: "100%" }, ml: { lg: "auto" } }}>
+          <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        </Box>
+      </Stack>
 
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       {mutationError ? <Alert severity="error">{mutationError}</Alert> : null}
 
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 5 }}>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <MealPlanSummaryCard
             title={t("mealPlan.cards.totalCalories")}
             goalValue={targetCalories}
@@ -407,7 +413,7 @@ export function MealPlanDashboardPage() {
             onAnalyze={() => setAnalysisTarget({ scope: "day", label: t("mealPlan.analysis.dayLabel") })}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <MealPlanMacroBalanceCard
             title={t("mealPlan.section.macroBalance")}
             items={macroDistribution}
@@ -459,9 +465,6 @@ export function MealPlanDashboardPage() {
         onClose={() => {
           setDialogState(null);
           setMutationError(null);
-        }}
-        onDataChanged={() => {
-          void refresh();
         }}
         onSubmitMultipleManualItems={handleSubmitMultipleManualItems}
         onAppendManualItems={handleAppendManualItems}

@@ -1,4 +1,4 @@
-import { Alert, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Paper, Snackbar, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -16,6 +16,7 @@ import {
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { FilterChipRow } from "../shared/ui/FilterChipRow";
 import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ShoppingAddDialog } from "../widgets/shopping/ShoppingAddDialog";
 import { ShoppingCategoryDialog } from "../widgets/shopping/ShoppingCategoryDialog";
@@ -36,7 +37,8 @@ export function ShoppingPage() {
   const [isMutating, setIsMutating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [status, setStatus] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
     | { type: "item"; item: ShoppingItem }
     | { type: "category"; categoryId: string; categoryName: string }
@@ -49,7 +51,7 @@ export function ShoppingPage() {
     async function load() {
       try {
         setIsLoading(true);
-        setStatus(null);
+        setLoadError(null);
         const [list, productList] = await Promise.all([getShoppingList(), getProducts()]);
         if (!cancelled) {
           setShoppingList(list);
@@ -58,7 +60,7 @@ export function ShoppingPage() {
       } catch (error) {
         console.error("Failed to load shopping list", error);
         if (!cancelled) {
-          setStatus({ type: "error", message: t("shopping.status.loadError") });
+          setLoadError(t("shopping.status.loadError"));
         }
       } finally {
         if (!cancelled) {
@@ -105,12 +107,11 @@ export function ShoppingPage() {
   async function handleToggleDone(item: ShoppingItem) {
     try {
       setIsMutating(true);
-      setStatus(null);
       const nextList = await setShoppingItemState(item.id, !item.isDone);
       setShoppingList(nextList);
     } catch (error) {
       console.error("Failed to toggle shopping item", error);
-      setStatus({ type: "error", message: t("shopping.status.toggleError") });
+      setFeedback({ type: "error", message: t("shopping.status.toggleError") });
     } finally {
       setIsMutating(false);
     }
@@ -119,13 +120,13 @@ export function ShoppingPage() {
   async function handleDeleteItem(item: ShoppingItem) {
     try {
       setIsMutating(true);
-      setStatus(null);
       const nextList = await removeShoppingItem(item.id);
       setShoppingList(nextList);
       setPendingDelete(null);
+      setFeedback({ type: "success", message: t("shopping.status.deleted") });
     } catch (error) {
       console.error("Failed to remove shopping item", error);
-      setStatus({ type: "error", message: t("shopping.status.deleteError") });
+      setFeedback({ type: "error", message: t("shopping.status.deleteError") });
     } finally {
       setIsMutating(false);
     }
@@ -142,7 +143,6 @@ export function ShoppingPage() {
   }) {
     try {
       setIsMutating(true);
-      setStatus(null);
       const nextList = await addShoppingItem({
         productId: payload.mode === "product" ? payload.product?.id : undefined,
         customName: payload.mode === "custom" ? payload.customName : undefined,
@@ -153,10 +153,11 @@ export function ShoppingPage() {
       });
       setShoppingList(nextList);
       setDialogOpen(false);
-      setStatus({ type: "success", message: t("shopping.status.added") });
+      setFeedback({ type: "success", message: t("shopping.status.added") });
     } catch (error) {
       console.error("Failed to add shopping item", error);
-      setStatus({ type: "error", message: t("shopping.status.addError") });
+      setFeedback({ type: "error", message: t("shopping.status.addError") });
+      throw error;
     } finally {
       setIsMutating(false);
     }
@@ -165,15 +166,14 @@ export function ShoppingPage() {
   async function handleAddCategory(name: string) {
     try {
       setIsMutating(true);
-      setStatus(null);
       await addShoppingCategory(name);
       const nextList = await getShoppingList();
       setShoppingList(nextList);
       setCategoryDialogOpen(false);
-      setStatus({ type: "success", message: t("shopping.status.categoryAdded") });
+      setFeedback({ type: "success", message: t("shopping.status.categoryAdded") });
     } catch (error) {
       console.error("Failed to add shopping category", error);
-      setStatus({ type: "error", message: t("shopping.status.categoryAddError") });
+      setFeedback({ type: "error", message: t("shopping.status.categoryAddError") });
     } finally {
       setIsMutating(false);
     }
@@ -182,18 +182,17 @@ export function ShoppingPage() {
   async function handleDeleteCategory(categoryId: string, categoryName: string) {
     try {
       setIsMutating(true);
-      setStatus(null);
       await removeShoppingCategory(categoryId);
       const nextList = await getShoppingList();
       setShoppingList(nextList);
       if (filter === categoryName) {
         setFilter("all");
       }
-      setStatus({ type: "success", message: t("shopping.status.categoryDeleted") });
+      setFeedback({ type: "success", message: t("shopping.status.categoryDeleted") });
       setPendingDelete(null);
     } catch (error) {
       console.error("Failed to delete shopping category", error);
-      setStatus({ type: "error", message: t("shopping.status.categoryDeleteError") });
+      setFeedback({ type: "error", message: t("shopping.status.categoryDeleteError") });
     } finally {
       setIsMutating(false);
     }
@@ -202,10 +201,12 @@ export function ShoppingPage() {
   return (
     <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
+      <PageTitle title={t("shopping.title")} />
 
       <FilterChipRow
         value={filter}
         onChange={setFilter}
+        wrapOnDesktop
         items={[
           { value: "all", label: t("shopping.filters.all") },
           ...categoryNames.map((category) => ({
@@ -220,7 +221,7 @@ export function ShoppingPage() {
         onAdd={() => setCategoryDialogOpen(true)}
       />
 
-      {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
+      {loadError ? <Alert severity="error">{loadError}</Alert> : null}
 
       {isLoading ? (
         <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -234,23 +235,36 @@ export function ShoppingPage() {
           <Typography color="text.secondary">{t("shopping.empty")}</Typography>
         </Paper>
       ) : (
-        <Stack spacing={2.5}>
+        <Box
+          sx={{
+            columnCount: { xs: 1, xl: 2 },
+            columnGap: 12
+          }}
+        >
           {groupedItems.map(([categoryName, items]) => (
-            <ShoppingCategorySection
+            <Box
               key={categoryName}
-              title={categoryName}
-              items={items}
-              doneLabel={t("shopping.done")}
-              onDeleteCategory={
-                categoryByName.get(categoryName)
-                  ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(categoryName)!.id, categoryName })
-                  : undefined
-              }
-              onToggleDone={handleToggleDone}
-              onDelete={(item) => setPendingDelete({ type: "item", item })}
-            />
+              sx={{
+                breakInside: "avoid",
+                WebkitColumnBreakInside: "avoid",
+                mb: 2.5
+              }}
+            >
+              <ShoppingCategorySection
+                title={categoryName}
+                items={items}
+                doneLabel={t("shopping.done")}
+                onDeleteCategory={
+                  categoryByName.get(categoryName)
+                    ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(categoryName)!.id, categoryName })
+                    : undefined
+                }
+                onToggleDone={handleToggleDone}
+                onDelete={(item) => setPendingDelete({ type: "item", item })}
+              />
+            </Box>
           ))}
-        </Stack>
+        </Box>
       )}
 
       <ShoppingAddDialog
@@ -290,6 +304,17 @@ export function ShoppingPage() {
         tooltip={t("shopping.add")}
         onClick={() => setDialogOpen(true)}
       />
+
+      <Snackbar
+        open={Boolean(feedback)}
+        autoHideDuration={2500}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={feedback?.type ?? "success"} onClose={() => setFeedback(null)} sx={{ width: "100%" }}>
+          {feedback?.message}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }

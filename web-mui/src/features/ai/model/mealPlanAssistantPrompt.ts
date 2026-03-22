@@ -1,24 +1,8 @@
-import type { AiAgentSettings } from "../../../shared/config/aiAgent";
-
 export function buildMealPlanAssistantPrompt(input: {
   sectionTitle: string;
   existingItems: string[];
-  accessMode: AiAgentSettings["accessMode"];
   userInstructions?: string;
 }): string {
-  const accessRules =
-    input.accessMode === "full"
-      ? [
-          "You have full access mode.",
-          "If the request is clear enough, prepare an item that can be added immediately.",
-          "Ask a question only if the food is too ambiguous or key details are missing."
-        ]
-      : [
-          "You have limited access mode.",
-          "Always prepare the item proposal but ask for confirmation before it is added.",
-          "If anything is ambiguous, ask a short clarifying question."
-        ];
-
   const currentItems =
     input.existingItems.length > 0
       ? `Current items in this slot: ${input.existingItems.join(", ")}.`
@@ -35,6 +19,7 @@ export function buildMealPlanAssistantPrompt(input: {
     "Only prepare a proposal when the user's request is explicit enough or when the attached image is clear enough to identify a likely item.",
     "Do not search the saved product catalog by default. The user's product database may be empty.",
     "You may directly suggest a reasonable product-like item or meal component if needed.",
+    "Always prepare the item proposal first and wait for user confirmation before the item is added.",
     "Correct obvious spelling mistakes and approximate brand names when the intended item is very likely clear from the request.",
     "For popular branded foods, infer the most likely real product name when the user's typo is minor.",
     "For common branded bars, drinks, and packaged foods, prefer the canonical product name instead of repeating the user's typo when the intended item is clear.",
@@ -55,7 +40,6 @@ export function buildMealPlanAssistantPrompt(input: {
     "Use items for several separate ingredients or components.",
     "Do not return both proposal and items at the same time.",
     "Use proposal=null and items=[] if you need clarification and cannot prepare a useful item yet.",
-    ...accessRules,
     input.userInstructions?.trim() ? `Additional user instructions: ${input.userInstructions.trim()}` : ""
   ].filter(Boolean).join(" ");
 }

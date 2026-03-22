@@ -13,7 +13,6 @@ type AiAgentSettingsCardProps = {
 
 const MODEL_OPTIONS = ["gpt-5-mini", "gpt-5", "gpt-4.1-mini"];
 const SPEECH_LANGUAGE_OPTIONS: Array<AiAgentSettings["speechLanguage"]> = ["interface", "en", "ru"];
-const ACCESS_MODE_OPTIONS: Array<AiAgentSettings["accessMode"]> = ["limited", "full"];
 
 export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSettingsCardProps) {
   const { t } = useLanguage();
@@ -62,26 +61,6 @@ export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSett
         {SPEECH_LANGUAGE_OPTIONS.map((languageOption) => (
           <MenuItem key={languageOption} value={languageOption}>
             {t(`settings.agent.speechLanguage.${languageOption}` as never)}
-          </MenuItem>
-        ))}
-      </TextField>
-
-      <TextField
-        select
-        label={t("settings.agent.accessMode")}
-        value={draft.accessMode}
-        onChange={(event) =>
-          setDraft((current) => ({
-            ...current,
-            accessMode: event.target.value as AiAgentSettings["accessMode"]
-          }))
-        }
-        helperText={t(`settings.agent.accessMode.${draft.accessMode}.hint` as never)}
-        fullWidth
-      >
-        {ACCESS_MODE_OPTIONS.map((mode) => (
-          <MenuItem key={mode} value={mode}>
-            {t(`settings.agent.accessMode.${mode}` as never)}
           </MenuItem>
         ))}
       </TextField>

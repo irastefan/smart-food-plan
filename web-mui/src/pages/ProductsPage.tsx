@@ -7,6 +7,7 @@ import { useLanguage } from "../app/providers/LanguageProvider";
 import { deleteProduct, getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductCard } from "../widgets/products/ProductCard";
 
@@ -114,21 +115,20 @@ export function ProductsPage() {
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("products.title")} subtitle={t("products.subtitle")} />
+      <PageTitle title={t("products.title")} />
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
-        <TextField
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("products.searchPlaceholder")}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon />
-              </InputAdornment>
-            )
-          }}
-        />
-      </Paper>
+      <TextField
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder={t("products.searchPlaceholder")}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchRoundedIcon />
+            </InputAdornment>
+          )
+        }}
+      />
 
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 

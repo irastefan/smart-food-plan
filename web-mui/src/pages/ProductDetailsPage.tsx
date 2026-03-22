@@ -9,6 +9,7 @@ import { useLanguage } from "../app/providers/LanguageProvider";
 import { deleteProduct, getProduct, type ProductDetail } from "../features/products/api/productsApi";
 import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductNutritionCard } from "../widgets/products/ProductNutritionCard";
 import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCategoryPickerButton";
@@ -130,6 +131,7 @@ export function ProductDetailsPage() {
   return (
     <Stack spacing={3}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={product.title} subtitle={product.brand || t("products.noBrand")} />
+      <PageTitle title={product.title} />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         <Button component={RouterLink} to="/products" startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>

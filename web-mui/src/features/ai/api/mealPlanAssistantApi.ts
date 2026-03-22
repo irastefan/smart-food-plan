@@ -1,7 +1,6 @@
 import { listMcpTools } from "./mcpApi";
 import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiAgentApi";
 import { buildMealPlanAssistantPrompt } from "../model/mealPlanAssistantPrompt";
-import type { AiAgentSettings } from "../../../shared/config/aiAgent";
 
 export type MealPlanAssistantProposal = {
   name: string;
@@ -142,7 +141,6 @@ export async function runMealPlanAssistant(input: {
   history: AgentMessage[];
   sectionTitle: string;
   existingItems: string[];
-  accessMode: AiAgentSettings["accessMode"];
   userText: string;
   userInstructions?: string;
   images?: AgentImageInput[];
@@ -159,7 +157,6 @@ export async function runMealPlanAssistant(input: {
     systemPrompt: buildMealPlanAssistantPrompt({
       sectionTitle: input.sectionTitle,
       existingItems: input.existingItems,
-      accessMode: input.accessMode,
       userInstructions: input.userInstructions
     })
   });
@@ -178,7 +175,7 @@ export async function runMealPlanAssistant(input: {
   const message = enrichMessageWithNutrition(messageBase, proposal);
   const needsConfirmation = typeof parsed.needsConfirmation === "boolean"
     ? parsed.needsConfirmation
-    : input.accessMode === "limited";
+    : true;
 
   return {
     assistantMessage: {

@@ -9,6 +9,7 @@ import type { RecipeCategoryKey, RecipeSummary } from "../features/recipes/model
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeAssistantDialog } from "../widgets/recipes/RecipeAssistantDialog";
 import { RecipeCard } from "../widgets/recipes/RecipeCard";
@@ -96,24 +97,23 @@ export function RecipesPage() {
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("recipes.title")} subtitle={t("recipes.subtitle")} />
+      <PageTitle title={t("recipes.title")} />
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
-        <Stack spacing={2}>
-          <TextField
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("recipes.searchPlaceholder")}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRoundedIcon />
-                </InputAdornment>
-              )
-            }}
-          />
-          <RecipeCategoryTabs value={category} onChange={setCategory} />
-        </Stack>
-      </Paper>
+      <Stack spacing={2}>
+        <TextField
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("recipes.searchPlaceholder")}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRoundedIcon />
+              </InputAdornment>
+            )
+          }}
+        />
+        <RecipeCategoryTabs value={category} onChange={setCategory} />
+      </Stack>
 
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 

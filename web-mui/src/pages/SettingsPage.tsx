@@ -10,6 +10,7 @@ import {
 } from "../features/settings/api/settingsApi";
 import { getAiAgentSettings, setAiAgentSettings, type AiAgentSettings } from "../shared/config/aiAgent";
 import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAgentSettingsCard } from "../widgets/settings/AiAgentSettingsCard";
 import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
@@ -132,6 +133,7 @@ export function SettingsPage() {
   return (
     <Stack spacing={3}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("settings.title")} subtitle={t("settings.subtitle")} />
+      <PageTitle title={t("settings.title")} />
 
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 

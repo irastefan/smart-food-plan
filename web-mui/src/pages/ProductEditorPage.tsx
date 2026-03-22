@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { createProduct, getProduct, type ProductFormValues, updateProduct } from "../features/products/api/productsApi";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductForm } from "../widgets/products/ProductForm";
 
@@ -99,6 +100,7 @@ export function ProductEditorPage() {
         title={isEdit ? t("product.form.editTitle") : t("product.form.createTitle")}
         subtitle={isEdit ? t("product.form.editSubtitle") : t("product.form.createSubtitle")}
       />
+      <PageTitle title={isEdit ? t("product.form.editTitle") : t("product.form.createTitle")} />
 
       <Button component={RouterLink} to={isEdit && productId ? `/products/${productId}` : "/products"} startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
         {t("product.back")}

@@ -6,6 +6,7 @@ import { createRecipe, getRecipe, updateRecipe } from "../features/recipes/api/r
 import type { RecipeFormValues } from "../features/recipes/model/recipeTypes";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeForm } from "../widgets/recipes/RecipeForm";
 
@@ -131,6 +132,7 @@ export function RecipeEditorPage() {
         title={isEdit ? t("recipe.form.editTitle") : t("recipe.form.createTitle")}
         subtitle={isEdit ? t("recipe.form.editSubtitle") : t("recipe.form.createSubtitle")}
       />
+      <PageTitle title={isEdit ? t("recipe.form.editTitle") : t("recipe.form.createTitle")} />
 
       <Button component={RouterLink} to={isEdit && recipeId ? `/recipes/${recipeId}` : "/recipes"} startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
         {t("recipe.back")}
