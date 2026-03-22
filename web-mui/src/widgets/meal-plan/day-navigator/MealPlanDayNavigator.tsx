@@ -1,13 +1,11 @@
 import { Paper } from "@mui/material";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
-import { parseIsoDate } from "../dayNavigation";
 import { DayNavigatorHeader } from "./DayNavigatorHeader";
 import type { MealPlanDayNavigatorProps } from "./types";
 
 export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDayNavigatorProps) {
   const { language, t } = useLanguage();
   const locale = language === "ru" ? "ru-RU" : "en-US";
-  const selected = parseIsoDate(selectedDate);
 
   return (
     <Paper
@@ -41,9 +39,7 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
       <DayNavigatorHeader
         locale={locale}
         selectedDate={selectedDate}
-        selectedLabel={selected}
         todayLabel={t("mealPlan.dayNav.today")}
-        selectedShortLabel={t("mealPlan.dayNav.selected")}
         selectDayLabel={t("mealPlan.dayNav.selectDay")}
         onDateChange={onDateChange}
       />
