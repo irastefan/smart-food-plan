@@ -8,6 +8,7 @@ import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
+import { getMacroColor } from "../../shared/theme/macroColors";
 
 type RecipeCardProps = {
   recipe: RecipeSummary;
@@ -102,9 +103,9 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
           </Stack>
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color="#ffb547" />
-            <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color="#d58bff" />
-            <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color="#4dd6e3" />
+            <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color={getMacroColor("protein")} />
+            <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color={getMacroColor("fat")} />
+            <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color={getMacroColor("carbs")} />
           </Stack>
 
           {onDelete ? (

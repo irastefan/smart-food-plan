@@ -1,6 +1,7 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { NutritionTotals } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { getMacroColor } from "../../shared/theme/macroColors";
 import { MacroRingRow } from "../nutrition/MacroRingRow";
 
 type RecipeNutritionCardProps = {
@@ -12,9 +13,9 @@ export function RecipeNutritionCard({ totals }: RecipeNutritionCardProps) {
   const totalMacros = Math.max(1, totals.proteinG + totals.fatG + totals.carbsG);
 
   const segments = [
-    { key: "protein", label: t("recipe.macros.protein"), value: totals.proteinG, color: "#ffb547" },
-    { key: "fat", label: t("recipe.macros.fat"), value: totals.fatG, color: "#d58bff" },
-    { key: "carbs", label: t("recipe.macros.carbs"), value: totals.carbsG, color: "#4dd6e3" }
+    { key: "protein", label: t("recipe.macros.protein"), value: totals.proteinG, color: getMacroColor("protein") },
+    { key: "fat", label: t("recipe.macros.fat"), value: totals.fatG, color: getMacroColor("fat") },
+    { key: "carbs", label: t("recipe.macros.carbs"), value: totals.carbsG, color: getMacroColor("carbs") }
   ];
 
   return (

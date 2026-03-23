@@ -26,6 +26,7 @@ import {
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { PageTitle } from "../shared/ui/PageTitle";
+import { getMacroColor } from "../shared/theme/macroColors";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanAnalysisDialog } from "../widgets/meal-plan/MealPlanAnalysisDialog";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
@@ -156,21 +157,21 @@ export function MealPlanDashboardPage() {
       label: t("mealPlan.macro.protein"),
       value: day?.totals.proteinG ?? 0,
       target: targetMacros.protein,
-      color: "#ffb547"
+      color: getMacroColor("protein")
     },
     {
       key: "fat",
       label: t("mealPlan.macro.fat"),
       value: day?.totals.fatG ?? 0,
       target: targetMacros.fat,
-      color: "#d58bff"
+      color: getMacroColor("fat")
     },
     {
       key: "carbs",
       label: t("mealPlan.macro.carbs"),
       value: day?.totals.carbsG ?? 0,
       target: targetMacros.carbs,
-      color: "#4dd6e3"
+      color: getMacroColor("carbs")
     }
   ];
   const usedCalories = day?.totals.caloriesKcal ?? 0;

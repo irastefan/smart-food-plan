@@ -6,6 +6,7 @@ import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } 
 import { Link as RouterLink } from "react-router-dom";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { getMacroColor } from "../../shared/theme/macroColors";
 import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type ProductCardProps = {
@@ -52,9 +53,9 @@ export function ProductCard({ product, shoppingCategories = [], onAddToShopping,
           </Stack>
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Macro label={t("product.macros.protein")} value={product.nutritionPer100g.proteinG} color="#ffb547" />
-            <Macro label={t("product.macros.fat")} value={product.nutritionPer100g.fatG} color="#d58bff" />
-            <Macro label={t("product.macros.carbs")} value={product.nutritionPer100g.carbsG} color="#4dd6e3" />
+            <Macro label={t("product.macros.protein")} value={product.nutritionPer100g.proteinG} color={getMacroColor("protein")} />
+            <Macro label={t("product.macros.fat")} value={product.nutritionPer100g.fatG} color={getMacroColor("fat")} />
+            <Macro label={t("product.macros.carbs")} value={product.nutritionPer100g.carbsG} color={getMacroColor("carbs")} />
           </Stack>
 
           <Stack direction="row" spacing={0.75} justifyContent="flex-end">

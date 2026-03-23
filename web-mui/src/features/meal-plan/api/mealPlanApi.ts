@@ -1,4 +1,5 @@
 import { apiRequest } from "../../../shared/api/http";
+import { getMacroColor } from "../../../shared/theme/macroColors";
 import type { ProductSummary } from "../../products/api/productsApi";
 import { createRecipe } from "../../recipes/api/recipesApi";
 import type { RecipeFormValues } from "../../recipes/model/recipeTypes";
@@ -538,8 +539,8 @@ export function getMealCompletion(day: MealPlanDay): number {
 
 export function getMacroDistribution(day: MealPlanDay): Array<{ key: string; label: string; value: number; color: string }> {
   return [
-    { key: "protein", label: "Protein", value: day.totals.proteinG, color: "#22c55e" },
-    { key: "fat", label: "Fat", value: day.totals.fatG, color: "#f59e0b" },
-    { key: "carbs", label: "Carbs", value: day.totals.carbsG, color: "#0ea5e9" }
+    { key: "protein", label: "Protein", value: day.totals.proteinG, color: getMacroColor("protein") },
+    { key: "fat", label: "Fat", value: day.totals.fatG, color: getMacroColor("fat") },
+    { key: "carbs", label: "Carbs", value: day.totals.carbsG, color: getMacroColor("carbs") }
   ];
 }

@@ -1,6 +1,7 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ProductNutrition } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { getMacroColor } from "../../shared/theme/macroColors";
 import { MacroRingRow } from "../nutrition/MacroRingRow";
 
 type ProductNutritionCardProps = {
@@ -11,9 +12,9 @@ export function ProductNutritionCard({ nutrition }: ProductNutritionCardProps) {
   const { t } = useLanguage();
 
   const metrics = [
-    { key: "protein", label: t("product.macros.protein"), value: nutrition.proteinG, color: "#ffb547" },
-    { key: "fat", label: t("product.macros.fat"), value: nutrition.fatG, color: "#d58bff" },
-    { key: "carbs", label: t("product.macros.carbs"), value: nutrition.carbsG, color: "#4dd6e3" }
+    { key: "protein", label: t("product.macros.protein"), value: nutrition.proteinG, color: getMacroColor("protein") },
+    { key: "fat", label: t("product.macros.fat"), value: nutrition.fatG, color: getMacroColor("fat") },
+    { key: "carbs", label: t("product.macros.carbs"), value: nutrition.carbsG, color: getMacroColor("carbs") }
   ];
 
   return (
