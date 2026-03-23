@@ -112,15 +112,15 @@ export function DayNavigatorHeader({
           py: 0.45,
           borderRadius: 999,
           border: "1px solid",
-          borderColor: isToday ? "rgba(96,213,176,0.42)" : "divider",
+          borderColor: isToday ? "primary.main" : "divider",
           color: isToday ? "primary.contrastText" : "text.primary",
           background: (theme) =>
             isToday
-              ? "linear-gradient(135deg, #60d5b0 0%, #10b981 100%)"
+              ? theme.palette.primary.main
               : theme.palette.mode === "dark"
                 ? "rgba(31, 36, 54, 0.92)"
                 : "rgba(255,255,255,0.86)",
-          boxShadow: isToday ? "0 10px 22px rgba(16, 185, 129, 0.18)" : "none",
+          boxShadow: isToday ? "0 10px 22px rgba(16, 185, 129, 0.14)" : "none",
           fontSize: { xs: 12, md: 13 },
           fontWeight: 700,
           whiteSpace: "nowrap",
