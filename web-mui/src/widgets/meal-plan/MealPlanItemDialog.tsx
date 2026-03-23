@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  MenuItem,
   Stack,
   Tab,
   Tabs,
@@ -26,6 +27,7 @@ import type { MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getLocalizedUnitLabel, getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 import { AiAssistantPanel } from "../ai/AiAssistantPanel";
 
 type MealPlanItemDialogProps = {
@@ -130,6 +132,7 @@ export function MealPlanItemDialog({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const agentSettings = getAiAgentSettings();
+  const unitOptions = useMemo(() => getUnitOptions((key) => t(key as never)), [t]);
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [batchItems, setBatchItems] = useState<MealPlanAssistantProposal[]>([]);
   const [singleProposal, setSingleProposal] = useState<MealPlanAssistantProposal | null>(null);
@@ -140,7 +143,7 @@ export function MealPlanItemDialog({
   const [servings, setServings] = useState(item?.type === "recipe" ? item.servings ?? 1 : 1);
   const initialManualNutrition = inferManualNutritionPer100(item);
   const [manualName, setManualName] = useState(item?.isManual ? item.title : "");
-  const [manualUnit, setManualUnit] = useState(item?.isManual ? item.unit ?? "g" : "g");
+  const [manualUnit, setManualUnit] = useState(item?.isManual ? normalizeUnitValue(item.unit) ?? "g" : "g");
   const [manualKcal100, setManualKcal100] = useState(item?.isManual ? initialManualNutrition.kcal100 : 0);
   const [manualProtein100, setManualProtein100] = useState(item?.isManual ? initialManualNutrition.protein100 : 0);
   const [manualFat100, setManualFat100] = useState(item?.isManual ? initialManualNutrition.fat100 : 0);
@@ -159,7 +162,7 @@ export function MealPlanItemDialog({
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
     setServings(item?.type === "recipe" ? item.servings ?? 1 : 1);
     setManualName(item?.isManual ? item.title : "");
-    setManualUnit(item?.isManual ? item.unit ?? "g" : "g");
+    setManualUnit(item?.isManual ? normalizeUnitValue(item.unit) ?? "g" : "g");
     const nextManualNutrition = inferManualNutritionPer100(item);
     setManualKcal100(item?.isManual ? nextManualNutrition.kcal100 : 0);
     setManualProtein100(item?.isManual ? nextManualNutrition.protein100 : 0);
@@ -342,7 +345,7 @@ export function MealPlanItemDialog({
                     if (nextProposal) {
                       setManualName(nextProposal.name);
                       setQuantity(nextProposal.amount);
-                      setManualUnit(nextProposal.unit);
+                      setManualUnit(normalizeUnitValue(nextProposal.unit) ?? "g");
                       setManualKcal100(nextProposal.kcal100);
                       setManualProtein100(nextProposal.protein100);
                       setManualFat100(nextProposal.fat100);
@@ -383,7 +386,7 @@ export function MealPlanItemDialog({
                                       {singleProposal.name}
                                     </Typography>
                                     <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
-                                      {`${Math.round(singleProposal.amount)} ${singleProposal.unit}`}
+                                      {`${Math.round(singleProposal.amount)} ${getLocalizedUnitLabel((key) => t(key as never), singleProposal.unit)}`}
                                     </Typography>
                                   </Stack>
                                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
@@ -445,7 +448,7 @@ export function MealPlanItemDialog({
                                           {entry.name}
                                         </Typography>
                                         <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
-                                          {`${Math.round(entry.amount)} ${entry.unit}`}
+                                          {`${Math.round(entry.amount)} ${getLocalizedUnitLabel((key) => t(key as never), entry.unit)}`}
                                         </Typography>
                                       </Stack>
                                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
@@ -566,7 +569,19 @@ export function MealPlanItemDialog({
                     onChange={(event) => setQuantity(Math.max(0.1, Number(event.target.value) || 0.1))}
                     fullWidth
                   />
-                  <TextField label={t("mealPlan.dialog.unit")} value={manualUnit} onChange={(event) => setManualUnit(event.target.value || "g")} fullWidth />
+                    <TextField
+                      select
+                      label={t("mealPlan.dialog.unit")}
+                      value={manualUnit}
+                      onChange={(event) => setManualUnit((event.target.value as typeof manualUnit) || "g")}
+                      fullWidth
+                    >
+                    {unitOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <TextField label={t("recipe.form.caloriesPer100")} type="number" value={manualKcal100} onChange={(event) => setManualKcal100(Number(event.target.value) || 0)} fullWidth />

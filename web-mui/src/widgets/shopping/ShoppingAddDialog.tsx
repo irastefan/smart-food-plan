@@ -7,12 +7,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Stack,
   TextField
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ProductSummary } from "../../features/products/api/productsApi";
+import { getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 import { ShoppingCategorySelector } from "./ShoppingCategorySelector";
 
 type ShoppingAddDialogProps = {
@@ -43,6 +45,7 @@ export function ShoppingAddDialog({
   onSubmit
 }: ShoppingAddDialogProps) {
   const { t } = useLanguage();
+  const unitOptions = useMemo(() => getUnitOptions((key) => t(key as never)), [t]);
   const [inputValue, setInputValue] = useState("");
   const [amount, setAmount] = useState("1");
   const [unit, setUnit] = useState("pcs");
@@ -136,7 +139,19 @@ export function ShoppingAddDialog({
               onChange={(event) => setAmount(event.target.value)}
               fullWidth
             />
-            <TextField label={t("shopping.dialog.unit")} value={unit} onChange={(event) => setUnit(event.target.value)} fullWidth />
+            <TextField
+              select
+              label={t("shopping.dialog.unit")}
+              value={normalizeUnitValue(unit) ?? "pcs"}
+              onChange={(event) => setUnit(event.target.value)}
+              fullWidth
+            >
+              {unitOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
 
           <ShoppingCategorySelector

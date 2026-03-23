@@ -20,6 +20,7 @@ import { recipeCategoryKeys } from "../../features/recipes/model/recipeCategorie
 import type { RecipeFormValues } from "../../features/recipes/model/recipeTypes";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 
 type RecipeFormProps = {
   value: RecipeFormValues;
@@ -33,6 +34,7 @@ type RecipeFormProps = {
 
 export function RecipeForm({ value, products, isSubmitting, status, submitLabel, onChange, onSubmit }: RecipeFormProps) {
   const { t } = useLanguage();
+  const unitOptions = useMemo(() => getUnitOptions((key) => t(key as never)), [t]);
 
   const totalNutrition = useMemo(() => {
     return value.ingredients.reduce(
@@ -197,7 +199,19 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
                   )}
                   <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
                     <TextField label={t("recipe.form.amount")} type="number" inputProps={{ min: 0.1, step: 0.1 }} value={ingredient.amount} onChange={(event) => updateIngredient(index, { amount: Math.max(0.1, Number(event.target.value) || 0.1) })} fullWidth />
-                    <TextField label={t("recipe.form.unit")} value={ingredient.unit} onChange={(event) => updateIngredient(index, { unit: event.target.value || "g" })} fullWidth />
+                    <TextField
+                      select
+                      label={t("recipe.form.unit")}
+                      value={normalizeUnitValue(ingredient.unit) ?? "g"}
+                      onChange={(event) => updateIngredient(index, { unit: event.target.value || "g" })}
+                      fullWidth
+                    >
+                      {unitOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Stack>
                 </Stack>
               </Paper>

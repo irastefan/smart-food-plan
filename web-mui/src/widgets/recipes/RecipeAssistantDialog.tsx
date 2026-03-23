@@ -22,6 +22,7 @@ import { runRecipeAssistant, type RecipeAssistantDraft } from "../../features/ai
 import { createRecipe } from "../../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import { AiAssistantPanel } from "../ai/AiAssistantPanel";
 
 type RecipeAssistantDialogProps = {
@@ -224,7 +225,7 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                                   <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
                                     <Typography fontWeight={700}>{ingredient.name}</Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                      {round(ingredient.amount)} {ingredient.unit}
+                                      {round(ingredient.amount)} {getLocalizedUnitLabel((key) => t(key as never), ingredient.unit)}
                                     </Typography>
                                   </Stack>
                                   <Typography variant="body2" color="text.secondary">

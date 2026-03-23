@@ -1,6 +1,8 @@
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import { Checkbox, Chip, IconButton, Paper, Stack, Typography } from "@mui/material";
+import { useLanguage } from "../../app/providers/LanguageProvider";
+import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import type { ShoppingItem } from "../../features/shopping/api/shoppingApi";
 
 type ShoppingCategorySectionProps = {
@@ -12,11 +14,11 @@ type ShoppingCategorySectionProps = {
   onDelete: (item: ShoppingItem) => void;
 };
 
-function formatAmount(item: ShoppingItem): string {
+function formatAmount(item: ShoppingItem, unitLabel: string): string {
   if (item.amount == null) {
-    return item.unit;
+    return unitLabel;
   }
-  return `${Number.isInteger(item.amount) ? item.amount : item.amount.toFixed(1)} ${item.unit}`;
+  return `${Number.isInteger(item.amount) ? item.amount : item.amount.toFixed(1)} ${unitLabel}`;
 }
 
 export function ShoppingCategorySection({
@@ -27,6 +29,8 @@ export function ShoppingCategorySection({
   onToggleDone,
   onDelete
 }: ShoppingCategorySectionProps) {
+  const { t } = useLanguage();
+
   return (
     <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={2}>
@@ -70,7 +74,7 @@ export function ShoppingCategorySection({
                   </Typography>
                   <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
                     <Typography variant="body2" color="text.secondary">
-                      {formatAmount(item)}
+                      {formatAmount(item, getLocalizedUnitLabel((key) => t(key as never), item.unit))}
                     </Typography>
                     {item.note ? (
                       <Typography variant="body2" color="text.secondary" noWrap>

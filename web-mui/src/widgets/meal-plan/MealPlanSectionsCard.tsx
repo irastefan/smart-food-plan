@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { MealPlanDay, MealPlanItem, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
+import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type MealPlanSectionsCardProps = {
@@ -158,7 +159,7 @@ export function MealPlanSectionsCard({
                         {`${
                           item.type === "recipe"
                             ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
-                            : `${formatNumber(item.amount ?? 0)} ${item.unit ?? "g"}`
+                            : `${formatNumber(item.amount ?? 0)} ${getLocalizedUnitLabel((key) => t(key as never), item.unit ?? "g")}`
                         } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}g`}
                       </Typography>
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>

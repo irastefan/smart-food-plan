@@ -8,6 +8,7 @@ import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategori
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { addShoppingCategory, addShoppingItem, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { getLocalizedUnitLabel } from "../shared/lib/units";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeHero } from "../widgets/recipes/RecipeHero";
@@ -164,7 +165,7 @@ export function RecipeDetailsPage() {
                     <ListItem disableGutters sx={{ py: 1.75 }}>
                       <ListItemText
                         primary={ingredient.title}
-                        secondary={`${ingredient.quantity} ${ingredient.unit}`}
+                        secondary={`${ingredient.quantity} ${getLocalizedUnitLabel((key) => t(key as never), ingredient.unit)}`}
                         primaryTypographyProps={{ fontWeight: 700 }}
                         secondaryTypographyProps={{ color: "text.secondary" }}
                       />
