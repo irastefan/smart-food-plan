@@ -381,7 +381,7 @@ export function MealPlanDashboardPage() {
   }
 
   return (
-    <Stack spacing={3} flex={1}>
+    <Stack spacing={{ xs: 1, md: 3 }} flex={1}>
       <DashboardTopbar
         onOpenSidebar={openSidebar}
         title={t("mealPlan.dashboard.title")}
