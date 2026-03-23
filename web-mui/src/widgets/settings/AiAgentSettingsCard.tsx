@@ -13,7 +13,6 @@ type AiAgentSettingsCardProps = {
 
 const MODEL_OPTIONS = ["gpt-5-mini", "gpt-5", "gpt-4.1-mini"];
 const SPEECH_LANGUAGE_OPTIONS: Array<AiAgentSettings["speechLanguage"]> = ["interface", "en", "ru"];
-
 export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSettingsCardProps) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState<AiAgentSettings>(value);

@@ -5,13 +5,15 @@ export type AiAgentSettings = {
   userInstructions: string;
   showToolOutput: boolean;
   speechLanguage: "interface" | "en" | "ru";
+  mealPlanSummaryMetric: "remaining" | "food";
 };
 
 const defaultSettings: AiAgentSettings = {
   model: "gpt-5-mini",
   userInstructions: "",
   showToolOutput: false,
-  speechLanguage: "interface"
+  speechLanguage: "interface",
+  mealPlanSummaryMetric: "remaining"
 };
 
 export function getAiAgentSettings(): AiAgentSettings {
@@ -35,7 +37,11 @@ export function getAiAgentSettings(): AiAgentSettings {
       speechLanguage:
         parsed.speechLanguage === "en" || parsed.speechLanguage === "ru" || parsed.speechLanguage === "interface"
           ? parsed.speechLanguage
-          : defaultSettings.speechLanguage
+          : defaultSettings.speechLanguage,
+      mealPlanSummaryMetric:
+        parsed.mealPlanSummaryMetric === "food" || parsed.mealPlanSummaryMetric === "remaining"
+          ? parsed.mealPlanSummaryMetric
+          : defaultSettings.mealPlanSummaryMetric
     };
   } catch {
     return defaultSettings;

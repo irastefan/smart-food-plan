@@ -1,10 +1,11 @@
 import KeyRoundedIcon from "@mui/icons-material/KeyRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import TrackChangesRoundedIcon from "@mui/icons-material/TrackChangesRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { ButtonBase, Paper, Stack, Typography } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
-export type SettingsSectionId = "profile" | "targets" | "openai";
+export type SettingsSectionId = "profile" | "targets" | "general" | "openai";
 
 type SettingsSectionNavProps = {
   value: SettingsSectionId;
@@ -23,6 +24,12 @@ const items: Array<{ id: SettingsSectionId; icon: typeof PersonRoundedIcon; labe
     icon: TrackChangesRoundedIcon,
     labelKey: "settings.sections.targets.title",
     descriptionKey: "settings.sections.targets.subtitle"
+  },
+  {
+    id: "general",
+    icon: TuneRoundedIcon,
+    labelKey: "settings.sections.general.title",
+    descriptionKey: "settings.sections.general.subtitle"
   },
   {
     id: "openai",

@@ -13,6 +13,7 @@ import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAgentSettingsCard } from "../widgets/settings/AiAgentSettingsCard";
+import { AppPreferencesCard } from "../widgets/settings/AppPreferencesCard";
 import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
 import { ProfilePreviewCard } from "../widgets/settings/ProfilePreviewCard";
 import { SettingsSectionCard } from "../widgets/settings/SettingsSectionCard";
@@ -122,6 +123,13 @@ export function SettingsPage() {
     setStatus({ type: "success", message: t("settings.agent.saved") });
   }
 
+  function handleSavePreferences(value: Pick<AiAgentSettings, "mealPlanSummaryMetric">) {
+    const nextValue = { ...agentSettings, ...value };
+    setAiAgentSettings(nextValue);
+    setAgentSettingsState(nextValue);
+    setStatus({ type: "success", message: t("settings.preferences.saved") });
+  }
+
   if (isLoading) {
     return (
       <Paper sx={{ p: 8, borderRadius: 1.25, display: "grid", placeItems: "center" }}>
@@ -166,6 +174,19 @@ export function SettingsPage() {
                   subtitle={t("settings.sections.targets.subtitle")}
                 >
                   <ProfilePreviewCard profile={profile} />
+                </SettingsSectionCard>
+              ) : null}
+
+              {activeSection === "general" ? (
+                <SettingsSectionCard
+                  title={t("settings.sections.general.title")}
+                  subtitle={t("settings.sections.general.subtitle")}
+                >
+                  <AppPreferencesCard
+                    value={{ mealPlanSummaryMetric: agentSettings.mealPlanSummaryMetric }}
+                    isSubmitting={isSubmitting}
+                    onSave={handleSavePreferences}
+                  />
                 </SettingsSectionCard>
               ) : null}
 

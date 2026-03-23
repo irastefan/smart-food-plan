@@ -1,6 +1,7 @@
 import ChecklistRoundedIcon from "@mui/icons-material/ChecklistRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
+import TimelapseRoundedIcon from "@mui/icons-material/TimelapseRounded";
 import { Box, Card, CardContent, CircularProgress, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ReactNode } from "react";
@@ -10,6 +11,8 @@ type MealPlanSummaryCardProps = {
   goalValue: number;
   usedValue: number;
   remainingValue: number;
+  centerValue: number;
+  centerLabel: string;
   goalLabel: string;
   usedLabel: string;
   remainingLabel: string;
@@ -26,6 +29,8 @@ export function MealPlanSummaryCard({
   goalValue,
   usedValue,
   remainingValue,
+  centerValue,
+  centerLabel,
   goalLabel,
   usedLabel,
   remainingLabel,
@@ -37,6 +42,7 @@ export function MealPlanSummaryCard({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
   const ringSize = isMobile ? 128 : 168;
+  const showFoodInCenter = centerLabel === usedLabel;
 
   return (
     <Card
@@ -111,10 +117,10 @@ export function MealPlanSummaryCard({
             >
               <Box textAlign="center">
                 <Typography variant="h2" lineHeight={1} mb={0.5} sx={{ fontSize: { xs: "1.7rem", sm: "3rem" } }}>
-                  {formatNumber(remainingValue)}
+                  {formatNumber(centerValue)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.78rem", sm: "0.875rem" } }}>
-                  {remainingLabel}
+                  {centerLabel}
                 </Typography>
               </Box>
             </Box>
@@ -127,9 +133,13 @@ export function MealPlanSummaryCard({
               value={`${formatNumber(goalValue)} kcal`}
             />
             <SummaryStat
-              icon={<ChecklistRoundedIcon sx={{ color: "#62b4ff" }} />}
-              label={usedLabel}
-              value={`${formatNumber(usedValue)} kcal`}
+              icon={
+                showFoodInCenter
+                  ? <TimelapseRoundedIcon sx={{ color: "#8b9bff" }} />
+                  : <ChecklistRoundedIcon sx={{ color: "#62b4ff" }} />
+              }
+              label={showFoodInCenter ? remainingLabel : usedLabel}
+              value={`${formatNumber(showFoodInCenter ? remainingValue : usedValue)} kcal`}
             />
           </Stack>
         </Stack>

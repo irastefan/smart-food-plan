@@ -24,6 +24,7 @@ import {
   updateMealPlanItem
 } from "../features/meal-plan/api/mealPlanApi";
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
+import { getAiAgentSettings } from "../shared/config/aiAgent";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { getMacroColor } from "../shared/theme/macroColors";
@@ -177,6 +178,9 @@ export function MealPlanDashboardPage() {
   const usedCalories = day?.totals.caloriesKcal ?? 0;
   const remainingCalories = targetCalories - usedCalories;
   const hasAnyMealItems = Boolean(day?.sections.some((section) => section.items.length > 0));
+  const mealPlanSummaryMetric = getAiAgentSettings().mealPlanSummaryMetric;
+  const summaryCenterValue = mealPlanSummaryMetric === "food" ? usedCalories : remainingCalories;
+  const summaryCenterLabel = mealPlanSummaryMetric === "food" ? t("mealPlan.cards.used") : t("mealPlan.cards.remaining");
 
   async function handleSubmitDialog(payload: {
     type: "product" | "recipe" | "manual";
@@ -407,6 +411,8 @@ export function MealPlanDashboardPage() {
             goalValue={targetCalories}
             usedValue={usedCalories}
             remainingValue={remainingCalories}
+            centerValue={summaryCenterValue}
+            centerLabel={summaryCenterLabel}
             goalLabel={t("mealPlan.cards.goal")}
             usedLabel={t("mealPlan.cards.used")}
             remainingLabel={t("mealPlan.cards.remaining")}
