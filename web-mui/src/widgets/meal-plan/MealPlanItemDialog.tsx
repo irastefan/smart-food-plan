@@ -87,6 +87,15 @@ function getProposalTotals(proposal: MealPlanAssistantProposal) {
   };
 }
 
+function parseDecimalInput(value: string, fallback: number, min = 0.1): number {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.max(min, parsed);
+}
+
 function inferManualNutritionPer100(item?: MealPlanItem | null) {
   if (!item?.isManual || item.type !== "product") {
     return { kcal100: 0, protein100: 0, fat100: 0, carbs100: 0 };
@@ -544,9 +553,9 @@ export function MealPlanItemDialog({
                 <TextField
                   label={t("mealPlan.dialog.servings")}
                   type="number"
-                  inputProps={{ min: 1, step: 1 }}
+                  inputProps={{ min: 0.1, step: 0.1 }}
                   value={servings}
-                  onChange={(event) => setServings(Math.max(1, Number(event.target.value) || 1))}
+                  onChange={(event) => setServings(parseDecimalInput(event.target.value, servings, 0.1))}
                 />
                 <Box>
                   <Button onClick={submitRecipe} variant="contained" disabled={isSubmitting || !selectedRecipe}>

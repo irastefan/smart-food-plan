@@ -37,6 +37,10 @@ function formatNumber(value: number): string {
   return String(Math.round(value));
 }
 
+function formatPortion(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+}
+
 function getItemHref(item: MealPlanItem): string | null {
   if (item.type === "product" && item.productId) {
     return `/products/${item.productId}`;
@@ -158,7 +162,7 @@ export function MealPlanSectionsCard({
                       >
                         {`${
                           item.type === "recipe"
-                            ? `${formatNumber(item.servings ?? 1)} ${servingsLabel}`
+                            ? `${formatPortion(item.servings ?? 1)} ${servingsLabel}`
                             : `${formatNumber(item.amount ?? 0)} ${getLocalizedUnitLabel((key) => t(key as never), item.unit ?? "g")}`
                         } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}g`}
                       </Typography>
