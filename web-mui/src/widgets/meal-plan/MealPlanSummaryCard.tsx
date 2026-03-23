@@ -92,7 +92,7 @@ export function MealPlanSummaryCard({
               size={ringSize}
               thickness={3.2}
               sx={{
-                color: "#62b4ff",
+                color: "#10b981",
                 position: "absolute",
                 left: 0,
                 "& .MuiCircularProgress-circle": {
