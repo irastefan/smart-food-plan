@@ -2,16 +2,16 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import type { AiAgentSettings } from "../../shared/config/aiAgent";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import type { AppPreferences } from "../../shared/config/appPreferences";
 
 type AppPreferencesCardProps = {
-  value: Pick<AiAgentSettings, "mealPlanSummaryMetric">;
+  value: AppPreferences;
   isSubmitting: boolean;
-  onSave: (value: Pick<AiAgentSettings, "mealPlanSummaryMetric">) => void;
+  onSave: (value: AppPreferences) => void;
 };
 
-const MEAL_PLAN_SUMMARY_OPTIONS: Array<AiAgentSettings["mealPlanSummaryMetric"]> = ["remaining", "food"];
+const MEAL_PLAN_SUMMARY_OPTIONS: Array<AppPreferences["mealPlanSummaryMetric"]> = ["remaining", "food"];
 
 export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferencesCardProps) {
   const { t } = useLanguage();
@@ -37,7 +37,7 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         value={draft.mealPlanSummaryMetric}
         onChange={(event) =>
           setDraft({
-            mealPlanSummaryMetric: event.target.value as AiAgentSettings["mealPlanSummaryMetric"]
+            mealPlanSummaryMetric: event.target.value as AppPreferences["mealPlanSummaryMetric"]
           })
         }
         fullWidth

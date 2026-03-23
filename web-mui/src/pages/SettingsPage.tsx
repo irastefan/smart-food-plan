@@ -9,6 +9,7 @@ import {
   type UserProfile
 } from "../features/settings/api/settingsApi";
 import { getAiAgentSettings, setAiAgentSettings, type AiAgentSettings } from "../shared/config/aiAgent";
+import { getAppPreferences, setAppPreferences, type AppPreferences } from "../shared/config/appPreferences";
 import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
@@ -31,6 +32,7 @@ export function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [openAiApiKey, setOpenAiApiKeyState] = useState("");
   const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
+  const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
   const [activeSection, setActiveSection] = useState<SettingsSectionId>("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +62,7 @@ export function SettingsPage() {
           setProfile(mergeProfileFormulas(current.profile, null));
           setOpenAiApiKeyState(getOpenAiApiKey());
           setAgentSettingsState(getAiAgentSettings());
+          setAppPreferencesState(getAppPreferences());
         }
       } catch (error) {
         console.error("Failed to load settings", error);
@@ -123,10 +126,9 @@ export function SettingsPage() {
     setStatus({ type: "success", message: t("settings.agent.saved") });
   }
 
-  function handleSavePreferences(value: Pick<AiAgentSettings, "mealPlanSummaryMetric">) {
-    const nextValue = { ...agentSettings, ...value };
-    setAiAgentSettings(nextValue);
-    setAgentSettingsState(nextValue);
+  function handleSavePreferences(value: AppPreferences) {
+    setAppPreferences(value);
+    setAppPreferencesState(value);
     setStatus({ type: "success", message: t("settings.preferences.saved") });
   }
 
@@ -183,7 +185,7 @@ export function SettingsPage() {
                   subtitle={t("settings.sections.general.subtitle")}
                 >
                   <AppPreferencesCard
-                    value={{ mealPlanSummaryMetric: agentSettings.mealPlanSummaryMetric }}
+                    value={appPreferences}
                     isSubmitting={isSubmitting}
                     onSave={handleSavePreferences}
                   />
