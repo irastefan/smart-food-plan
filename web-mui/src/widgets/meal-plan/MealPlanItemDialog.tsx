@@ -23,7 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
-import type { MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
+import { getMealPlanHistory, type MealPlanHistoryItem, type MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
@@ -35,6 +35,7 @@ type MealPlanItemDialogProps = {
   mode: "add" | "edit";
   sectionTitle: string;
   initialItemType?: "product" | "recipe" | "manual";
+  anchorDate: string;
   item?: MealPlanItem | null;
   recipes: RecipeSummary[];
   products: ProductSummary[];
@@ -44,6 +45,7 @@ type MealPlanItemDialogProps = {
   onClose: () => void;
   onSubmitMultipleManualItems?: (items: MealPlanAssistantProposal[]) => void;
   onAppendManualItems?: (items: MealPlanAssistantProposal[]) => void;
+  onSubmitHistoryItem?: (item: MealPlanHistoryItem) => void;
   onSubmit: (payload: {
     type: "product" | "recipe" | "manual";
     product?: ProductSummary;
@@ -59,7 +61,7 @@ type MealPlanItemDialogProps = {
   }) => void;
 };
 
-type DialogTab = "ai" | "product" | "recipe" | "manual";
+type DialogTab = "ai" | "history" | "product" | "recipe" | "manual";
 
 function normalizeUnitKey(unit: string): string {
   const normalized = unit.trim().toLowerCase();
@@ -153,6 +155,7 @@ export function MealPlanItemDialog({
   mode,
   sectionTitle,
   initialItemType = "product",
+  anchorDate,
   item,
   recipes,
   products,
@@ -162,6 +165,7 @@ export function MealPlanItemDialog({
   onClose,
   onSubmitMultipleManualItems,
   onAppendManualItems,
+  onSubmitHistoryItem,
   onSubmit
 }: MealPlanItemDialogProps) {
   const { t } = useLanguage();
@@ -173,6 +177,11 @@ export function MealPlanItemDialog({
   const [batchItems, setBatchItems] = useState<MealPlanAssistantProposal[]>([]);
   const [singleProposal, setSingleProposal] = useState<MealPlanAssistantProposal | null>(null);
   const [singleProposalTotalsOverride, setSingleProposalTotalsOverride] = useState<{ calories: number; protein: number; fat: number; carbs: number } | null>(null);
+  const [historyItems, setHistoryItems] = useState<MealPlanHistoryItem[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
+  const [pendingUiAction, setPendingUiAction] = useState<{ kind: "single" | "batch" | "history"; key: string } | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
@@ -195,6 +204,9 @@ export function MealPlanItemDialog({
     setBatchItems([]);
     setSingleProposal(null);
     setSingleProposalTotalsOverride(null);
+    setHistoryError(null);
+    setPendingActionKey(null);
+    setPendingUiAction(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
@@ -207,6 +219,59 @@ export function MealPlanItemDialog({
     setManualFat100(item?.isManual ? nextManualNutrition.fat100 : 0);
     setManualCarbs100(item?.isManual ? nextManualNutrition.carbs100 : 0);
   }, [initialItemType, item, mode, open]);
+
+  useEffect(() => {
+    if (!open || mode !== "add") {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadHistory() {
+      try {
+        setIsHistoryLoading(true);
+        setHistoryError(null);
+        const response = await getMealPlanHistory(anchorDate);
+        if (!cancelled) {
+          setHistoryItems(response);
+        }
+      } catch (error) {
+        console.error("Failed to load meal plan history", error);
+        if (!cancelled) {
+          setHistoryError(t("mealPlan.history.loadError"));
+          setHistoryItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsHistoryLoading(false);
+        }
+      }
+    }
+
+    void loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [anchorDate, mode, open, t]);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      if (pendingUiAction && !errorMessage) {
+        if (pendingUiAction.kind === "single") {
+          setSingleProposal(null);
+          setSingleProposalTotalsOverride(null);
+        }
+
+        if (pendingUiAction.kind === "batch") {
+          setBatchItems((current) => current.filter((entry, index) => getProposalActionKey(entry, index) !== pendingUiAction.key));
+        }
+      }
+
+      setPendingActionKey(null);
+      setPendingUiAction(null);
+    }
+  }, [errorMessage, isSubmitting, pendingUiAction]);
 
   const selectedProduct = useMemo(() => products.find((entry) => entry.id === selectedProductId) ?? null, [products, selectedProductId]);
   const selectedRecipe = useMemo(() => recipes.find((entry) => entry.id === selectedRecipeId) ?? null, [recipes, selectedRecipeId]);
@@ -264,6 +329,10 @@ export function MealPlanItemDialog({
     onAppendManualItems?.(items);
   }
 
+  function getProposalActionKey(proposal: MealPlanAssistantProposal, index?: number): string {
+    return `${proposal.name}-${proposal.unit}-${proposal.amount}${typeof index === "number" ? `-${index}` : ""}`;
+  }
+
   const title = mode === "add" ? t("mealPlan.dialog.addTitle", { section: sectionTitle }) : t("mealPlan.dialog.editTitle", { section: sectionTitle });
 
   return (
@@ -306,6 +375,7 @@ export function MealPlanItemDialog({
             sx={{ px: { xs: 1, md: 0 }, borderBottom: "1px solid", borderColor: "divider" }}
           >
             <Tab value="ai" label={t("mealPlan.dialog.ai")} icon={<AutoAwesomeRoundedIcon fontSize="small" />} iconPosition="start" />
+            {mode === "add" ? <Tab value="history" label={t("mealPlan.dialog.history")} /> : null}
             <Tab value="product" label={t("mealPlan.dialog.product")} />
             <Tab value="recipe" label={t("mealPlan.dialog.recipe")} />
             <Tab value="manual" label={t("mealPlan.dialog.manual")} />
@@ -435,8 +505,10 @@ export function MealPlanItemDialog({
                                 <IconButton
                                   color="primary"
                                   onClick={() => {
+                                    const actionKey = getProposalActionKey(singleProposal);
+                                    setPendingActionKey(actionKey);
+                                    setPendingUiAction({ kind: "single", key: actionKey });
                                     appendItems([singleProposal]);
-                                    setSingleProposal(null);
                                   }}
                                   disabled={isSubmitting}
                                   sx={{
@@ -446,12 +518,19 @@ export function MealPlanItemDialog({
                                     bgcolor: "primary.main",
                                     color: "primary.contrastText",
                                     boxShadow: "none",
+                                    "&.Mui-disabled": {
+                                      bgcolor: "primary.main",
+                                      color: "primary.contrastText",
+                                      opacity: 0.58
+                                    },
                                     "&:hover": {
                                       bgcolor: "primary.dark"
                                     }
                                   }}
                                 >
-                                  {isSubmitting ? <CircularProgress size={16} /> : <AddRoundedIcon sx={{ fontSize: 18 }} />}
+                                  {pendingActionKey === getProposalActionKey(singleProposal)
+                                    ? <CircularProgress size={16} sx={{ color: "#ffffff" }} />
+                                    : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                                 </IconButton>
                               </Stack>
                             );
@@ -497,8 +576,10 @@ export function MealPlanItemDialog({
                                     <IconButton
                                       color="primary"
                                       onClick={() => {
+                                        const actionKey = getProposalActionKey(entry, index);
+                                        setPendingActionKey(actionKey);
+                                        setPendingUiAction({ kind: "batch", key: actionKey });
                                         appendItems([entry]);
-                                        setBatchItems((current) => current.filter((_, currentIndex) => currentIndex !== index));
                                       }}
                                       disabled={isSubmitting}
                                       sx={{
@@ -508,12 +589,19 @@ export function MealPlanItemDialog({
                                         bgcolor: "primary.main",
                                         color: "primary.contrastText",
                                         boxShadow: "none",
+                                        "&.Mui-disabled": {
+                                          bgcolor: "primary.main",
+                                          color: "primary.contrastText",
+                                          opacity: 0.58
+                                        },
                                         "&:hover": {
                                           bgcolor: "primary.dark"
                                         }
                                       }}
                                     >
-                                      {isSubmitting ? <CircularProgress size={15} /> : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                                      {pendingActionKey === getProposalActionKey(entry, index)
+                                        ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
+                                        : <AddRoundedIcon sx={{ fontSize: 17 }} />}
                                     </IconButton>
                                   </Stack>
                                 </Box>
@@ -542,6 +630,113 @@ export function MealPlanItemDialog({
                     </Stack>
                   )}
                 />
+              </Stack>
+            ) : null}
+
+            {activeTab === "history" ? (
+              <Stack spacing={2} sx={{ maxWidth: 860, mx: "auto" }}>
+                <Stack spacing={0.5}>
+                  <Typography variant="h6" fontWeight={800}>{t("mealPlan.history.title")}</Typography>
+                  <Typography color="text.secondary">{t("mealPlan.history.subtitle")}</Typography>
+                </Stack>
+
+                {historyError ? <Alert severity="error">{historyError}</Alert> : null}
+
+                {isHistoryLoading ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                    <CircularProgress size={28} />
+                  </Box>
+                ) : historyItems.length === 0 ? (
+                  <Typography color="text.secondary">{t("mealPlan.history.empty")}</Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {historyItems.map((entry) => {
+                      const per100 = entry.nutritionPer100 ?? (() => {
+                        if (entry.type === "product" && entry.amount && entry.amount > 0) {
+                          const factor = 100 / entry.amount;
+                          return {
+                            caloriesKcal: entry.nutritionTotal.caloriesKcal * factor,
+                            proteinG: entry.nutritionTotal.proteinG * factor,
+                            fatG: entry.nutritionTotal.fatG * factor,
+                            carbsG: entry.nutritionTotal.carbsG * factor
+                          };
+                        }
+
+                        return null;
+                      })();
+
+                      return (
+                        <Box
+                          key={entry.id}
+                          sx={{
+                            px: 1.4,
+                            py: 1.1,
+                            borderRadius: 1.5,
+                            backgroundColor: (theme) => (theme.palette.mode === "dark" ? "rgba(20, 28, 42, 0.92)" : "rgba(255,255,255,0.98)"),
+                            boxShadow: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                                : "0 8px 24px rgba(15,23,42,0.05)"
+                          }}
+                        >
+                          <Stack direction="row" spacing={1.25} alignItems="center">
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="center">
+                                <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
+                                  {entry.title}
+                                </Typography>
+                                <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                  {entry.type === "recipe"
+                                    ? `${Math.round(entry.servings ?? 1)} ${t("units.short.serving" as never)}`
+                                    : `${Math.round(entry.amount ?? 100)} ${getLocalizedUnitLabel((key) => t(key as never), entry.unit)}`}
+                                </Typography>
+                              </Stack>
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
+                                {`${Math.round(entry.nutritionTotal.caloriesKcal)} kcal · ${t("mealPlan.macro.protein")} ${Math.round(entry.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${Math.round(entry.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${Math.round(entry.nutritionTotal.carbsG)}g`}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.4 }}>
+                                {`${entry.title} · ${entry.date}`}
+                              </Typography>
+                            </Box>
+                            <IconButton
+                              color="primary"
+                              onClick={() => {
+                                const actionKey = `history-${entry.id}`;
+                                setPendingActionKey(actionKey);
+                                setPendingUiAction({ kind: "history", key: actionKey });
+                                onSubmitHistoryItem?.({
+                                  ...entry,
+                                  nutritionPer100: per100
+                                });
+                              }}
+                              disabled={isSubmitting}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                ml: 0.75,
+                                bgcolor: "primary.main",
+                                color: "primary.contrastText",
+                                boxShadow: "none",
+                                "&.Mui-disabled": {
+                                  bgcolor: "primary.main",
+                                  color: "primary.contrastText",
+                                  opacity: 0.58
+                                },
+                                "&:hover": {
+                                  bgcolor: "primary.dark"
+                                }
+                              }}
+                            >
+                              {pendingActionKey === `history-${entry.id}`
+                                ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
+                                : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                            </IconButton>
+                          </Stack>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                )}
               </Stack>
             ) : null}
 

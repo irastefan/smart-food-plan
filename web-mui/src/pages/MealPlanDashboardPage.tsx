@@ -19,6 +19,7 @@ import {
   copyMealPlanSectionToDate,
   removeMealPlanItem,
   saveMealPlanSectionAsRecipe,
+  type MealPlanHistoryItem,
   type MealPlanItem,
   type MealPlanSection,
   updateMealPlanItem
@@ -312,6 +313,73 @@ export function MealPlanDashboardPage() {
     }
   }
 
+  async function handleSubmitHistoryItem(item: MealPlanHistoryItem) {
+    if (!dialogState) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      setMutationError(null);
+
+      const nextDay =
+        item.type === "recipe" && item.recipeId
+          ? await addRecipeToMealPlan(
+              selectedDate,
+              dialogState.sectionId,
+              {
+                id: item.recipeId,
+                slug: item.recipeId,
+                title: item.title,
+                category: "all",
+                servings: item.servings ?? 1,
+                nutritionTotal: item.nutritionTotal,
+                nutritionPerServing: item.nutritionTotal
+              },
+              { servings: item.servings ?? 1 }
+            )
+          : item.type === "product" && !item.isManual && item.productId
+            ? await addProductToMealPlan(
+                selectedDate,
+                dialogState.sectionId,
+                {
+                  id: item.productId,
+                  slug: item.productId,
+                  title: item.title,
+                  nutritionPer100g: item.nutritionPer100 ?? {
+                    caloriesKcal: 0,
+                    proteinG: 0,
+                    fatG: 0,
+                    carbsG: 0
+                  }
+                },
+                {
+                  quantity: item.amount ?? 100,
+                  unit: item.unit ?? "g"
+                }
+              )
+            : await addManualItemToMealPlan(selectedDate, dialogState.sectionId, {
+                name: item.title,
+                amount: item.amount ?? 100,
+                unit: item.unit ?? "g",
+                kcal100: item.nutritionPer100?.caloriesKcal ?? 0,
+                protein100: item.nutritionPer100?.proteinG ?? 0,
+                fat100: item.nutritionPer100?.fatG ?? 0,
+                carbs100: item.nutritionPer100?.carbsG ?? 0
+              });
+
+      setDay(nextDay);
+      setDialogState(null);
+      setFeedback({ type: "success", message: t("mealPlan.status.itemAdded") });
+    } catch (error) {
+      console.error("Failed to add meal plan history item", error);
+      setMutationError(t("mealPlan.dialog.saveError"));
+      setFeedback({ type: "error", message: t("mealPlan.dialog.saveError") });
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   async function handleDeleteConfirmed() {
     if (!pendingDelete) {
       return;
@@ -463,6 +531,7 @@ export function MealPlanDashboardPage() {
         mode={dialogState?.mode ?? "add"}
         sectionTitle={dialogState?.sectionTitle ?? ""}
         initialItemType={dialogState?.item?.isManual ? "manual" : dialogState?.item?.type ?? "product"}
+        anchorDate={selectedDate}
         item={dialogState?.item}
         recipes={recipes}
         products={products}
@@ -475,6 +544,7 @@ export function MealPlanDashboardPage() {
         }}
         onSubmitMultipleManualItems={handleSubmitMultipleManualItems}
         onAppendManualItems={handleAppendManualItems}
+        onSubmitHistoryItem={handleSubmitHistoryItem}
         onSubmit={handleSubmitDialog}
       />
 

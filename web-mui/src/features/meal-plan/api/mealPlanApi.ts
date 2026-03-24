@@ -43,6 +43,11 @@ export type MealPlanDay = {
   totals: NutritionTotals;
 };
 
+export type MealPlanHistoryItem = MealPlanItem & {
+  date: string;
+  createdAt?: string;
+};
+
 type BackendEntry = {
   id?: string;
   name?: string;
@@ -73,6 +78,13 @@ type BackendDay = {
   slots?: Record<string, BackendEntry[]>;
   nutritionBySlot?: Record<string, Record<string, unknown>>;
   nutritionTotal?: Record<string, unknown>;
+};
+
+type BackendHistoryResponse = {
+  anchorDate: string;
+  fromDate: string;
+  toDate: string;
+  items?: Array<BackendEntry & { date?: string; createdAt?: string }>;
 };
 
 const SLOT_LABELS: Record<string, string> = {
@@ -158,6 +170,19 @@ function mapDay(day: BackendDay): MealPlanDay {
 export async function getMealPlanDay(date: string): Promise<MealPlanDay> {
   const response = await apiRequest<BackendDay>(`/v1/meal-plans/day?date=${encodeURIComponent(date)}`);
   return mapDay(response);
+}
+
+export async function getMealPlanHistory(date: string): Promise<MealPlanHistoryItem[]> {
+  const response = await apiRequest<BackendHistoryResponse>(`/v1/meal-plans/history?date=${encodeURIComponent(date)}`);
+  return (response.items ?? []).map((entry) => {
+    const slot = entry.slot ?? "SNACK";
+    const mapped = mapEntry(slot, entry);
+    return {
+      ...mapped,
+      date: entry.date ?? response.anchorDate,
+      createdAt: entry.createdAt
+    };
+  });
 }
 
 function normalizeProductAmountAndUnit(
