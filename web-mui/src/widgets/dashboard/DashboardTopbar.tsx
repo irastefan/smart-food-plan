@@ -4,18 +4,15 @@ import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import {
-  Avatar,
   Box,
   IconButton,
   MenuItem,
   Select,
   Stack,
-  Typography,
   type SelectChangeEvent
 } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { useThemeMode } from "../../app/providers/ThemeModeProvider";
-import { useDashboardUser } from "./useDashboardUser";
 
 type DashboardTopbarProps = {
   onOpenSidebar: () => void;
@@ -27,7 +24,6 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
   const { language, setLanguage, t } = useLanguage();
   const { mode, toggleMode } = useThemeMode();
   const isDark = mode === "dark";
-  const user = useDashboardUser();
 
   function handleLanguageChange(event: SelectChangeEvent): void {
     setLanguage(event.target.value as "en" | "ru");
@@ -91,20 +87,6 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
           <IconButton sx={{ display: { xs: "none", sm: "inline-flex" } }}>
             <NotificationsRoundedIcon />
           </IconButton>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main" }}>
-              {(user?.email?.[0] ?? "U").toUpperCase()}
-            </Avatar>
-            <Box sx={{ display: { xs: "none", lg: "block" } }}>
-              <Typography variant="body2" fontWeight={800}>
-                {user?.email ?? "User"}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t("common.member")}
-              </Typography>
-            </Box>
-          </Stack>
         </Stack>
       </Stack>
     </Stack>
