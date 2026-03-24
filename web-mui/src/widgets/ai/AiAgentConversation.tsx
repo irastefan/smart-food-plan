@@ -1,8 +1,5 @@
-import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import TerminalRoundedIcon from "@mui/icons-material/TerminalRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import { Accordion, AccordionDetails, AccordionSummary, Avatar, Box, Paper, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typography } from "@mui/material";
 import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -24,51 +21,27 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
         <Stack
           key={message.id}
           direction="row"
-          spacing={{ xs: 0.75, md: 1 }}
           justifyContent={message.role === "user" ? "flex-end" : "flex-start"}
           alignItems="flex-start"
         >
-          {message.role !== "user" ? (
-            <Avatar
+          {message.role === "tool" ? (
+            <Paper
               sx={{
-                width: { xs: 28, md: 32 },
-                height: { xs: 28, md: 32 },
-                bgcolor: message.role === "tool" ? "action.selected" : "primary.main",
-                color: message.role === "tool" ? "text.primary" : "primary.contrastText",
-                mt: 0.25
+                p: { xs: 1.2, md: 1.5 },
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+                width: "100%",
+                maxWidth: 820,
+                background: (theme) => theme.palette.action.hover
               }}
             >
-              {message.role === "assistant" ? <SmartToyRoundedIcon sx={{ fontSize: 16 }} /> : <TerminalRoundedIcon sx={{ fontSize: 16 }} />}
-            </Avatar>
-          ) : null}
-
-          <Paper
-            sx={{
-              p: { xs: 1.2, md: 1.5 },
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: message.role === "user" ? "rgba(4, 120, 87, 0.35)" : "divider",
-              width: "100%",
-              maxWidth: message.role === "tool" ? 820 : 720,
-              background: (theme) =>
-                message.role === "user"
-                  ? theme.palette.mode === "dark"
-                    ? "linear-gradient(90deg, rgba(16,185,129,0.22), rgba(16,185,129,0.12))"
-                    : "linear-gradient(90deg, rgba(16,185,129,0.16), rgba(16,185,129,0.08))"
-                  : message.role === "tool"
-                    ? theme.palette.action.hover
-                    : theme.palette.background.paper,
-              color: message.role === "user" ? "text.primary" : "text.primary"
-            }}
-          >
-            <Stack spacing={0.75}>
-              <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
-                  {message.role === "tool" ? message.toolName : message.role}
-                </Typography>
-              </Stack>
-
-              {message.role === "tool" ? (
+              <Stack spacing={0.75}>
+                <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                  <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
+                    {message.toolName}
+                  </Typography>
+                </Stack>
                 <Accordion
                   disableGutters
                   elevation={0}
@@ -111,38 +84,68 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                     </Box>
                   </AccordionDetails>
                 </Accordion>
-              ) : (
-                <Box
-                  component="pre"
-                  sx={{
-                    m: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    fontFamily: "inherit",
-                    fontSize: { xs: 14, md: 15 },
-                    lineHeight: 1.55,
-                    overflowX: "auto"
-                  }}
-                >
-                  {message.text}
-                </Box>
-              )}
-            </Stack>
-          </Paper>
-
-          {message.role === "user" ? (
-            <Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 }, bgcolor: "rgba(16,185,129,0.9)", color: "#ffffff", mt: 0.25 }}>
-              <PersonRoundedIcon sx={{ fontSize: 16 }} />
-            </Avatar>
-          ) : null}
+              </Stack>
+            </Paper>
+          ) : message.role === "user" ? (
+            <Box
+              sx={{
+                mx: { xs: 0.5, md: 0.75 },
+                px: { xs: 1.3, md: 1.45 },
+                py: { xs: 1.05, md: 1.15 },
+                borderRadius: 1.1,
+                maxWidth: 720,
+                background: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(135deg, rgba(16,185,129,0.34), rgba(16,185,129,0.22))"
+                    : "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.14))",
+                color: "text.primary"
+              }}
+            >
+              <Box
+                component="pre"
+                sx={{
+                  m: 0,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily: "inherit",
+                  fontSize: { xs: 13.5, md: 14.5 },
+                  lineHeight: 1.5,
+                  overflowX: "auto"
+                }}
+              >
+                {message.text}
+              </Box>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: 760,
+                pt: 0.15
+              }}
+            >
+              <Box
+                component="pre"
+                sx={{
+                  m: 0,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily: "inherit",
+                  fontSize: { xs: 14, md: 15 },
+                  lineHeight: 1.7,
+                  overflowX: "auto",
+                  color: "text.primary"
+                }}
+              >
+                {message.text}
+              </Box>
+            </Box>
+          )}
         </Stack>
       ))}
 
       {isSubmitting ? (
-        <Stack direction="row" spacing={{ xs: 0.75, md: 1 }} justifyContent="flex-start" alignItems="flex-start">
-          <Avatar sx={{ width: { xs: 28, md: 32 }, height: { xs: 28, md: 32 }, bgcolor: "primary.main", color: "primary.contrastText", mt: 0.25 }}>
-            <SmartToyRoundedIcon sx={{ fontSize: 16 }} />
-          </Avatar>
+        <Stack direction="row" justifyContent="flex-start" alignItems="flex-start">
           <Box
             sx={{
               minHeight: { xs: 28, md: 32 },
