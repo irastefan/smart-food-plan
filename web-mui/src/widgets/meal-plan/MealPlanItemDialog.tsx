@@ -87,6 +87,33 @@ function getProposalTotals(proposal: MealPlanAssistantProposal) {
   };
 }
 
+function extractTotalsFromAssistantMessage(message: string): { calories: number; protein: number; fat: number; carbs: number } | null {
+  const caloriesMatch = message.match(/(\d+(?:[.,]\d+)?)\s*kcal|(\d+(?:[.,]\d+)?)\s*ккал/i);
+  const proteinMatch = message.match(/protein\s*(\d+(?:[.,]\d+)?)\s*g|бел(?:ки)?\s*(\d+(?:[.,]\d+)?)\s*г/i);
+  const fatMatch = message.match(/fat\s*(\d+(?:[.,]\d+)?)\s*g|жир(?:ы)?\s*(\d+(?:[.,]\d+)?)\s*г/i);
+  const carbsMatch = message.match(/carbs?\s*(\d+(?:[.,]\d+)?)\s*g|углевод(?:ы)?\s*(\d+(?:[.,]\d+)?)\s*г/i);
+
+  const parseMatch = (match: RegExpMatchArray | null): number | null => {
+    const raw = match?.[1] ?? match?.[2];
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number.parseFloat(raw.replace(",", "."));
+    return Number.isFinite(parsed) ? Math.round(parsed) : null;
+  };
+
+  const calories = parseMatch(caloriesMatch);
+  const protein = parseMatch(proteinMatch);
+  const fat = parseMatch(fatMatch);
+  const carbs = parseMatch(carbsMatch);
+
+  if (calories === null || protein === null || fat === null || carbs === null) {
+    return null;
+  }
+
+  return { calories, protein, fat, carbs };
+}
+
 function parseDecimalInput(value: string, fallback: number, min = 0.1): number {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed)) {
@@ -145,6 +172,7 @@ export function MealPlanItemDialog({
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
   const [batchItems, setBatchItems] = useState<MealPlanAssistantProposal[]>([]);
   const [singleProposal, setSingleProposal] = useState<MealPlanAssistantProposal | null>(null);
+  const [singleProposalTotalsOverride, setSingleProposalTotalsOverride] = useState<{ calories: number; protein: number; fat: number; carbs: number } | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
@@ -166,6 +194,7 @@ export function MealPlanItemDialog({
     setActiveTab(mode === "edit" ? (item?.isManual ? "manual" : item?.type ?? initialItemType) : "ai");
     setBatchItems([]);
     setSingleProposal(null);
+    setSingleProposalTotalsOverride(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
@@ -350,6 +379,7 @@ export function MealPlanItemDialog({
                     const nextItems = result?.items ?? [];
                     setBatchItems(nextItems);
                     setSingleProposal(nextProposal);
+                    setSingleProposalTotalsOverride(nextProposal && result ? extractTotalsFromAssistantMessage(result.assistantMessage.text) : null);
 
                     if (nextProposal) {
                       setManualName(nextProposal.name);
@@ -385,7 +415,7 @@ export function MealPlanItemDialog({
                           }}
                         >
                           {(() => {
-                            const totals = getProposalTotals(singleProposal);
+                            const totals = singleProposalTotalsOverride ?? getProposalTotals(singleProposal);
 
                             return (
                               <Stack direction="row" spacing={1.25} alignItems="center">

@@ -58,6 +58,60 @@ function buildPortionNutritionLine(message: string, proposal: MealPlanAssistantP
   return `Portion ${roundToWhole(proposal.amount)} ${proposal.unit} · ${calories} kcal · Protein ${protein}g · Fat ${fat}g · Carbs ${carbs}g`;
 }
 
+function isPackagingUnit(unit: string): boolean {
+  const normalized = unit.trim().toLowerCase();
+  return [
+    "bag",
+    "bags",
+    "pack",
+    "packs",
+    "package",
+    "packages",
+    "packet",
+    "packets",
+    "pkg",
+    "пачка",
+    "пачки",
+    "пакет",
+    "пакета",
+    "упаковка",
+    "упаковки"
+  ].includes(normalized);
+}
+
+function extractWeightFromMessage(message: string): { amount: number; unit: "g" | "ml" } | null {
+  const match = message.match(/(\d+(?:[.,]\d+)?)\s*(g|gr|gram|grams|г|гр|ml|мл)\b/i);
+  if (!match) {
+    return null;
+  }
+
+  const amount = Number.parseFloat(match[1].replace(",", "."));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return null;
+  }
+
+  const rawUnit = match[2].toLowerCase();
+  const unit = rawUnit === "ml" || rawUnit === "мл" ? "ml" : "g";
+  return { amount, unit };
+}
+
+function normalizeProposalFromMessage(proposal: MealPlanAssistantProposal | null, message: string): MealPlanAssistantProposal | null {
+  if (!proposal || !isPackagingUnit(proposal.unit)) {
+    return proposal;
+  }
+
+  const detectedWeight = extractWeightFromMessage(message);
+  if (!detectedWeight) {
+    return proposal;
+  }
+
+  return {
+    ...proposal,
+    amount: detectedWeight.amount,
+    unit: detectedWeight.unit
+  };
+}
+
 function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) {
@@ -169,9 +223,9 @@ export async function runMealPlanAssistant(input: {
     items?: unknown;
   };
 
-  const proposal = sanitizeProposal(parsed.proposal);
-  const items = proposal ? [] : sanitizeProposalList(parsed.items);
   const messageBase = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
+  const proposal = normalizeProposalFromMessage(sanitizeProposal(parsed.proposal), messageBase);
+  const items = proposal ? [] : sanitizeProposalList(parsed.items);
   const message = enrichMessageWithNutrition(messageBase, proposal);
   const needsConfirmation = typeof parsed.needsConfirmation === "boolean"
     ? parsed.needsConfirmation
