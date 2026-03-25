@@ -444,6 +444,8 @@ export function MealPlanDashboardPage() {
       setPendingCopySection(null);
       if (copyTargetDate === selectedDate) {
         await refresh();
+      } else {
+        setSelectedDate(copyTargetDate);
       }
     } catch (error) {
       console.error("Failed to copy meal plan section", error);
