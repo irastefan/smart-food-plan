@@ -2,6 +2,7 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { getBodyMetricsDay, getBodyMetricsHistory, upsertBodyMetrics, type BodyMetricsEntry } from "../features/body-metrics/api/bodyMetricsApi";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeSummary } from "../features/recipes/model/recipeTypes";
@@ -31,6 +32,7 @@ import { PageTitle } from "../shared/ui/PageTitle";
 import { getMacroColor } from "../shared/theme/macroColors";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanAnalysisDialog } from "../widgets/meal-plan/MealPlanAnalysisDialog";
+import { MealPlanBodyMetricsCard } from "../widgets/meal-plan/MealPlanBodyMetricsCard";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
 import { MealPlanItemDialog } from "../widgets/meal-plan/MealPlanItemDialog";
 import { MealPlanMacroBalanceCard } from "../widgets/meal-plan/MealPlanMacroBalanceCard";
@@ -41,6 +43,58 @@ type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
 };
+
+type BodyMetricsDraft = {
+  weightKg: string;
+  neckCm: string;
+  bustCm: string;
+  underbustCm: string;
+  waistCm: string;
+  hipsCm: string;
+  bicepsCm: string;
+  forearmCm: string;
+  thighCm: string;
+  calfCm: string;
+};
+
+function emptyBodyMetricsDraft(): BodyMetricsDraft {
+  return {
+    weightKg: "",
+    neckCm: "",
+    bustCm: "",
+    underbustCm: "",
+    waistCm: "",
+    hipsCm: "",
+    bicepsCm: "",
+    forearmCm: "",
+    thighCm: "",
+    calfCm: ""
+  };
+}
+
+function toDraft(entry: BodyMetricsEntry | null): BodyMetricsDraft {
+  return {
+    weightKg: entry?.weightKg != null ? String(entry.weightKg) : "",
+    neckCm: entry?.measurements?.neckCm != null ? String(entry.measurements.neckCm) : "",
+    bustCm: entry?.measurements?.bustCm != null ? String(entry.measurements.bustCm) : "",
+    underbustCm: entry?.measurements?.underbustCm != null ? String(entry.measurements.underbustCm) : "",
+    waistCm: entry?.measurements?.waistCm != null ? String(entry.measurements.waistCm) : "",
+    hipsCm: entry?.measurements?.hipsCm != null ? String(entry.measurements.hipsCm) : "",
+    bicepsCm: entry?.measurements?.bicepsCm != null ? String(entry.measurements.bicepsCm) : "",
+    forearmCm: entry?.measurements?.forearmCm != null ? String(entry.measurements.forearmCm) : "",
+    thighCm: entry?.measurements?.thighCm != null ? String(entry.measurements.thighCm) : "",
+    calfCm: entry?.measurements?.calfCm != null ? String(entry.measurements.calfCm) : ""
+  };
+}
+
+function toOptionalNumber(value: string): number | undefined {
+  const normalized = value.trim().replace(",", ".");
+  if (!normalized) {
+    return undefined;
+  }
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
 
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
@@ -65,6 +119,9 @@ export function MealPlanDashboardPage() {
   const [pendingCopySection, setPendingCopySection] = useState<MealPlanSection | null>(null);
   const [copyTargetDate, setCopyTargetDate] = useState(selectedDate);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [bodyMetricsDraft, setBodyMetricsDraft] = useState<BodyMetricsDraft>(emptyBodyMetricsDraft());
+  const [bodyMetricsHistory, setBodyMetricsHistory] = useState<BodyMetricsEntry[]>([]);
+  const [isBodyMetricsSaving, setIsBodyMetricsSaving] = useState(false);
   const [analysisTarget, setAnalysisTarget] = useState<
     | { scope: "day"; label: string }
     | { scope: "section"; label: string; section: MealPlanSection }
@@ -144,6 +201,33 @@ export function MealPlanDashboardPage() {
     setCopyTargetDate(selectedDate);
   }, [selectedDate]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBodyMetrics() {
+      try {
+        const preferences = getAppPreferences();
+        const [daily, history] = await Promise.all([
+          getBodyMetricsDay(selectedDate),
+          getBodyMetricsHistory({ toDate: selectedDate, limitDays: preferences.bodyMetricsHistoryDays })
+        ]);
+
+        if (!cancelled) {
+          setBodyMetricsDraft(toDraft(daily));
+          setBodyMetricsHistory(history);
+        }
+      } catch (error) {
+        console.error("Failed to load body metrics", error);
+      }
+    }
+
+    void loadBodyMetrics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate]);
+
   if (isLoading) {
     return (
       <Stack flex={1} alignItems="center" justifyContent="center" spacing={2}>
@@ -179,7 +263,8 @@ export function MealPlanDashboardPage() {
   const usedCalories = day?.totals.caloriesKcal ?? 0;
   const remainingCalories = targetCalories - usedCalories;
   const hasAnyMealItems = Boolean(day?.sections.some((section) => section.items.length > 0));
-  const mealPlanSummaryMetric = getAppPreferences().mealPlanSummaryMetric;
+  const appPreferences = getAppPreferences();
+  const mealPlanSummaryMetric = appPreferences.mealPlanSummaryMetric;
   const summaryCenterValue = mealPlanSummaryMetric === "food" ? usedCalories : remainingCalories;
   const summaryCenterLabel = mealPlanSummaryMetric === "food" ? t("mealPlan.cards.used") : t("mealPlan.cards.remaining");
 
@@ -455,6 +540,36 @@ export function MealPlanDashboardPage() {
     }
   }
 
+  async function handleSaveBodyMetrics() {
+    try {
+      setIsBodyMetricsSaving(true);
+      const saved = await upsertBodyMetrics({
+        date: selectedDate,
+        weightKg: toOptionalNumber(bodyMetricsDraft.weightKg),
+        neckCm: toOptionalNumber(bodyMetricsDraft.neckCm),
+        bustCm: toOptionalNumber(bodyMetricsDraft.bustCm),
+        underbustCm: toOptionalNumber(bodyMetricsDraft.underbustCm),
+        waistCm: toOptionalNumber(bodyMetricsDraft.waistCm),
+        hipsCm: toOptionalNumber(bodyMetricsDraft.hipsCm),
+        bicepsCm: toOptionalNumber(bodyMetricsDraft.bicepsCm),
+        forearmCm: toOptionalNumber(bodyMetricsDraft.forearmCm),
+        thighCm: toOptionalNumber(bodyMetricsDraft.thighCm),
+        calfCm: toOptionalNumber(bodyMetricsDraft.calfCm)
+      });
+
+      setBodyMetricsDraft(toDraft(saved));
+      const preferences = getAppPreferences();
+      const history = await getBodyMetricsHistory({ toDate: selectedDate, limitDays: preferences.bodyMetricsHistoryDays });
+      setBodyMetricsHistory(history);
+      setFeedback({ type: "success", message: t("bodyMetrics.saved") });
+    } catch (error) {
+      console.error("Failed to save body metrics", error);
+      setFeedback({ type: "error", message: t("bodyMetrics.saveError") });
+    } finally {
+      setIsBodyMetricsSaving(false);
+    }
+  }
+
   return (
     <Stack spacing={{ xs: 1, md: 3 }} flex={1}>
       <DashboardTopbar
@@ -475,7 +590,7 @@ export function MealPlanDashboardPage() {
       {mutationError ? <Alert severity="error">{mutationError}</Alert> : null}
 
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid size={{ xs: 12, xl: 4 }}>
           <MealPlanSummaryCard
             title={t("mealPlan.cards.totalCalories")}
             goalValue={targetCalories}
@@ -490,12 +605,24 @@ export function MealPlanDashboardPage() {
             onAnalyze={() => setAnalysisTarget({ scope: "day", label: t("mealPlan.analysis.dayLabel") })}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 5 }}>
+        <Grid size={{ xs: 12, xl: 4 }}>
           <MealPlanMacroBalanceCard
             title={t("mealPlan.section.macroBalance")}
             items={macroDistribution}
             leftLabel={t("mealPlan.macro.left")}
             overLabel={t("mealPlan.macro.over")}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, xl: 4 }}>
+          <MealPlanBodyMetricsCard
+            date={selectedDate}
+            draft={bodyMetricsDraft}
+            history={bodyMetricsHistory}
+            historyDays={appPreferences.bodyMetricsHistoryDays}
+            visibleFields={appPreferences.visibleBodyMetricFields}
+            isSaving={isBodyMetricsSaving}
+            onChange={setBodyMetricsDraft}
+            onSave={() => void handleSaveBodyMetrics()}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>

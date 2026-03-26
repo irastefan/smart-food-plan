@@ -1,6 +1,6 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Button, Checkbox, ListItemText, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { AppPreferences } from "../../shared/config/appPreferences";
@@ -12,6 +12,19 @@ type AppPreferencesCardProps = {
 };
 
 const MEAL_PLAN_SUMMARY_OPTIONS: Array<AppPreferences["mealPlanSummaryMetric"]> = ["remaining", "food"];
+const BODY_METRICS_HISTORY_OPTIONS: Array<AppPreferences["bodyMetricsHistoryDays"]> = [30, 60, 90, 180];
+const BODY_METRIC_FIELD_OPTIONS: AppPreferences["visibleBodyMetricFields"] = [
+  "weightKg",
+  "neckCm",
+  "bustCm",
+  "underbustCm",
+  "waistCm",
+  "hipsCm",
+  "bicepsCm",
+  "forearmCm",
+  "thighCm",
+  "calfCm"
+];
 
 export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferencesCardProps) {
   const { t } = useLanguage();
@@ -37,6 +50,7 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         value={draft.mealPlanSummaryMetric}
         onChange={(event) =>
           setDraft({
+            ...draft,
             mealPlanSummaryMetric: event.target.value as AppPreferences["mealPlanSummaryMetric"]
           })
         }
@@ -45,6 +59,52 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         {MEAL_PLAN_SUMMARY_OPTIONS.map((option) => (
           <MenuItem key={option} value={option}>
             {t(`settings.preferences.mealPlanSummaryMetric.${option}` as never)}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        select
+        label={t("settings.preferences.visibleBodyMetricFields")}
+        value={draft.visibleBodyMetricFields}
+        onChange={(event) =>
+          setDraft({
+            ...draft,
+            visibleBodyMetricFields: typeof event.target.value === "string" ? event.target.value.split(",") as AppPreferences["visibleBodyMetricFields"] : event.target.value as AppPreferences["visibleBodyMetricFields"]
+          })
+        }
+        SelectProps={{
+          multiple: true,
+          renderValue: (selected) =>
+            (selected as AppPreferences["visibleBodyMetricFields"])
+              .map((field) => t(`settings.preferences.visibleBodyMetricFields.${field}` as never))
+              .join(", ")
+        }}
+        fullWidth
+      >
+        {BODY_METRIC_FIELD_OPTIONS.map((field) => (
+          <MenuItem key={field} value={field}>
+            <Checkbox checked={draft.visibleBodyMetricFields.includes(field)} />
+            <ListItemText primary={t(`settings.preferences.visibleBodyMetricFields.${field}` as never)} />
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        select
+        label={t("settings.preferences.bodyMetricsHistoryDays")}
+        value={draft.bodyMetricsHistoryDays}
+        onChange={(event) =>
+          setDraft({
+            ...draft,
+            bodyMetricsHistoryDays: Number(event.target.value) as AppPreferences["bodyMetricsHistoryDays"]
+          })
+        }
+        fullWidth
+      >
+        {BODY_METRICS_HISTORY_OPTIONS.map((value) => (
+          <MenuItem key={value} value={value}>
+            {t("settings.preferences.bodyMetricsHistoryDays.option" as never, { value })}
           </MenuItem>
         ))}
       </TextField>
