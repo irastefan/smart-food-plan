@@ -227,7 +227,7 @@ export function ShoppingPage() {
   }
 
   return (
-    <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
+    <Stack spacing={{ xs: 2, md: 3 }} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
         <PageTitle title={t("shopping.title")} />
@@ -274,7 +274,7 @@ export function ShoppingPage() {
         <Box
           sx={{
             columnCount: { xs: 1, xl: 2 },
-            columnGap: 12
+            columnGap: { xs: 0, xl: 10 }
           }}
         >
           {groupedItems.map(([categoryName, items]) => (
@@ -283,7 +283,7 @@ export function ShoppingPage() {
               sx={{
                 breakInside: "avoid",
                 WebkitColumnBreakInside: "avoid",
-                mb: 2.5
+                mb: { xs: 1.4, md: 2 }
               }}
             >
               <ShoppingCategorySection

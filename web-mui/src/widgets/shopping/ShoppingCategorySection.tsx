@@ -32,8 +32,8 @@ export function ShoppingCategorySection({
   const { t } = useLanguage();
 
   return (
-    <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
-      <Stack spacing={2}>
+    <Paper sx={{ p: { xs: 1.4, md: 2 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
+      <Stack spacing={{ xs: 1.25, md: 1.75 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Typography variant="h6" fontWeight={800}>{title}</Typography>
           <Stack direction="row" spacing={0.75} alignItems="center">
@@ -46,38 +46,42 @@ export function ShoppingCategorySection({
           </Stack>
         </Stack>
 
-        <Stack spacing={1}>
+        <Stack spacing={{ xs: 0.8, md: 1 }}>
           {items.map((item) => (
             <Stack
               key={item.id}
               direction="row"
-              spacing={1.5}
-              alignItems="center"
+              spacing={1}
+              alignItems="flex-start"
               justifyContent="space-between"
               sx={{
-                p: 1.5,
+                p: { xs: 1, md: 1.25 },
                 borderRadius: 1.25,
                 border: "1px solid",
                 borderColor: "divider",
                 backgroundColor: item.isDone ? "action.selected" : "background.paper"
               }}
             >
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
-                <Checkbox checked={item.isDone} onChange={() => onToggleDone(item)} />
+              <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
+                <Checkbox checked={item.isDone} onChange={() => onToggleDone(item)} sx={{ mt: -0.35, ml: -0.35 }} />
                 <Stack sx={{ minWidth: 0 }}>
                   <Typography
                     fontWeight={700}
-                    noWrap
-                    sx={{ textDecoration: item.isDone ? "line-through" : "none", opacity: item.isDone ? 0.7 : 1 }}
+                    sx={{
+                      textDecoration: item.isDone ? "line-through" : "none",
+                      opacity: item.isDone ? 0.7 : 1,
+                      lineHeight: 1.25,
+                      overflowWrap: "anywhere"
+                    }}
                   >
                     {item.title}
                   </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
-                    <Typography variant="body2" color="text.secondary">
+                  <Stack direction="row" spacing={0.8} alignItems="center" useFlexGap flexWrap="wrap" sx={{ mt: 0.2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2 }}>
                       {formatAmount(item, getLocalizedUnitLabel((key) => t(key as never), item.unit))}
                     </Typography>
                     {item.note ? (
-                      <Typography variant="body2" color="text.secondary" noWrap>
+                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2, overflowWrap: "anywhere" }}>
                         {item.note}
                       </Typography>
                     ) : null}
@@ -85,7 +89,7 @@ export function ShoppingCategorySection({
                 </Stack>
               </Stack>
 
-              <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack direction="row" spacing={0.25} alignItems="center" sx={{ pt: 0.1, flexShrink: 0 }}>
                 {item.isDone ? <Chip size="small" icon={<ShoppingCartRoundedIcon />} label={doneLabel} /> : null}
                 <IconButton size="small" onClick={() => onDelete(item)}>
                   <DeleteOutlineRoundedIcon fontSize="small" />
