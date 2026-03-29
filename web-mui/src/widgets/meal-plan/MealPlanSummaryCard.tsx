@@ -43,6 +43,7 @@ export function MealPlanSummaryCard({
   const progress = goalValue > 0 ? Math.min(100, (usedValue / goalValue) * 100) : 0;
   const ringSize = isMobile ? 128 : 168;
   const showFoodInCenter = centerLabel === usedLabel;
+  const ringColor = "#2f6b56";
 
   return (
     <Card
@@ -98,7 +99,7 @@ export function MealPlanSummaryCard({
               size={ringSize}
               thickness={3.2}
               sx={{
-                color: "#4f8f6b",
+                color: ringColor,
                 position: "absolute",
                 left: 0,
                 "& .MuiCircularProgress-circle": {

@@ -43,3 +43,5 @@ export const dashboardNavigation = [
     icon: SettingsRoundedIcon
   }
 ] as const;
+
+export type DashboardNavigationId = typeof dashboardNavigation[number]["id"];

@@ -1,4 +1,6 @@
-import { Alert, Box, CircularProgress, Paper, Snackbar, Stack, Typography } from "@mui/material";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import { Alert, Box, CircularProgress, Paper, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -15,21 +17,28 @@ import {
 } from "../features/shopping/api/shoppingApi";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { FilterChipRow } from "../shared/ui/FilterChipRow";
-import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
+import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ShoppingAddDialog } from "../widgets/shopping/ShoppingAddDialog";
+import { ShoppingAssistantDialog } from "../widgets/shopping/ShoppingAssistantDialog";
 import { ShoppingCategoryDialog } from "../widgets/shopping/ShoppingCategoryDialog";
 import { ShoppingCategorySection } from "../widgets/shopping/ShoppingCategorySection";
 
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageAgentAction: (action: (() => void) | null) => void;
+  clearPageAgentAction: () => void;
+  registerPageAddAction: (action: (() => void) | null) => void;
+  clearPageAddAction: () => void;
 };
 
 export function ShoppingPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction } = useOutletContext<LayoutContext>();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [shoppingList, setShoppingList] = useState<ShoppingList | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [filter, setFilter] = useState("all");
@@ -39,11 +48,26 @@ export function ShoppingPage() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<
     | { type: "item"; item: ShoppingItem }
     | { type: "category"; categoryId: string; categoryName: string }
     | null
   >(null);
+
+  useEffect(() => {
+    registerPageAgentAction(() => setAssistantOpen(true));
+    return () => {
+      clearPageAgentAction();
+    };
+  }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageAddAction(() => setDialogOpen(true));
+    return () => {
+      clearPageAddAction();
+    };
+  }, [clearPageAddAction, registerPageAddAction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -205,7 +229,15 @@ export function ShoppingPage() {
   return (
     <Stack spacing={3} sx={{ pb: { xs: 11, md: 9 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("shopping.title")} subtitle={t("shopping.subtitle")} />
-      <PageTitle title={t("shopping.title")} />
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+        <PageTitle title={t("shopping.title")} />
+        {isDesktop ? (
+          <Stack direction="row" spacing={1}>
+            <PageActionButton icon={<AddRoundedIcon fontSize="small" />} label={t("shopping.add")} onClick={() => setDialogOpen(true)} />
+            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("contextAgent.shopping.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
+          </Stack>
+        ) : null}
+      </Stack>
 
       <FilterChipRow
         value={filter}
@@ -305,11 +337,6 @@ export function ShoppingPage() {
         }}
       />
 
-      <FloatingActionMenu
-        tooltip={t("shopping.add")}
-        onClick={() => setDialogOpen(true)}
-      />
-
       <Snackbar
         open={Boolean(feedback)}
         autoHideDuration={2500}
@@ -320,6 +347,12 @@ export function ShoppingPage() {
           {feedback?.message}
         </Alert>
       </Snackbar>
+
+      <ShoppingAssistantDialog
+        open={assistantOpen}
+        shoppingList={shoppingList}
+        onClose={() => setAssistantOpen(false)}
+      />
     </Stack>
   );
 }

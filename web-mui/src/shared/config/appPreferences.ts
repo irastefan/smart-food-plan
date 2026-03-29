@@ -3,6 +3,7 @@ const APP_PREFERENCES_STORAGE_KEY = "smartFoodPlanMui.appPreferences";
 export type AppPreferences = {
   mealPlanSummaryMetric: "remaining" | "food";
   bodyMetricsHistoryDays: 30 | 60 | 90 | 180;
+  mobileQuickNavItems: Array<"meal-plan" | "recipes" | "products" | "shopping" | "settings">;
   visibleBodyMetricFields: Array<
     "weightKg" | "neckCm" | "bustCm" | "underbustCm" | "waistCm" | "hipsCm" | "bicepsCm" | "forearmCm" | "thighCm" | "calfCm"
   >;
@@ -11,8 +12,17 @@ export type AppPreferences = {
 const defaultPreferences: AppPreferences = {
   mealPlanSummaryMetric: "food",
   bodyMetricsHistoryDays: 90,
+  mobileQuickNavItems: ["meal-plan", "recipes", "shopping", "settings"],
   visibleBodyMetricFields: ["weightKg", "bustCm", "waistCm", "hipsCm"]
 };
+
+const VALID_MOBILE_NAV_ITEMS = new Set<AppPreferences["mobileQuickNavItems"][number]>([
+  "meal-plan",
+  "recipes",
+  "products",
+  "shopping",
+  "settings"
+]);
 
 const VALID_BODY_METRIC_FIELDS = new Set<AppPreferences["visibleBodyMetricFields"][number]>([
   "weightKg",
@@ -48,6 +58,12 @@ export function getAppPreferences(): AppPreferences {
         parsed.bodyMetricsHistoryDays === 30 || parsed.bodyMetricsHistoryDays === 60 || parsed.bodyMetricsHistoryDays === 90 || parsed.bodyMetricsHistoryDays === 180
           ? parsed.bodyMetricsHistoryDays
           : defaultPreferences.bodyMetricsHistoryDays,
+      mobileQuickNavItems: Array.isArray(parsed.mobileQuickNavItems)
+        ? Array.from(new Set(parsed.mobileQuickNavItems)).filter(
+            (item): item is AppPreferences["mobileQuickNavItems"][number] =>
+              typeof item === "string" && VALID_MOBILE_NAV_ITEMS.has(item as AppPreferences["mobileQuickNavItems"][number])
+          ).slice(0, 4)
+        : defaultPreferences.mobileQuickNavItems,
       visibleBodyMetricFields: Array.isArray(parsed.visibleBodyMetricFields)
         ? parsed.visibleBodyMetricFields.filter(
             (field): field is AppPreferences["visibleBodyMetricFields"][number] =>

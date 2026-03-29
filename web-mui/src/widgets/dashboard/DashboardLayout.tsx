@@ -1,11 +1,47 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Box, Stack } from "@mui/material";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { DashboardQuickActions } from "./DashboardQuickActions";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pageAgentAction, setPageAgentAction] = useState<(() => void) | null>(null);
+  const [pageAddAction, setPageAddAction] = useState<(() => void) | null>(null);
+  const navigate = useNavigate();
+  const openSidebar = useCallback(() => setMobileOpen(true), []);
+  const registerPageAgentAction = useCallback((action: (() => void) | null) => {
+    setPageAgentAction(() => action);
+  }, []);
+  const clearPageAgentAction = useCallback(() => {
+    setPageAgentAction(null);
+  }, []);
+  const registerPageAddAction = useCallback((action: (() => void) | null) => {
+    setPageAddAction(() => action);
+  }, []);
+  const clearPageAddAction = useCallback(() => {
+    setPageAddAction(null);
+  }, []);
+  const outletContext = useMemo(
+    () => ({
+      openSidebar,
+      collapsed,
+      registerPageAgentAction,
+      clearPageAgentAction,
+      registerPageAddAction,
+      clearPageAddAction
+    }),
+    [clearPageAddAction, clearPageAgentAction, collapsed, openSidebar, registerPageAddAction, registerPageAgentAction]
+  );
+  const handleOpenAgent = useCallback(() => {
+    if (pageAgentAction) {
+      pageAgentAction();
+      return;
+    }
+
+    navigate("/ai-agent");
+  }, [navigate, pageAgentAction]);
 
   return (
     <Box
@@ -38,9 +74,11 @@ export function DashboardLayout() {
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Stack sx={{ minHeight: "100vh", px: { xs: 2, md: 3 }, py: { xs: 2, md: 3 } }}>
-          <Outlet context={{ openSidebar: () => setMobileOpen(true), collapsed }} />
+          <Outlet context={outletContext} />
         </Stack>
       </Box>
+
+      <DashboardQuickActions onOpenAgent={handleOpenAgent} onOpenAdd={pageAddAction ?? undefined} />
     </Box>
   );
 }

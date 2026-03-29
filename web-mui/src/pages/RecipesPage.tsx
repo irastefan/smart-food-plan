@@ -1,14 +1,14 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, CircularProgress, Grid, InputAdornment, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { deleteRecipe, getRecipes } from "../features/recipes/api/recipesApi";
 import type { RecipeCategoryKey, RecipeSummary } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
-import { FloatingActionMenu } from "../shared/ui/FloatingActionMenu";
+import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeAssistantDialog } from "../widgets/recipes/RecipeAssistantDialog";
@@ -18,12 +18,18 @@ import { RecipeCategoryTabs } from "../widgets/recipes/RecipeCategoryTabs";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageAgentAction: (action: (() => void) | null) => void;
+  clearPageAgentAction: () => void;
+  registerPageAddAction: (action: (() => void) | null) => void;
+  clearPageAddAction: () => void;
 };
 
 export function RecipesPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction } = useOutletContext<LayoutContext>();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -31,6 +37,20 @@ export function RecipesPage() {
   const [category, setCategory] = useState<RecipeCategoryKey>("all");
   const [deleteTarget, setDeleteTarget] = useState<RecipeSummary | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+
+  useEffect(() => {
+    registerPageAgentAction(() => setAssistantOpen(true));
+    return () => {
+      clearPageAgentAction();
+    };
+  }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageAddAction(() => navigate("/recipes/new"));
+    return () => {
+      clearPageAddAction();
+    };
+  }, [clearPageAddAction, navigate, registerPageAddAction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,7 +117,15 @@ export function RecipesPage() {
   return (
     <Stack spacing={3} sx={{ pb: { xs: 10, md: 8 } }}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("recipes.title")} subtitle={t("recipes.subtitle")} />
-      <PageTitle title={t("recipes.title")} />
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+        <PageTitle title={t("recipes.title")} />
+        {isDesktop ? (
+          <Stack direction="row" spacing={1}>
+            <PageActionButton icon={<AddRoundedIcon fontSize="small" />} label={t("recipes.add")} onClick={() => navigate("/recipes/new")} />
+            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("recipe.ai.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
+          </Stack>
+        ) : null}
+      </Stack>
 
       <Stack spacing={2}>
         <TextField
@@ -142,24 +170,6 @@ export function RecipesPage() {
         message={t("recipe.confirmDelete", { name: deleteTarget?.title ?? "" })}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleConfirmDelete()}
-      />
-
-      <FloatingActionMenu
-        tooltip={t("recipes.add")}
-        items={[
-          {
-            key: "recipe",
-            label: t("recipes.add"),
-            icon: <AddRoundedIcon fontSize="small" />,
-            onClick: () => navigate("/recipes/new")
-          },
-          {
-            key: "ai",
-            label: t("recipe.ai.title"),
-            icon: <SmartToyRoundedIcon fontSize="small" />,
-            onClick: () => setAssistantOpen(true)
-          }
-        ]}
       />
 
       <RecipeAssistantDialog open={assistantOpen} onClose={() => setAssistantOpen(false)} />

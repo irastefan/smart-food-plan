@@ -1,3 +1,4 @@
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
@@ -28,10 +29,12 @@ import {
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
 import { getAppPreferences } from "../shared/config/appPreferences";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { getMacroColor } from "../shared/theme/macroColors";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { MealPlanAnalysisDialog } from "../widgets/meal-plan/MealPlanAnalysisDialog";
+import { MealPlanAssistantDialog } from "../widgets/meal-plan/MealPlanAssistantDialog";
 import { MealPlanBodyMetricsCard } from "../widgets/meal-plan/MealPlanBodyMetricsCard";
 import { MealPlanDayNavigator } from "../widgets/meal-plan/day-navigator";
 import { MealPlanItemDialog } from "../widgets/meal-plan/MealPlanItemDialog";
@@ -42,6 +45,8 @@ import { MealPlanSummaryCard } from "../widgets/meal-plan/MealPlanSummaryCard";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageAgentAction: (action: (() => void) | null) => void;
+  clearPageAgentAction: () => void;
 };
 
 type BodyMetricsDraft = {
@@ -98,7 +103,7 @@ function toOptionalNumber(value: string): number | undefined {
 
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction } = useOutletContext<LayoutContext>();
   const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage, refresh } = useMealPlanDashboard();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -127,6 +132,14 @@ export function MealPlanDashboardPage() {
     | { scope: "section"; label: string; section: MealPlanSection }
     | null
   >(null);
+  const [pageAssistantOpen, setPageAssistantOpen] = useState(false);
+
+  useEffect(() => {
+    registerPageAgentAction(() => setPageAssistantOpen(true));
+    return () => {
+      clearPageAgentAction();
+    };
+  }, [clearPageAgentAction, registerPageAgentAction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -581,9 +594,20 @@ export function MealPlanDashboardPage() {
         <Box sx={{ display: { xs: "none", lg: "block" } }}>
           <PageTitle title={t("mealPlan.dashboard.title")} />
         </Box>
-        <Box sx={{ width: { xs: "100%", lg: 420 }, maxWidth: { lg: "100%" }, ml: { lg: "auto" } }}>
-          <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        </Box>
+        <Stack direction={{ xs: "column", lg: "row" }} spacing={1} alignItems={{ xs: "stretch", lg: "stretch" }} sx={{ width: { xs: "100%", lg: "auto" }, ml: { lg: "auto" } }}>
+          <Box sx={{ width: { xs: "100%", lg: 420 }, maxWidth: { lg: "100%" } }}>
+            <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          </Box>
+          <Box sx={{ display: { xs: "none", lg: "flex" }, alignSelf: "stretch" }}>
+            <PageActionButton
+              icon={<SmartToyRoundedIcon fontSize="small" />}
+              label={t("contextAgent.mealPlan.title")}
+              onClick={() => setPageAssistantOpen(true)}
+              variant="agent"
+              sx={{ minHeight: "100%", px: 1.6 }}
+            />
+          </Box>
+        </Stack>
       </Stack>
 
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
@@ -760,6 +784,12 @@ export function MealPlanDashboardPage() {
           carbs: targetMacros.carbs
         }}
         onClose={() => setAnalysisTarget(null)}
+      />
+      <MealPlanAssistantDialog
+        open={pageAssistantOpen}
+        date={selectedDate}
+        day={day}
+        onClose={() => setPageAssistantOpen(false)}
       />
     </Stack>
   );

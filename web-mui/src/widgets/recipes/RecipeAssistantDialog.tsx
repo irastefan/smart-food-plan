@@ -1,4 +1,3 @@
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import {
@@ -6,14 +5,8 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Stack,
-  Typography,
-  useMediaQuery,
-  useTheme
+  Typography
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +17,7 @@ import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCateg
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import { AiAssistantPanel } from "../ai/AiAssistantPanel";
+import { PageAssistantDialogShell } from "../ai/PageAssistantDialogShell";
 
 type RecipeAssistantDialogProps = {
   open: boolean;
@@ -62,8 +56,6 @@ function getDraftTotals(draft: RecipeAssistantDraft) {
 export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const agentSettings = getAiAgentSettings();
   const [draft, setDraft] = useState<RecipeAssistantDraft | null>(null);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -91,36 +83,7 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullScreen={isMobile}
-      fullWidth
-      maxWidth={false}
-      PaperProps={{
-        sx: isMobile
-          ? undefined
-          : {
-              width: "76vw",
-              maxWidth: 1180,
-              height: "84vh",
-              maxHeight: "84vh",
-              borderRadius: 1.5,
-              overflow: "hidden"
-            }
-      }}
-    >
-      <DialogTitle sx={{ pr: 2 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <IconButton onClick={onClose} edge="start" size="small">
-            <ArrowBackRoundedIcon />
-          </IconButton>
-          <Typography component="span" variant="h6" fontWeight={800}>
-            {t("recipe.ai.title")}
-          </Typography>
-        </Stack>
-      </DialogTitle>
-      <DialogContent sx={{ px: { xs: 0, md: 2 }, pb: 0 }}>
+    <PageAssistantDialogShell open={open} onClose={onClose} title={t("recipe.ai.title")}>
         <Stack sx={{ height: "100%" }}>
           <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2.5 }}>
             <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
@@ -269,8 +232,7 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
             </Stack>
           </Box>
         </Stack>
-      </DialogContent>
-    </Dialog>
+    </PageAssistantDialogShell>
   );
 }
 

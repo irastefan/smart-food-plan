@@ -13,6 +13,7 @@ type AppPreferencesCardProps = {
 
 const MEAL_PLAN_SUMMARY_OPTIONS: Array<AppPreferences["mealPlanSummaryMetric"]> = ["remaining", "food"];
 const BODY_METRICS_HISTORY_OPTIONS: Array<AppPreferences["bodyMetricsHistoryDays"]> = [30, 60, 90, 180];
+const MOBILE_NAV_OPTIONS: AppPreferences["mobileQuickNavItems"] = ["meal-plan", "recipes", "products", "shopping", "settings"];
 const BODY_METRIC_FIELD_OPTIONS: AppPreferences["visibleBodyMetricFields"] = [
   "weightKg",
   "neckCm",
@@ -59,6 +60,37 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         {MEAL_PLAN_SUMMARY_OPTIONS.map((option) => (
           <MenuItem key={option} value={option}>
             {t(`settings.preferences.mealPlanSummaryMetric.${option}` as never)}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        select
+        label={t("settings.preferences.mobileQuickNavItems")}
+        value={draft.mobileQuickNavItems}
+        onChange={(event) =>
+          setDraft({
+            ...draft,
+            mobileQuickNavItems:
+              (typeof event.target.value === "string"
+                ? event.target.value.split(",")
+                : event.target.value as string[]).slice(0, 4) as AppPreferences["mobileQuickNavItems"]
+          })
+        }
+        SelectProps={{
+          multiple: true,
+          renderValue: (selected) =>
+            (selected as AppPreferences["mobileQuickNavItems"])
+              .map((item) => t(`settings.preferences.mobileQuickNavItems.${item}` as never))
+              .join(", ")
+        }}
+        helperText={t("settings.preferences.mobileQuickNavItemsHint")}
+        fullWidth
+      >
+        {MOBILE_NAV_OPTIONS.map((item) => (
+          <MenuItem key={item} value={item}>
+            <Checkbox checked={draft.mobileQuickNavItems.includes(item)} />
+            <ListItemText primary={t(`settings.preferences.mobileQuickNavItems.${item}` as never)} />
           </MenuItem>
         ))}
       </TextField>

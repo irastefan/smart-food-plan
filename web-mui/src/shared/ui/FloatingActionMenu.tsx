@@ -14,9 +14,10 @@ type FloatingActionMenuProps = {
   tooltip: string;
   items?: FloatingActionMenuItem[];
   onClick?: () => void;
+  bottomOffset?: string | number | { xs?: string | number; md?: string | number };
 };
 
-export function FloatingActionMenu({ tooltip, items, onClick }: FloatingActionMenuProps) {
+export function FloatingActionMenu({ tooltip, items, onClick, bottomOffset = { xs: "calc(92px + env(safe-area-inset-bottom, 0px))", md: "calc(28px + env(safe-area-inset-bottom, 0px))" } }: FloatingActionMenuProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const usesMenu = Boolean(items?.length);
 
@@ -36,7 +37,7 @@ export function FloatingActionMenu({ tooltip, items, onClick }: FloatingActionMe
         sx={{
           position: "fixed",
           right: { xs: 16, md: 24 },
-          bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
+          bottom: bottomOffset,
           zIndex: 1200,
           borderRadius: "999px",
           border: "1px solid",
