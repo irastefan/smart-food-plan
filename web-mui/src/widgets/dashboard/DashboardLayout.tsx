@@ -73,7 +73,14 @@ export function DashboardLayout() {
       />
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Stack sx={{ minHeight: "100vh", px: { xs: 2, md: 3 }, py: { xs: 2, md: 3 } }}>
+        <Stack
+          sx={{
+            minHeight: "100vh",
+            px: { xs: 2, md: 3 },
+            pt: { xs: 2, md: 3 },
+            pb: { xs: "calc(92px + env(safe-area-inset-bottom, 0px))", md: 3 }
+          }}
+        >
           <Outlet context={outletContext} />
         </Stack>
       </Box>
