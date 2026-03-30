@@ -1,11 +1,11 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Box, IconButton, Paper, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getAppPreferences } from "../../shared/config/appPreferences";
+import { AiAgentAvatarIcon } from "./AiAgentAvatarIcon";
 import { dashboardNavigation, type DashboardNavigationId } from "./navigation";
 
 type DashboardQuickActionsProps = {
@@ -99,19 +99,12 @@ export function DashboardQuickActions({ onOpenAgent, onOpenAdd }: DashboardQuick
             ))}
 
             <Tooltip title={t("layout.contextAgent")}>
-              <DockActionButton
-                icon={<SmartToyRoundedIcon sx={{ fontSize: 24 }} />}
-                active
-                onClick={handleOpenAgent}
-              />
+              <DockActionButton icon={<AiAgentAvatarIcon size={26} variant="default" />} active onClick={handleOpenAgent} />
             </Tooltip>
 
             {onOpenAdd ? (
               <Tooltip title={t("common.add")}>
-                <DockActionButton
-                  icon={<AddRoundedIcon sx={{ fontSize: 24 }} />}
-                  onClick={onOpenAdd}
-                />
+                <DockActionButton icon={<AddRoundedIcon sx={{ fontSize: 24 }} />} onClick={onOpenAdd} />
               </Tooltip>
             ) : null}
 
