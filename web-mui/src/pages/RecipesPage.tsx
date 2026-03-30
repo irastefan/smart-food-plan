@@ -22,11 +22,14 @@ type LayoutContext = {
   clearPageAgentAction: () => void;
   registerPageAddAction: (action: (() => void) | null) => void;
   clearPageAddAction: () => void;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function RecipesPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
+    useOutletContext<LayoutContext>();
   const navigate = useNavigate();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -51,6 +54,13 @@ export function RecipesPage() {
       clearPageAddAction();
     };
   }, [clearPageAddAction, navigate, registerPageAddAction]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;

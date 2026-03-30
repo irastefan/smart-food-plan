@@ -11,6 +11,8 @@ import { ProductForm } from "../widgets/products/ProductForm";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 const emptyForm: ProductFormValues = {
@@ -27,7 +29,7 @@ export function ProductEditorPage() {
   const { productId } = useParams();
   const isEdit = Boolean(productId);
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [form, setForm] = useState<ProductFormValues>(emptyForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +73,13 @@ export function ProductEditorPage() {
       cancelled = true;
     };
   }, [isEdit, productId, t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   const submitLabel = useMemo(() => (isEdit ? t("product.form.update") : t("product.form.create")), [isEdit, t]);
 

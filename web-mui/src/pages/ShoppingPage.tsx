@@ -32,11 +32,14 @@ type LayoutContext = {
   clearPageAgentAction: () => void;
   registerPageAddAction: (action: (() => void) | null) => void;
   clearPageAddAction: () => void;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function ShoppingPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
+    useOutletContext<LayoutContext>();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [shoppingList, setShoppingList] = useState<ShoppingList | null>(null);
@@ -68,6 +71,13 @@ export function ShoppingPage() {
       clearPageAddAction();
     };
   }, [clearPageAddAction, registerPageAddAction]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;

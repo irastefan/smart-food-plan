@@ -14,11 +14,13 @@ import { ProductCard } from "../widgets/products/ProductCard";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function ProductsPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -55,6 +57,13 @@ export function ProductsPage() {
       cancelled = true;
     };
   }, [t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;

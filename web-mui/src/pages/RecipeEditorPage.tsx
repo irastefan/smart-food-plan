@@ -13,6 +13,8 @@ import { RecipeForm } from "../widgets/recipes/RecipeForm";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 const emptyForm: RecipeFormValues = {
@@ -29,7 +31,7 @@ export function RecipeEditorPage() {
   const { recipeId } = useParams();
   const isEdit = Boolean(recipeId);
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [form, setForm] = useState<RecipeFormValues>(emptyForm);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +92,13 @@ export function RecipeEditorPage() {
       cancelled = true;
     };
   }, [isEdit, recipeId, t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   const submitLabel = useMemo(() => (isEdit ? t("recipe.form.update") : t("recipe.form.create")), [isEdit, t]);
 

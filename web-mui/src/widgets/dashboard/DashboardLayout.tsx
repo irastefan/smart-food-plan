@@ -9,6 +9,7 @@ export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pageAgentAction, setPageAgentAction] = useState<(() => void) | null>(null);
   const [pageAddAction, setPageAddAction] = useState<(() => void) | null>(null);
+  const [pageLoading, setPageLoading] = useState(false);
   const navigate = useNavigate();
   const openSidebar = useCallback(() => setMobileOpen(true), []);
   const registerPageAgentAction = useCallback((action: (() => void) | null) => {
@@ -23,6 +24,12 @@ export function DashboardLayout() {
   const clearPageAddAction = useCallback(() => {
     setPageAddAction(null);
   }, []);
+  const registerPageLoading = useCallback((value: boolean) => {
+    setPageLoading(value);
+  }, []);
+  const clearPageLoading = useCallback(() => {
+    setPageLoading(false);
+  }, []);
   const outletContext = useMemo(
     () => ({
       openSidebar,
@@ -30,9 +37,11 @@ export function DashboardLayout() {
       registerPageAgentAction,
       clearPageAgentAction,
       registerPageAddAction,
-      clearPageAddAction
+      clearPageAddAction,
+      registerPageLoading,
+      clearPageLoading
     }),
-    [clearPageAddAction, clearPageAgentAction, collapsed, openSidebar, registerPageAddAction, registerPageAgentAction]
+    [clearPageAddAction, clearPageAgentAction, clearPageLoading, collapsed, openSidebar, registerPageAddAction, registerPageAgentAction, registerPageLoading]
   );
   const handleOpenAgent = useCallback(() => {
     if (pageAgentAction) {
@@ -85,7 +94,7 @@ export function DashboardLayout() {
         </Stack>
       </Box>
 
-      <DashboardQuickActions onOpenAgent={handleOpenAgent} onOpenAdd={pageAddAction ?? undefined} />
+      <DashboardQuickActions onOpenAgent={handleOpenAgent} onOpenAdd={pageAddAction ?? undefined} isAgentLoading={pageLoading} />
     </Box>
   );
 }

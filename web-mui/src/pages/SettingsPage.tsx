@@ -24,11 +24,13 @@ import { UserProfileForm } from "../widgets/settings/UserProfileForm";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function SettingsPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [openAiApiKey, setOpenAiApiKeyState] = useState("");
   const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
@@ -82,6 +84,13 @@ export function SettingsPage() {
       cancelled = true;
     };
   }, [t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   async function handleSave() {
     if (!profile) {

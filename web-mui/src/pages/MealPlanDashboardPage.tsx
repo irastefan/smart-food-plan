@@ -47,6 +47,8 @@ type LayoutContext = {
   collapsed: boolean;
   registerPageAgentAction: (action: (() => void) | null) => void;
   clearPageAgentAction: () => void;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 type BodyMetricsDraft = {
@@ -103,7 +105,7 @@ function toOptionalNumber(value: string): number | undefined {
 
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage, refresh } = useMealPlanDashboard();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -140,6 +142,13 @@ export function MealPlanDashboardPage() {
       clearPageAgentAction();
     };
   }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;

@@ -11,9 +11,10 @@ import { dashboardNavigation, type DashboardNavigationId } from "./navigation";
 type DashboardQuickActionsProps = {
   onOpenAgent?: () => void;
   onOpenAdd?: () => void;
+  isAgentLoading?: boolean;
 };
 
-export function DashboardQuickActions({ onOpenAgent, onOpenAdd }: DashboardQuickActionsProps) {
+export function DashboardQuickActions({ onOpenAgent, onOpenAdd, isAgentLoading = false }: DashboardQuickActionsProps) {
   const { t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
@@ -99,7 +100,11 @@ export function DashboardQuickActions({ onOpenAgent, onOpenAdd }: DashboardQuick
             ))}
 
             <Tooltip title={t("layout.contextAgent")}>
-              <DockActionButton icon={<AiAgentAvatarIcon size={26} variant="default" />} active onClick={handleOpenAgent} />
+              <DockActionButton
+                icon={<AiAgentAvatarIcon size={26} variant={isAgentLoading ? "loading" : "active"} />}
+                active
+                onClick={handleOpenAgent}
+              />
             </Tooltip>
 
             {onOpenAdd ? (

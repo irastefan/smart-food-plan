@@ -18,13 +18,15 @@ import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCatego
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function RecipeDetailsPage() {
   const { recipeId } = useParams();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
@@ -64,6 +66,13 @@ export function RecipeDetailsPage() {
       cancelled = true;
     };
   }, [recipeId, t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;

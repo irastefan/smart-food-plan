@@ -14,11 +14,13 @@ import { AiAssistantPanel } from "../widgets/ai/AiAssistantPanel";
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function AiAgentPage() {
   const { t } = useLanguage();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<{ type: "error"; message: string } | null>(null);
@@ -60,6 +62,13 @@ export function AiAgentPage() {
       cancelled = true;
     };
   }, [t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   return (
     <Stack spacing={{ xs: 1.5, md: 2 }}>

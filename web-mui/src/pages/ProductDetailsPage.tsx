@@ -17,13 +17,15 @@ import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCatego
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageLoading: (value: boolean) => void;
+  clearPageLoading: () => void;
 };
 
 export function ProductDetailsPage() {
   const { productId } = useParams();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { openSidebar } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
@@ -63,6 +65,13 @@ export function ProductDetailsPage() {
       cancelled = true;
     };
   }, [productId, t]);
+
+  useEffect(() => {
+    registerPageLoading(isLoading);
+    return () => {
+      clearPageLoading();
+    };
+  }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
     let cancelled = false;
