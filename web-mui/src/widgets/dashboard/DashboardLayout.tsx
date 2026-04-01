@@ -1,16 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
 import { Box, Stack } from "@mui/material";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { GlobalAiAgentDialog } from "../ai/GlobalAiAgentDialog";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardQuickActions } from "./DashboardQuickActions";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [globalAgentOpen, setGlobalAgentOpen] = useState(false);
   const [pageAgentAction, setPageAgentAction] = useState<(() => void) | null>(null);
   const [pageAddAction, setPageAddAction] = useState<(() => void) | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
-  const navigate = useNavigate();
   const openSidebar = useCallback(() => setMobileOpen(true), []);
   const toggleMobileSidebar = useCallback(() => setMobileOpen((current) => !current), []);
   const registerPageAgentAction = useCallback((action: (() => void) | null) => {
@@ -50,8 +51,8 @@ export function DashboardLayout() {
       return;
     }
 
-    navigate("/ai-agent");
-  }, [navigate, pageAgentAction]);
+    setGlobalAgentOpen(true);
+  }, [pageAgentAction]);
 
   return (
     <Box
@@ -69,6 +70,8 @@ export function DashboardLayout() {
           variant="desktop"
           collapsed={collapsed}
           open
+          globalAgentOpen={globalAgentOpen}
+          onOpenGlobalAgent={handleOpenAgent}
           onToggleCollapse={() => setCollapsed((value) => !value)}
           onCloseMobile={() => setMobileOpen(false)}
         />
@@ -78,6 +81,8 @@ export function DashboardLayout() {
         variant="mobile"
         collapsed={false}
         open={mobileOpen}
+        globalAgentOpen={globalAgentOpen}
+        onOpenGlobalAgent={handleOpenAgent}
         onToggleCollapse={() => undefined}
         onCloseMobile={() => setMobileOpen(false)}
       />
@@ -102,6 +107,7 @@ export function DashboardLayout() {
         onToggleMore={toggleMobileSidebar}
         isAgentLoading={pageLoading}
       />
+      <GlobalAiAgentDialog open={globalAgentOpen} onClose={() => setGlobalAgentOpen(false)} />
     </Box>
   );
 }

@@ -6,7 +6,6 @@ import { MealPlanDashboardPage } from "../pages/MealPlanDashboardPage";
 import { ProductDetailsPage } from "../pages/ProductDetailsPage";
 import { ProductEditorPage } from "../pages/ProductEditorPage";
 import { ProductsPage } from "../pages/ProductsPage";
-import { AiAgentPage } from "../pages/AiAgentPage";
 import { RecipeDetailsPage } from "../pages/RecipeDetailsPage";
 import { RecipeEditorPage } from "../pages/RecipeEditorPage";
 import { RecipesPage } from "../pages/RecipesPage";
@@ -87,7 +86,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "ai-agent",
-            element: <AiAgentPage />
+            element: <Navigate to="/meal-plan" replace />
           },
           {
             path: "settings",

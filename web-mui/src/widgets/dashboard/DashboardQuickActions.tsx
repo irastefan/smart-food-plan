@@ -49,10 +49,7 @@ export function DashboardQuickActions({
   const handleOpenAgent = () => {
     if (onOpenAgent) {
       onOpenAgent();
-      return;
     }
-
-    navigate("/ai-agent");
   };
 
   if (isMobile) {

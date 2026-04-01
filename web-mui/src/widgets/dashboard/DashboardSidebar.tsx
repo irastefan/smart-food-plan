@@ -36,6 +36,8 @@ type DashboardSidebarProps = {
   variant: "desktop" | "mobile";
   collapsed: boolean;
   open: boolean;
+  globalAgentOpen: boolean;
+  onOpenGlobalAgent: () => void;
   onToggleCollapse: () => void;
   onCloseMobile: () => void;
 };
@@ -44,6 +46,8 @@ export function DashboardSidebar({
   variant,
   collapsed,
   open,
+  globalAgentOpen,
+  onOpenGlobalAgent,
   onToggleCollapse,
   onCloseMobile
 }: DashboardSidebarProps) {
@@ -174,7 +178,7 @@ export function DashboardSidebar({
       <List sx={{ flex: 1, px: 0.5 }}>
         {dashboardNavigation.map((item) => {
           const Icon = item.icon;
-          const selected = location.pathname === item.path;
+          const selected = item.id === "ai-agent" ? globalAgentOpen : location.pathname === item.path;
 
           if (item.id === "settings") {
             const settingsSelected = location.pathname.startsWith("/settings");
@@ -261,9 +265,18 @@ export function DashboardSidebar({
 
           const button = (
             <ListItemButton
-              component={NavLink}
-              to={item.path}
-              onClick={onCloseMobile}
+              {...(item.id === "ai-agent"
+                ? {
+                    onClick: () => {
+                      onOpenGlobalAgent();
+                      onCloseMobile();
+                    }
+                  }
+                : {
+                    component: NavLink,
+                    to: item.path,
+                    onClick: onCloseMobile
+                  })}
               sx={{
                 minHeight: 46,
                 mb: 0.5,
