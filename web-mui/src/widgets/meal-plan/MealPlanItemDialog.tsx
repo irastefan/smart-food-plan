@@ -28,7 +28,7 @@ import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel, getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
-import { AiAssistantPanel } from "../ai/AiAssistantPanel";
+import { AgentWorkspace } from "../ai/AgentWorkspace";
 
 type MealPlanItemDialogProps = {
   open: boolean;
@@ -413,7 +413,8 @@ export function MealPlanItemDialog({
             {activeTab === "ai" ? (
               <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto" }}>
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-                <AiAssistantPanel
+                <AgentWorkspace
+                  panelKey={`meal-plan-slot-agent-${open ? "open" : "closed"}-${sectionTitle}-${anchorDate}-${mode}`}
                   speechLanguage={agentSettings.speechLanguage}
                   showToolOutput={false}
                   placeholder={t("aiAgent.placeholder")}
@@ -461,15 +462,13 @@ export function MealPlanItemDialog({
                       setManualCarbs100(nextProposal.carbs100);
                     }
                   }}
-                  renderTop={() => (
-                    <Stack spacing={2.5}>
-                      <Stack spacing={0.5}>
-                        <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
-                        <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
-                      </Stack>
+                  header={
+                    <Stack spacing={0.5}>
+                      <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
+                      <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
                     </Stack>
-                  )}
-                  renderBottom={() => (
+                  }
+                  renderTemplate={() => (
                     <Stack spacing={1.1} sx={{ pb: 1.75 }}>
                       {singleProposal ? (
                         <Box

@@ -16,7 +16,7 @@ import { createRecipe } from "../../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
-import { AiAssistantPanel } from "../ai/AiAssistantPanel";
+import { AgentWorkspace } from "../ai/AgentWorkspace";
 import { PageAssistantDialogShell } from "../ai/PageAssistantDialogShell";
 
 type RecipeAssistantDialogProps = {
@@ -88,12 +88,18 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
           <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2.5 }}>
             <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
               {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
-              <AiAssistantPanel
+              <AgentWorkspace
+                panelKey={`recipe-agent-${open ? "open" : "closed"}`}
                 speechLanguage={agentSettings.speechLanguage}
                 showToolOutput={false}
                 placeholder={t("recipe.ai.placeholder")}
                 submitLabel={t("aiAgent.send")}
                 missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
+                quickPrompts={[
+                  t("aiAgent.prompt.addRecipe"),
+                  t("aiAgent.prompt.improveMealPlan"),
+                  t("aiAgent.prompt.shoppingList")
+                ]}
                 onRun={async ({ apiKey, payload, messages }) => {
                   const normalizedText = payload.text.trim();
                   const userText =
@@ -120,8 +126,8 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                 onExtraResult={(result) => {
                   setDraft(result?.draft ?? null);
                 }}
-                renderBottom={() =>
-                  draft ? (
+                renderTemplate={({ extra }) =>
+                  extra?.draft ? (
                     <Box
                       sx={{
                         mt: 1,
@@ -145,17 +151,17 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                           <Stack spacing={0.4}>
                             <Stack direction="row" spacing={1} alignItems="center">
                               <RestaurantMenuRoundedIcon sx={{ fontSize: 18, color: "success.main" }} />
-                              <Typography fontWeight={800}>{draft.title}</Typography>
+                              <Typography fontWeight={800}>{extra.draft.title}</Typography>
                             </Stack>
-                            {draft.description ? (
+                            {extra.draft.description ? (
                               <Typography variant="body2" color="text.secondary">
-                                {draft.description}
+                                {extra.draft.description}
                               </Typography>
                             ) : null}
                           </Stack>
                           <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                            <Chip size="small" label={getRecipeCategoryLabel(draft.category, t)} />
-                            <Chip size="small" label={t("recipe.ai.servings", { count: draft.servings })} />
+                            <Chip size="small" label={getRecipeCategoryLabel(extra.draft.category, t)} />
+                            <Chip size="small" label={t("recipe.ai.servings", { count: extra.draft.servings })} />
                           </Stack>
                         </Stack>
 
@@ -169,7 +175,7 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                         ) : null}
 
                         <Stack spacing={1}>
-                          {draft.ingredients.map((ingredient) => {
+                          {extra.draft.ingredients.map((ingredient) => {
                             const ingredientTotals = getIngredientTotals(ingredient);
                             return (
                               <Box
@@ -200,11 +206,11 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                           })}
                         </Stack>
 
-                        {draft.steps.filter(Boolean).length > 0 ? (
+                        {extra.draft.steps.filter(Boolean).length > 0 ? (
                           <Stack spacing={0.6}>
                             <Typography fontWeight={700}>{t("recipe.steps")}</Typography>
                             <Stack spacing={0.5}>
-                              {draft.steps.filter(Boolean).map((step, index) => (
+                              {extra.draft.steps.filter(Boolean).map((step, index) => (
                                 <Typography key={`${index}-${step}`} variant="body2" color="text.secondary">
                                   {index + 1}. {step}
                                 </Typography>

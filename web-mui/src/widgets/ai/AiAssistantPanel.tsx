@@ -5,9 +5,9 @@ import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
 import { AiAgentComposer } from "./AiAgentComposer";
 import { AiAgentConversation } from "./AiAgentConversation";
 
-type ComposerPayload = { text: string; images: Array<{ name: string; dataUrl: string }> };
+export type ComposerPayload = { text: string; images: Array<{ name: string; dataUrl: string }> };
 
-type AiAssistantPanelRenderProps = {
+export type AiAssistantPanelRenderProps = {
   draft: string;
   setDraft: (value: string) => void;
   messages: AgentMessage[];
@@ -15,7 +15,7 @@ type AiAssistantPanelRenderProps = {
   isSubmitting: boolean;
 };
 
-type AiAssistantPanelProps<TExtra = void> = {
+export type AiAssistantPanelProps<TExtra = void> = {
   speechLanguage: "interface" | "en" | "ru";
   showToolOutput: boolean;
   placeholder: string;
