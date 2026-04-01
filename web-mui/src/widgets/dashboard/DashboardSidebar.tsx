@@ -182,11 +182,7 @@ export function DashboardSidebar({
               <ListItemButton
                 onClick={() => {
                   setSettingsOpen((current) => {
-                    const next = !current;
-                    if (next && !settingsSelected) {
-                      navigate("/settings?section=profile");
-                    }
-                    return next;
+                    return !current;
                   });
                 }}
                 sx={{
@@ -226,6 +222,7 @@ export function DashboardSidebar({
                   <Stack spacing={0.5} sx={{ mt: 0.25, mb: 0.75, ml: 1.25, pl: 1.5, borderLeft: "1px solid rgba(148, 163, 184, 0.2)" }}>
                     {settingsSections.map((section) => {
                       const sectionSelected = settingsSelected && (currentSettingsSection ?? "profile") === section.id;
+                      const SectionIcon = section.icon;
                       return (
                         <ListItemButton
                           key={section.id}
@@ -246,6 +243,9 @@ export function DashboardSidebar({
                             }
                           }}
                         >
+                          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+                            <SectionIcon fontSize="small" />
+                          </ListItemIcon>
                           <ListItemText
                             primary={t(section.labelKey as TranslationKey)}
                             primaryTypographyProps={{ fontSize: 14, fontWeight: sectionSelected ? 700 : 600 }}

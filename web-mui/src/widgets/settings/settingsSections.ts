@@ -12,6 +12,12 @@ export const settingsSections: Array<{
   descriptionKey: string;
 }> = [
   {
+    id: "general",
+    icon: TuneRoundedIcon,
+    labelKey: "settings.sections.general.title",
+    descriptionKey: "settings.sections.general.subtitle"
+  },
+  {
     id: "profile",
     icon: PersonRoundedIcon,
     labelKey: "settings.sections.profile.title",
@@ -22,12 +28,6 @@ export const settingsSections: Array<{
     icon: TrackChangesRoundedIcon,
     labelKey: "settings.sections.targets.title",
     descriptionKey: "settings.sections.targets.subtitle"
-  },
-  {
-    id: "general",
-    icon: TuneRoundedIcon,
-    labelKey: "settings.sections.general.title",
-    descriptionKey: "settings.sections.general.subtitle"
   },
   {
     id: "openai",
