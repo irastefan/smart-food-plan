@@ -60,39 +60,35 @@ export function AgentWorkspace<TExtra = void>({
         }}
         renderTop={
           quickPrompts.length > 0
-            ? ({ setDraft }) => (
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  sx={{
-                    overflowX: "auto",
-                    overflowY: "hidden",
-                    flexWrap: "nowrap",
-                    pb: 0.25,
-                    scrollSnapType: "x proximity",
-                    WebkitOverflowScrolling: "touch",
-                    "&::-webkit-scrollbar": {
-                      display: "none"
-                    },
-                    scrollbarWidth: "none"
-                  }}
-                >
-                  {quickPrompts.map((prompt) => (
-                    <Chip
-                      key={prompt}
-                      label={prompt}
-                      variant="outlined"
-                      clickable
-                      onClick={() => setDraft(prompt)}
-                      sx={{
-                        height: { xs: 28, md: 30 },
-                        fontSize: { xs: 12, md: 13 },
-                        flexShrink: 0,
-                        scrollSnapAlign: "start"
-                      }}
-                    />
-                  ))}
-                </Stack>
+            ? ({ setDraft, visibleMessages, isSubmitting }) => (
+                visibleMessages.length === 0 && !isSubmitting ? (
+                  <Stack
+                    direction="row"
+                    spacing={0.9}
+                    useFlexGap
+                    flexWrap="wrap"
+                    justifyContent="center"
+                    sx={{
+                      pb: { xs: 0.5, md: 0.75 },
+                      maxWidth: 760,
+                      mx: "auto"
+                    }}
+                  >
+                    {quickPrompts.map((prompt) => (
+                      <Chip
+                        key={prompt}
+                        label={prompt}
+                        variant="outlined"
+                        clickable
+                        onClick={() => setDraft(prompt)}
+                        sx={{
+                          height: { xs: 30, md: 32 },
+                          fontSize: { xs: 12, md: 13 }
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                ) : null
               )
             : undefined
         }

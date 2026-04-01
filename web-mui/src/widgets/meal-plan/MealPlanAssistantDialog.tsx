@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
@@ -72,11 +72,6 @@ export function MealPlanAssistantDialog({ open, date, day, onClose }: MealPlanAs
                 t("contextAgent.mealPlan.prompt.highProteinIdeas"),
                 t("contextAgent.mealPlan.prompt.reviewDinner")
               ]}
-              hint={
-                <Typography color="text.secondary" sx={{ fontSize: 12 }}>
-                  {t("contextAgent.mealPlan.hint")}
-                </Typography>
-              }
               speechLanguage={agentSettings.speechLanguage}
               showToolOutput={agentSettings.showToolOutput}
               placeholder={t("contextAgent.mealPlan.placeholder")}

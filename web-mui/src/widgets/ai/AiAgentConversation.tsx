@@ -115,6 +115,27 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
               >
                 {message.text}
               </Box>
+              {message.images && message.images.length > 0 ? (
+                <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.85 }}>
+                  {message.images.map((image) => (
+                    <Box
+                      key={`${message.id}-${image.name}`}
+                      component="img"
+                      src={image.dataUrl}
+                      alt={image.name}
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        display: "block",
+                        border: "1px solid",
+                        borderColor: "rgba(255,255,255,0.14)"
+                      }}
+                    />
+                  ))}
+                </Stack>
+              ) : null}
             </Box>
           ) : (
             <Box

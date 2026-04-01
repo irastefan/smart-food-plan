@@ -127,17 +127,19 @@ export function AiAgentComposer({
       return;
     }
 
+    const currentImages = [...images];
     const payloadImages = await Promise.all(
-      images.map(async (image) => ({
+      currentImages.map(async (image) => ({
         name: image.file.name,
         dataUrl: await toDataUrl(image.file)
       }))
     );
 
-    await onSubmit({ text, images: payloadImages });
-    images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
-    setImages([]);
     onValueChange("");
+    setImages([]);
+
+    await onSubmit({ text, images: payloadImages });
+    currentImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
   }
 
   function handleComposerKeyDown(event: React.KeyboardEvent<HTMLElement>) {

@@ -68,7 +68,8 @@ export function AiAssistantPanel<TExtra = void>({
     const userMessage: AgentMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      text: normalizedText || "[Image]"
+      text: normalizedText || "[Image]",
+      images: payload.images
     };
 
     const nextHistory = [...messages, userMessage];

@@ -6,6 +6,7 @@ export type AgentMessage = {
   role: "user" | "assistant" | "tool";
   text: string;
   toolName?: string;
+  images?: AgentImageInput[];
 };
 
 export type AgentImageInput = {
