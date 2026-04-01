@@ -1,6 +1,6 @@
-import { Alert, CircularProgress, Grid, Paper, Stack } from "@mui/material";
-import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Alert, CircularProgress, Paper, Stack } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import {
   getCurrentUserSettings,
@@ -18,7 +18,7 @@ import { AppPreferencesCard } from "../widgets/settings/AppPreferencesCard";
 import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
 import { ProfilePreviewCard } from "../widgets/settings/ProfilePreviewCard";
 import { SettingsSectionCard } from "../widgets/settings/SettingsSectionCard";
-import { SettingsSectionNav, type SettingsSectionId } from "../widgets/settings/SettingsSectionNav";
+import { isSettingsSectionId } from "../widgets/settings/settingsSections";
 import { UserProfileForm } from "../widgets/settings/UserProfileForm";
 
 type LayoutContext = {
@@ -35,10 +35,15 @@ export function SettingsPage() {
   const [openAiApiKey, setOpenAiApiKeyState] = useState("");
   const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
   const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
-  const [activeSection, setActiveSection] = useState<SettingsSectionId>("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "error" | "success" | "info"; message: string } | null>(null);
+  const [searchParams] = useSearchParams();
+
+  const activeSection = useMemo(() => {
+    const rawSection = searchParams.get("section");
+    return isSettingsSectionId(rawSection) ? rawSection : "profile";
+  }, [searchParams]);
 
   function mergeProfileFormulas(nextProfile: UserProfile, fallbackProfile: UserProfile | null): UserProfile {
     if (nextProfile.availableTargetFormulas.length > 0) {
@@ -157,64 +162,41 @@ export function SettingsPage() {
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {profile ? (
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, xl: 3 }}>
-            <SettingsSectionNav value={activeSection} onChange={setActiveSection} />
-          </Grid>
-          <Grid size={{ xs: 12, xl: 9 }}>
-            <Stack spacing={3}>
-              {activeSection === "profile" ? (
-                <SettingsSectionCard
-                  title={t("settings.sections.profile.title")}
-                  subtitle={t("settings.sections.profile.subtitle")}
-                >
-                  <UserProfileForm
-                    value={profile}
-                    isSubmitting={isSubmitting}
-                    status={null}
-                    onChange={setProfile}
-                    onSave={handleSave}
-                    onRecalculate={handleRecalculate}
-                  />
-                </SettingsSectionCard>
-              ) : null}
+        <Stack spacing={3}>
+          {activeSection === "profile" ? (
+            <SettingsSectionCard title={t("settings.sections.profile.title")} subtitle={t("settings.sections.profile.subtitle")}>
+              <UserProfileForm
+                value={profile}
+                isSubmitting={isSubmitting}
+                status={null}
+                onChange={setProfile}
+                onSave={handleSave}
+                onRecalculate={handleRecalculate}
+              />
+            </SettingsSectionCard>
+          ) : null}
 
-              {activeSection === "targets" ? (
-                <SettingsSectionCard
-                  title={t("settings.sections.targets.title")}
-                  subtitle={t("settings.sections.targets.subtitle")}
-                >
-                  <ProfilePreviewCard profile={profile} />
-                </SettingsSectionCard>
-              ) : null}
+          {activeSection === "targets" ? (
+            <SettingsSectionCard title={t("settings.sections.targets.title")} subtitle={t("settings.sections.targets.subtitle")}>
+              <ProfilePreviewCard profile={profile} />
+            </SettingsSectionCard>
+          ) : null}
 
-              {activeSection === "general" ? (
-                <SettingsSectionCard
-                  title={t("settings.sections.general.title")}
-                  subtitle={t("settings.sections.general.subtitle")}
-                >
-                  <AppPreferencesCard
-                    value={appPreferences}
-                    isSubmitting={isSubmitting}
-                    onSave={handleSavePreferences}
-                  />
-                </SettingsSectionCard>
-              ) : null}
+          {activeSection === "general" ? (
+            <SettingsSectionCard title={t("settings.sections.general.title")} subtitle={t("settings.sections.general.subtitle")}>
+              <AppPreferencesCard value={appPreferences} isSubmitting={isSubmitting} onSave={handleSavePreferences} />
+            </SettingsSectionCard>
+          ) : null}
 
-              {activeSection === "openai" ? (
-                <SettingsSectionCard
-                  title={t("settings.sections.openai.title")}
-                  subtitle={t("settings.sections.openai.subtitle")}
-                >
-                  <Stack spacing={4}>
-                    <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
-                    <AiAgentSettingsCard value={agentSettings} isSubmitting={isSubmitting} onSave={handleSaveAgentSettings} />
-                  </Stack>
-                </SettingsSectionCard>
-              ) : null}
-            </Stack>
-          </Grid>
-        </Grid>
+          {activeSection === "openai" ? (
+            <SettingsSectionCard title={t("settings.sections.openai.title")} subtitle={t("settings.sections.openai.subtitle")}>
+              <Stack spacing={4}>
+                <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
+                <AiAgentSettingsCard value={agentSettings} isSubmitting={isSubmitting} onSave={handleSaveAgentSettings} />
+              </Stack>
+            </SettingsSectionCard>
+          ) : null}
+        </Stack>
       ) : null}
     </Stack>
   );

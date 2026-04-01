@@ -1,7 +1,6 @@
 import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
 import LanguageRoundedIcon from "@mui/icons-material/LanguageRounded";
 import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import {
   Box,
@@ -9,7 +8,9 @@ import {
   MenuItem,
   Select,
   Stack,
-  type SelectChangeEvent
+  type SelectChangeEvent,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { useThemeMode } from "../../app/providers/ThemeModeProvider";
@@ -23,7 +24,14 @@ type DashboardTopbarProps = {
 export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
   const { language, setLanguage, t } = useLanguage();
   const { mode, toggleMode } = useThemeMode();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const isDark = mode === "dark";
+  void onOpenSidebar;
+
+  if (isMobile) {
+    return null;
+  }
 
   function handleLanguageChange(event: SelectChangeEvent): void {
     setLanguage(event.target.value as "en" | "ru");
@@ -32,11 +40,7 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
   return (
     <Stack>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: "100%" }}>
-        <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-          <IconButton onClick={onOpenSidebar} sx={{ display: { lg: "none" }, flexShrink: 0 }}>
-            <MenuRoundedIcon />
-          </IconButton>
-        </Box>
+        <Box sx={{ flex: 1 }} />
 
         <Stack direction="row" spacing={{ xs: 0.75, md: 1.25 }} alignItems="center" justifyContent="flex-end" sx={{ flexShrink: 0 }}>
           <Stack
@@ -44,6 +48,7 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
             spacing={0.75}
             alignItems="center"
             sx={{
+              display: { xs: "none", lg: "flex" },
               px: { xs: 1, md: 1.25 },
               py: 0.75,
               borderRadius: 999,
@@ -76,6 +81,7 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
             onClick={toggleMode}
             title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
             sx={{
+              display: { xs: "none", lg: "inline-flex" },
               border: "1px solid",
               borderColor: "divider",
               backgroundColor: isDark ? "rgba(20,31,45,0.94)" : "#ffffff"
@@ -84,7 +90,7 @@ export function DashboardTopbar({ onOpenSidebar }: DashboardTopbarProps) {
             {isDark ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
           </IconButton>
 
-          <IconButton sx={{ display: { xs: "none", sm: "inline-flex" } }}>
+          <IconButton>
             <NotificationsRoundedIcon />
           </IconButton>
         </Stack>

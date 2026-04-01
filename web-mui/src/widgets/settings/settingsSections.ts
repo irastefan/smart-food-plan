@@ -1,0 +1,42 @@
+import KeyRoundedIcon from "@mui/icons-material/KeyRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import TrackChangesRoundedIcon from "@mui/icons-material/TrackChangesRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+
+export type SettingsSectionId = "profile" | "targets" | "general" | "openai";
+
+export const settingsSections: Array<{
+  id: SettingsSectionId;
+  icon: typeof PersonRoundedIcon;
+  labelKey: string;
+  descriptionKey: string;
+}> = [
+  {
+    id: "profile",
+    icon: PersonRoundedIcon,
+    labelKey: "settings.sections.profile.title",
+    descriptionKey: "settings.sections.profile.subtitle"
+  },
+  {
+    id: "targets",
+    icon: TrackChangesRoundedIcon,
+    labelKey: "settings.sections.targets.title",
+    descriptionKey: "settings.sections.targets.subtitle"
+  },
+  {
+    id: "general",
+    icon: TuneRoundedIcon,
+    labelKey: "settings.sections.general.title",
+    descriptionKey: "settings.sections.general.subtitle"
+  },
+  {
+    id: "openai",
+    icon: KeyRoundedIcon,
+    labelKey: "settings.sections.openai.title",
+    descriptionKey: "settings.sections.openai.subtitle"
+  }
+];
+
+export function isSettingsSectionId(value: string | null): value is SettingsSectionId {
+  return settingsSections.some((item) => item.id === value);
+}
