@@ -313,14 +313,24 @@ export function DashboardSidebar({
     return (
       <Box
         sx={{
-          width: collapsed ? 92 : 392,
+          width: 392,
           minHeight: "100vh",
           height: "100%",
-          transition: "width 180ms ease",
-          display: "flex"
+          display: "flex",
+          justifyContent: "flex-start"
         }}
       >
-        {sidebarContent}
+        <Box
+          sx={{
+            width: collapsed ? 92 : 392,
+            minHeight: "100vh",
+            height: "100%",
+            transition: "width 180ms ease",
+            display: "flex"
+          }}
+        >
+          {sidebarContent}
+        </Box>
       </Box>
     );
   }
