@@ -133,7 +133,7 @@ export function DashboardQuickActions({
 
             <MobileNavItem
               icon={isMoreOpen ? <CloseRoundedIcon fontSize="small" /> : <MoreHorizRoundedIcon fontSize="small" />}
-              label={t("nav.more")}
+              label={isMoreOpen ? "" : t("nav.more")}
               selected={isMoreOpen || location.pathname.startsWith("/settings")}
               onClick={() => onToggleMore?.()}
             />
@@ -172,6 +172,7 @@ function MobileNavItem({
       <Box sx={{ lineHeight: 1, display: "grid", placeItems: "center" }}>{icon}</Box>
       <Typography
         sx={{
+          display: label ? "block" : "none",
           fontSize: 10,
           lineHeight: 1.1,
           fontWeight: selected ? 700 : 500,
