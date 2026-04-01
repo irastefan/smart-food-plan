@@ -132,7 +132,7 @@ export function RecipesPage() {
         {isDesktop ? (
           <Stack direction="row" spacing={1}>
             <PageActionButton icon={<AddRoundedIcon fontSize="small" />} label={t("recipes.add")} onClick={() => navigate("/recipes/new")} />
-            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("recipe.ai.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
+            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("aiAgent.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
           </Stack>
         ) : null}
       </Stack>

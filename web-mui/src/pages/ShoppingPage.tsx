@@ -240,7 +240,7 @@ export function ShoppingPage() {
         {isDesktop ? (
           <Stack direction="row" spacing={1}>
             <PageActionButton icon={<AddRoundedIcon fontSize="small" />} label={t("shopping.add")} onClick={() => setDialogOpen(true)} />
-            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("contextAgent.shopping.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
+            <PageActionButton icon={<SmartToyRoundedIcon fontSize="small" />} label={t("aiAgent.title")} onClick={() => setAssistantOpen(true)} variant="agent" />
           </Stack>
         ) : null}
       </Stack>

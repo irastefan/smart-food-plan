@@ -11,6 +11,7 @@ import { addShoppingCategory, addShoppingItem, getShoppingList } from "../featur
 import { getLocalizedUnitLabel } from "../shared/lib/units";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
+import { RecipeAssistantDialog } from "../widgets/recipes/RecipeAssistantDialog";
 import { RecipeHero } from "../widgets/recipes/RecipeHero";
 import { RecipeNutritionCard } from "../widgets/recipes/RecipeNutritionCard";
 import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCategoryPickerButton";
@@ -18,6 +19,8 @@ import { ShoppingCategoryPickerButton } from "../widgets/shopping/ShoppingCatego
 type LayoutContext = {
   openSidebar: () => void;
   collapsed: boolean;
+  registerPageAgentAction: (action: (() => void) | null) => void;
+  clearPageAgentAction: () => void;
   registerPageLoading: (value: boolean) => void;
   clearPageLoading: () => void;
 };
@@ -26,13 +29,21 @@ export function RecipeDetailsPage() {
   const { recipeId } = useParams();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [shoppingCategories, setShoppingCategories] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+
+  useEffect(() => {
+    registerPageAgentAction(() => setAssistantOpen(true));
+    return () => {
+      clearPageAgentAction();
+    };
+  }, [clearPageAgentAction, registerPageAgentAction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,6 +249,13 @@ export function RecipeDetailsPage() {
           onConfirm={() => void handleDelete()}
         />
       )}
+
+      <RecipeAssistantDialog
+        open={assistantOpen}
+        recipe={recipe}
+        onRecipeChanged={setRecipe}
+        onClose={() => setAssistantOpen(false)}
+      />
     </Stack>
   );
 }

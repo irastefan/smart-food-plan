@@ -1,7 +1,7 @@
 import { listMcpTools } from "./mcpApi";
 import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiAgentApi";
 import { buildRecipeAssistantPrompt } from "../model/recipeAssistantPrompt";
-import type { RecipeFormIngredient, RecipeFormValues } from "../../recipes/model/recipeTypes";
+import type { RecipeDetail, RecipeFormIngredient, RecipeFormValues } from "../../recipes/model/recipeTypes";
 import { normalizeRecipeCategory } from "../../recipes/model/recipeCategories";
 
 export type RecipeAssistantDraft = RecipeFormValues;
@@ -10,6 +10,7 @@ export type RecipeAssistantResult = {
   assistantMessage: AgentMessage;
   draft: RecipeAssistantDraft | null;
   needsConfirmation: boolean;
+  intent: "create" | "update";
 };
 
 function extractJson(text: string): string {
@@ -99,6 +100,7 @@ export async function runRecipeAssistant(input: {
   userText: string;
   userInstructions?: string;
   images?: AgentImageInput[];
+  currentRecipe?: RecipeDetail | null;
 }): Promise<RecipeAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({
@@ -110,7 +112,8 @@ export async function runRecipeAssistant(input: {
     model: input.model,
     userInstructions: input.userInstructions,
     systemPrompt: buildRecipeAssistantPrompt({
-      userInstructions: input.userInstructions
+      userInstructions: input.userInstructions,
+      currentRecipe: input.currentRecipe
     })
   });
 
@@ -118,6 +121,7 @@ export async function runRecipeAssistant(input: {
   const parsed = JSON.parse(extractJson(rawText)) as {
     message?: unknown;
     needsConfirmation?: unknown;
+    intent?: unknown;
     draft?: unknown;
   };
 
@@ -133,6 +137,7 @@ export async function runRecipeAssistant(input: {
       text: message
     },
     draft,
-    needsConfirmation: typeof parsed.needsConfirmation === "boolean" ? parsed.needsConfirmation : true
+    needsConfirmation: typeof parsed.needsConfirmation === "boolean" ? parsed.needsConfirmation : true,
+    intent: parsed.intent === "update" ? "update" : "create"
   };
 }

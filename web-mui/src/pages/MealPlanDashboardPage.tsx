@@ -620,7 +620,7 @@ export function MealPlanDashboardPage() {
           <Box sx={{ display: { xs: "none", lg: "flex" }, alignSelf: "stretch" }}>
             <PageActionButton
               icon={<SmartToyRoundedIcon fontSize="small" />}
-              label={t("contextAgent.mealPlan.title")}
+              label={t("aiAgent.title")}
               onClick={() => setPageAssistantOpen(true)}
               variant="agent"
               sx={{ minHeight: "100%", px: 1.6 }}

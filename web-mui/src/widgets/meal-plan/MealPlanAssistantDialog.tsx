@@ -1,4 +1,3 @@
-import { Box, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
@@ -6,8 +5,7 @@ import { runAgentTurn } from "../../features/ai/api/openaiAgentApi";
 import { buildMealPlanPageAssistantPrompt } from "../../features/ai/model/mealPlanPageAssistantPrompt";
 import type { MealPlanDay } from "../../features/meal-plan/api/mealPlanApi";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
-import { AgentWorkspace } from "../ai/AgentWorkspace";
-import { PageAssistantDialogShell } from "../ai/PageAssistantDialogShell";
+import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
 type MealPlanAssistantDialogProps = {
   open: boolean;
@@ -74,56 +72,50 @@ export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChange
   }
 
   return (
-    <PageAssistantDialogShell open={open} onClose={handleClose} title={t("contextAgent.mealPlan.title")}>
-      <Stack sx={{ height: "100%" }}>
-        <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2 }}>
-          <Stack spacing={2} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
-            <AgentWorkspace
-              panelKey={`meal-plan-page-agent-${date}-${open ? "open" : "closed"}`}
-              isLoading={isLoading}
-              loadError={status}
-              quickPrompts={[
-                t("contextAgent.mealPlan.prompt.analyzeDay"),
-                t("contextAgent.mealPlan.prompt.improveBalance"),
-                t("contextAgent.mealPlan.prompt.highProteinIdeas"),
-                t("contextAgent.mealPlan.prompt.reviewDinner")
-              ]}
-              speechLanguage={agentSettings.speechLanguage}
-              showToolOutput={agentSettings.showToolOutput}
-              placeholder={t("contextAgent.mealPlan.placeholder")}
-              submitLabel={t("aiAgent.send")}
-              missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-              missingApiKeyActionLabel={t("aiAgent.openSettings")}
-              onMissingApiKeyAction={() => {
-                window.location.href = "/settings";
-              }}
-              onRun={async ({ apiKey, payload, messages }) => {
-                const normalizedText = payload.text.trim();
-                const result = await runAgentTurn({
-                  apiKey,
-                  tools,
-                  history: messages,
-                  userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
-                  images: payload.images,
-                  model: agentSettings.model,
-                  userInstructions: agentSettings.userInstructions,
-                  systemPrompt: buildMealPlanPageAssistantPrompt({
-                    date,
-                    day,
-                    userInstructions: agentSettings.userInstructions
-                  })
-                });
+    <ContextAgentDialog
+      open={open}
+      onClose={handleClose}
+      panelKey={`meal-plan-page-agent-${date}-${open ? "open" : "closed"}`}
+      isLoading={isLoading}
+      loadError={status}
+      quickPrompts={[
+        t("contextAgent.mealPlan.prompt.analyzeDay"),
+        t("contextAgent.mealPlan.prompt.improveBalance"),
+        t("contextAgent.mealPlan.prompt.highProteinIdeas"),
+        t("contextAgent.mealPlan.prompt.reviewDinner")
+      ]}
+      speechLanguage={agentSettings.speechLanguage}
+      showToolOutput={agentSettings.showToolOutput}
+      placeholder={t("contextAgent.mealPlan.placeholder")}
+      submitLabel={t("aiAgent.send")}
+      missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
+      missingApiKeyActionLabel={t("aiAgent.openSettings")}
+      onMissingApiKeyAction={() => {
+        window.location.href = "/settings";
+      }}
+      onRun={async ({ apiKey, payload, messages }) => {
+        const normalizedText = payload.text.trim();
+        const result = await runAgentTurn({
+          apiKey,
+          tools,
+          history: messages,
+          userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
+          images: payload.images,
+          model: agentSettings.model,
+          userInstructions: agentSettings.userInstructions,
+          systemPrompt: buildMealPlanPageAssistantPrompt({
+            date,
+            day,
+            userInstructions: agentSettings.userInstructions
+          })
+        });
 
-                if (result.toolMessages.length > 0) {
-                  setHasPendingDataRefresh(true);
-                }
+        if (result.toolMessages.length > 0) {
+          setHasPendingDataRefresh(true);
+        }
 
-                return { appendedMessages: [...result.toolMessages, result.assistantMessage] };
-              }}
-            />
-          </Stack>
-        </Box>
-      </Stack>
-    </PageAssistantDialogShell>
+        return { appendedMessages: [...result.toolMessages, result.assistantMessage] };
+      }}
+    />
   );
 }

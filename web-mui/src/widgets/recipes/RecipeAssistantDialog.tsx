@@ -12,16 +12,18 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runRecipeAssistant, type RecipeAssistantDraft } from "../../features/ai/api/recipeAssistantApi";
-import { createRecipe } from "../../features/recipes/api/recipesApi";
+import { createRecipe, updateRecipe } from "../../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
+import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
 import { getAiAgentSettings } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
-import { AgentWorkspace } from "../ai/AgentWorkspace";
-import { PageAssistantDialogShell } from "../ai/PageAssistantDialogShell";
+import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
 type RecipeAssistantDialogProps = {
   open: boolean;
   onClose: () => void;
+  recipe?: RecipeDetail | null;
+  onRecipeChanged?: (recipe: RecipeDetail) => void;
 };
 
 function round(value: number): number {
@@ -53,11 +55,12 @@ function getDraftTotals(draft: RecipeAssistantDraft) {
   );
 }
 
-export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogProps) {
+export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeChanged }: RecipeAssistantDialogProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const agentSettings = getAiAgentSettings();
   const [draft, setDraft] = useState<RecipeAssistantDraft | null>(null);
+  const [draftIntent, setDraftIntent] = useState<"create" | "update">("create");
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -71,63 +74,77 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
     try {
       setIsCreating(true);
       setStatus(null);
-      const created = await createRecipe(draft);
-      onClose();
-      navigate(`/recipes/${created.id}`);
+      if (recipe && draftIntent === "update") {
+        const updated = await updateRecipe(recipe.id, draft);
+        onRecipeChanged?.(updated);
+        onClose();
+      } else {
+        const created = await createRecipe(draft);
+        onClose();
+        navigate(`/recipes/${created.id}`);
+      }
     } catch (error) {
-      console.error("Failed to create recipe from AI draft", error);
-      setStatus({ type: "error", message: t("recipe.ai.status.createError") });
+      console.error("Failed to save recipe from AI draft", error);
+      setStatus({ type: "error", message: recipe && draftIntent === "update" ? t("recipe.ai.status.updateError") : t("recipe.ai.status.createError") });
     } finally {
       setIsCreating(false);
     }
   }
 
   return (
-    <PageAssistantDialogShell open={open} onClose={onClose} title={t("recipe.ai.title")}>
-        <Stack sx={{ height: "100%" }}>
-          <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2.5 }}>
-            <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
-              {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
-              <AgentWorkspace
-                panelKey={`recipe-agent-${open ? "open" : "closed"}`}
-                speechLanguage={agentSettings.speechLanguage}
-                showToolOutput={false}
-                placeholder={t("recipe.ai.placeholder")}
-                submitLabel={t("aiAgent.send")}
-                missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-                quickPrompts={[
-                  t("aiAgent.prompt.addRecipe"),
-                  t("aiAgent.prompt.improveMealPlan"),
-                  t("aiAgent.prompt.shoppingList")
-                ]}
-                onRun={async ({ apiKey, payload, messages }) => {
-                  const normalizedText = payload.text.trim();
-                  const userText =
-                    normalizedText.length > 0
-                      ? normalizedText
-                      : payload.images.length > 0
-                        ? t("aiAgent.imageOnlyPrompt")
-                        : "";
+    <ContextAgentDialog
+      open={open}
+      onClose={onClose}
+      panelKey={`recipe-agent-${recipe?.id ?? "new"}-${open ? "open" : "closed"}`}
+      speechLanguage={agentSettings.speechLanguage}
+      showToolOutput={false}
+      placeholder={t("recipe.ai.placeholder")}
+      submitLabel={t("aiAgent.send")}
+      missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
+      quickPrompts={
+        recipe
+          ? [
+              t("recipe.ai.prompt.improveCurrent"),
+              t("recipe.ai.prompt.moreProtein"),
+              t("recipe.ai.prompt.reduceCalories")
+            ]
+          : [
+              t("aiAgent.prompt.addRecipe"),
+              t("aiAgent.prompt.improveMealPlan"),
+              t("aiAgent.prompt.shoppingList")
+            ]
+      }
+      outerHeader={status ? <Alert severity={status.type}>{status.message}</Alert> : null}
+      onRun={async ({ apiKey, payload, messages }) => {
+        const normalizedText = payload.text.trim();
+        const userText =
+          normalizedText.length > 0
+            ? normalizedText
+            : payload.images.length > 0
+              ? t("aiAgent.imageOnlyPrompt")
+              : "";
 
-                  const result = await runRecipeAssistant({
-                    apiKey,
-                    model: agentSettings.model,
-                    history: messages,
-                    userText,
-                    images: payload.images,
-                    userInstructions: agentSettings.userInstructions
-                  });
+        const result = await runRecipeAssistant({
+          apiKey,
+          model: agentSettings.model,
+          history: messages,
+          userText,
+          images: payload.images,
+          userInstructions: agentSettings.userInstructions,
+          currentRecipe: recipe
+        });
 
-                  return {
-                    appendedMessages: [result.assistantMessage],
-                    extra: result
-                  };
-                }}
-                onExtraResult={(result) => {
-                  setDraft(result?.draft ?? null);
-                }}
-                renderTemplate={({ extra }) =>
-                  extra?.draft ? (
+        return {
+          appendedMessages: [result.assistantMessage],
+          extra: result
+        };
+      }}
+      onExtraResult={(result) => {
+        setDraft(result?.draft ?? null);
+        setDraftIntent(result?.intent ?? "create");
+      }}
+      renderTemplate={({ extra }) =>
+        extra?.draft ? (
                     <Box
                       sx={{
                         mt: 1,
@@ -227,18 +244,14 @@ export function RecipeAssistantDialog({ open, onClose }: RecipeAssistantDialogPr
                             disabled={isCreating}
                             sx={{ boxShadow: "none" }}
                           >
-                            {t("recipe.ai.confirm")}
+                            {recipe && draftIntent === "update" ? t("recipe.ai.confirmUpdate") : t("recipe.ai.confirm")}
                           </Button>
                         </Box>
                       </Stack>
                     </Box>
                   ) : null
-                }
-              />
-            </Stack>
-          </Box>
-        </Stack>
-    </PageAssistantDialogShell>
+      }
+    />
   );
 }
 

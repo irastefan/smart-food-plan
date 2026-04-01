@@ -2,7 +2,7 @@ import { Alert, Box, Chip, CircularProgress, Stack } from "@mui/material";
 import { useEffect, useState, type ReactNode } from "react";
 import { AiAssistantPanel, type AiAssistantPanelProps, type AiAssistantPanelRenderProps } from "./AiAssistantPanel";
 
-type AgentWorkspaceProps<TExtra = void> = Omit<AiAssistantPanelProps<TExtra>, "renderTop" | "renderBottom" | "onExtraResult"> & {
+export type AgentWorkspaceProps<TExtra = void> = Omit<AiAssistantPanelProps<TExtra>, "renderTop" | "renderBottom" | "onExtraResult"> & {
   panelKey?: string;
   isLoading?: boolean;
   loadError?: string | null;
