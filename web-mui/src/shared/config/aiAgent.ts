@@ -1,3 +1,5 @@
+import type { Language } from "../i18n/messages";
+
 const AI_AGENT_SETTINGS_STORAGE_KEY = "smartFoodPlanMui.aiAgentSettings";
 
 export type AiAgentSettings = {
@@ -48,4 +50,11 @@ export function setAiAgentSettings(value: AiAgentSettings): void {
   }
 
   window.localStorage.setItem(AI_AGENT_SETTINGS_STORAGE_KEY, JSON.stringify(value));
+}
+
+export function resolveAiResponseLanguage(
+  speechLanguage: AiAgentSettings["speechLanguage"],
+  interfaceLanguage: Language
+): "en" | "ru" {
+  return speechLanguage === "interface" ? interfaceLanguage : speechLanguage;
 }

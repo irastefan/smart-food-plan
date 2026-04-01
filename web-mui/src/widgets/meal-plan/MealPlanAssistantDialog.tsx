@@ -4,7 +4,7 @@ import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
 import { runAgentTurn } from "../../features/ai/api/openaiAgentApi";
 import { buildMealPlanPageAssistantPrompt } from "../../features/ai/model/mealPlanPageAssistantPrompt";
 import type { MealPlanDay } from "../../features/meal-plan/api/mealPlanApi";
-import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
 type MealPlanAssistantDialogProps = {
@@ -16,7 +16,7 @@ type MealPlanAssistantDialogProps = {
 };
 
 export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChanged }: MealPlanAssistantDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const agentSettings = getAiAgentSettings();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,9 +103,11 @@ export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChange
           images: payload.images,
           model: agentSettings.model,
           userInstructions: agentSettings.userInstructions,
+          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
           systemPrompt: buildMealPlanPageAssistantPrompt({
             date,
             day,
+            responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
             userInstructions: agentSettings.userInstructions
           })
         });

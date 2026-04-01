@@ -15,7 +15,7 @@ import { runRecipeAssistant, type RecipeAssistantDraft } from "../../features/ai
 import { createRecipe, updateRecipe } from "../../features/recipes/api/recipesApi";
 import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
 import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
-import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
@@ -56,7 +56,7 @@ function getDraftTotals(draft: RecipeAssistantDraft) {
 }
 
 export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeChanged }: RecipeAssistantDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const agentSettings = getAiAgentSettings();
   const [draft, setDraft] = useState<RecipeAssistantDraft | null>(null);
@@ -131,7 +131,8 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
           userText,
           images: payload.images,
           userInstructions: agentSettings.userInstructions,
-          currentRecipe: recipe
+          currentRecipe: recipe,
+          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
         });
 
         return {

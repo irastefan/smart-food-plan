@@ -4,7 +4,7 @@ import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
 import { runAgentTurn } from "../../features/ai/api/openaiAgentApi";
 import { buildShoppingAssistantPrompt } from "../../features/ai/model/shoppingAssistantPrompt";
 import type { ShoppingList } from "../../features/shopping/api/shoppingApi";
-import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
 type ShoppingAssistantDialogProps = {
@@ -15,7 +15,7 @@ type ShoppingAssistantDialogProps = {
 };
 
 export function ShoppingAssistantDialog({ open, shoppingList, onClose, onDataChanged }: ShoppingAssistantDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const agentSettings = getAiAgentSettings();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,8 +102,10 @@ export function ShoppingAssistantDialog({ open, shoppingList, onClose, onDataCha
           images: payload.images,
           model: agentSettings.model,
           userInstructions: agentSettings.userInstructions,
+          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
           systemPrompt: buildShoppingAssistantPrompt({
             shoppingList,
+            responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
             userInstructions: agentSettings.userInstructions
           })
         });

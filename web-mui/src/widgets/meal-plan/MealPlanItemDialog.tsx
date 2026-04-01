@@ -26,7 +26,7 @@ import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { getMealPlanHistory, type MealPlanHistoryItem, type MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
-import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { getLocalizedUnitLabel, getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 import { AgentWorkspace } from "../ai/AgentWorkspace";
 
@@ -168,7 +168,7 @@ export function MealPlanItemDialog({
   onSubmitHistoryItem,
   onSubmit
 }: MealPlanItemDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const agentSettings = getAiAgentSettings();
@@ -437,7 +437,8 @@ export function MealPlanItemDialog({
                       existingItems,
                       userText,
                       images: payload.images,
-                      userInstructions: agentSettings.userInstructions
+                      userInstructions: agentSettings.userInstructions,
+                      responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
                     });
 
                     return {

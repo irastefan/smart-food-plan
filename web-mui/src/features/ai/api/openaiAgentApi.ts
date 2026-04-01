@@ -104,6 +104,7 @@ export async function runAgentTurn(input: {
   images?: AgentImageInput[];
   model?: string;
   userInstructions?: string;
+  responseLanguage?: "en" | "ru";
   systemPrompt?: string;
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);
@@ -113,7 +114,7 @@ export async function runAgentTurn(input: {
     Authorization: `Bearer ${input.apiKey}`
   };
 
-  const systemPrompt = input.systemPrompt?.trim() || buildAgentSystemPrompt(input.userInstructions);
+  const systemPrompt = input.systemPrompt?.trim() || buildAgentSystemPrompt(input.userInstructions, input.responseLanguage);
 
   const baseInput = [
     { role: "system", content: systemPrompt },

@@ -3,6 +3,7 @@ import type { MealPlanDay } from "../../meal-plan/api/mealPlanApi";
 export function buildMealPlanPageAssistantPrompt(input: {
   date: string;
   day: MealPlanDay | null;
+  responseLanguage: "en" | "ru";
   userInstructions?: string;
 }): string {
   const snapshot = input.day
@@ -30,7 +31,7 @@ export function buildMealPlanPageAssistantPrompt(input: {
     `The selected date is ${input.date}.`,
     "You work specifically with the user's meal plan screen.",
     "Help the user analyze the day, improve meal composition, suggest edits, suggest missing meals, or explain macro balance.",
-    "If the user asks to add or change something, propose a practical next step in the same language as the user.",
+    `Write the response in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
     "Do not pretend that you already changed the meal plan unless a tool actually did it.",
     "Prefer concise, practical answers with clear food suggestions.",
     "When suggesting foods, include rough calories, protein, fat, and carbs for the proposed portion if helpful.",

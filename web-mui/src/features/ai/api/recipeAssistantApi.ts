@@ -101,6 +101,7 @@ export async function runRecipeAssistant(input: {
   userInstructions?: string;
   images?: AgentImageInput[];
   currentRecipe?: RecipeDetail | null;
+  responseLanguage: "en" | "ru";
 }): Promise<RecipeAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({
@@ -111,9 +112,11 @@ export async function runRecipeAssistant(input: {
     images: input.images,
     model: input.model,
     userInstructions: input.userInstructions,
+    responseLanguage: input.responseLanguage,
     systemPrompt: buildRecipeAssistantPrompt({
       userInstructions: input.userInstructions,
-      currentRecipe: input.currentRecipe
+      currentRecipe: input.currentRecipe,
+      responseLanguage: input.responseLanguage
     })
   });
 

@@ -6,7 +6,7 @@ import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../features/ai/api/mcpApi";
 import { runAgentTurn } from "../features/ai/api/openaiAgentApi";
-import { getAiAgentSettings } from "../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../shared/config/aiAgent";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AgentWorkspace } from "../widgets/ai/AgentWorkspace";
@@ -19,7 +19,7 @@ type LayoutContext = {
 };
 
 export function AiAgentPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,7 +149,8 @@ export function AiAgentPage() {
                 userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),
                 images: payload.images,
                 model: agentSettings.model,
-                userInstructions: agentSettings.userInstructions
+                userInstructions: agentSettings.userInstructions,
+                responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
               });
 
               return {
