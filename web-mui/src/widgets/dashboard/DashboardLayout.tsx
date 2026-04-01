@@ -12,6 +12,7 @@ export function DashboardLayout() {
   const [pageLoading, setPageLoading] = useState(false);
   const navigate = useNavigate();
   const openSidebar = useCallback(() => setMobileOpen(true), []);
+  const toggleMobileSidebar = useCallback(() => setMobileOpen((current) => !current), []);
   const registerPageAgentAction = useCallback((action: (() => void) | null) => {
     setPageAgentAction(() => action);
   }, []);
@@ -94,7 +95,13 @@ export function DashboardLayout() {
         </Stack>
       </Box>
 
-      <DashboardQuickActions onOpenAgent={handleOpenAgent} onOpenAdd={pageAddAction ?? undefined} isAgentLoading={pageLoading} />
+      <DashboardQuickActions
+        onOpenAgent={handleOpenAgent}
+        onOpenAdd={pageAddAction ?? undefined}
+        isMoreOpen={mobileOpen}
+        onToggleMore={toggleMobileSidebar}
+        isAgentLoading={pageLoading}
+      />
     </Box>
   );
 }

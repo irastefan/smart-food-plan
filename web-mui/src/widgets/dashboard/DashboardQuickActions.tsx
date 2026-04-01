@@ -1,27 +1,11 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
-import LanguageRoundedIcon from "@mui/icons-material/LanguageRounded";
-import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import {
-  Box,
-  Divider,
-  IconButton,
-  Menu,
-  MenuItem,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme
-} from "@mui/material";
-import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { Box, IconButton, Paper, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { useMemo, type MouseEvent, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
-import { useThemeMode } from "../../app/providers/ThemeModeProvider";
 import { getAppPreferences } from "../../shared/config/appPreferences";
-import { settingsSections } from "../settings/settingsSections";
 import { AiAgentAvatarIcon } from "./AiAgentAvatarIcon";
 import { dashboardNavigation, type DashboardNavigationId } from "./navigation";
 
@@ -29,17 +13,23 @@ type DashboardQuickActionsProps = {
   onOpenAgent?: () => void;
   onOpenAdd?: () => void;
   isAgentLoading?: boolean;
+  isMoreOpen?: boolean;
+  onToggleMore?: () => void;
 };
 
-export function DashboardQuickActions({ onOpenAgent, onOpenAdd, isAgentLoading = false }: DashboardQuickActionsProps) {
-  const { language, setLanguage, t } = useLanguage();
-  const { mode, toggleMode } = useThemeMode();
+export function DashboardQuickActions({
+  onOpenAgent,
+  onOpenAdd,
+  isAgentLoading = false,
+  isMoreOpen = false,
+  onToggleMore
+}: DashboardQuickActionsProps) {
+  const { t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const location = useLocation();
   const navigate = useNavigate();
   const preferences = getAppPreferences();
-  const [moreAnchorEl, setMoreAnchorEl] = useState<HTMLElement | null>(null);
 
   const currentNavId = useMemo<DashboardNavigationId | null>(() => {
     const match = dashboardNavigation.find((item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`));
@@ -56,14 +46,6 @@ export function DashboardQuickActions({ onOpenAgent, onOpenAdd, isAgentLoading =
     [preferences.mobileQuickNavItems]
   );
 
-  const hiddenItems = useMemo(
-    () =>
-      dashboardNavigation.filter(
-        (item) => item.id !== "ai-agent" && item.id !== "settings" && !mobileItems.some((mobileItem) => mobileItem.id === item.id)
-      ),
-    [mobileItems]
-  );
-
   const handleOpenAgent = () => {
     if (onOpenAgent) {
       onOpenAgent();
@@ -71,14 +53,6 @@ export function DashboardQuickActions({ onOpenAgent, onOpenAdd, isAgentLoading =
     }
 
     navigate("/ai-agent");
-  };
-
-  const handleOpenMore = (event: MouseEvent<HTMLElement>) => {
-    setMoreAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseMore = () => {
-    setMoreAnchorEl(null);
   };
 
   if (isMobile) {
@@ -161,98 +135,13 @@ export function DashboardQuickActions({ onOpenAgent, onOpenAdd, isAgentLoading =
             ))}
 
             <MobileNavItem
-              icon={<MoreHorizRoundedIcon fontSize="small" />}
+              icon={isMoreOpen ? <CloseRoundedIcon fontSize="small" /> : <MoreHorizRoundedIcon fontSize="small" />}
               label={t("nav.more")}
-              selected={Boolean(moreAnchorEl) || location.pathname.startsWith("/settings")}
-              onClick={handleOpenMore}
+              selected={isMoreOpen || location.pathname.startsWith("/settings")}
+              onClick={() => onToggleMore?.()}
             />
           </Box>
         </Paper>
-
-        <Menu
-          anchorEl={moreAnchorEl}
-          open={Boolean(moreAnchorEl)}
-          onClose={handleCloseMore}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-          PaperProps={{
-            sx: {
-              minWidth: 248,
-              borderRadius: 1.5
-            }
-          }}
-        >
-          <MenuItem disabled sx={{ opacity: 1, fontWeight: 700 }}>
-            <LanguageRoundedIcon fontSize="small" sx={{ mr: 1.25 }} />
-            {t("common.language")}
-          </MenuItem>
-          <MenuItem
-            selected={language === "en"}
-            onClick={() => {
-              setLanguage("en");
-              handleCloseMore();
-            }}
-          >
-            EN
-          </MenuItem>
-          <MenuItem
-            selected={language === "ru"}
-            onClick={() => {
-              setLanguage("ru");
-              handleCloseMore();
-            }}
-          >
-            RU
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem
-            onClick={() => {
-              toggleMode();
-              handleCloseMore();
-            }}
-          >
-            {mode === "dark" ? <LightModeRoundedIcon fontSize="small" sx={{ mr: 1.25 }} /> : <DarkModeRoundedIcon fontSize="small" sx={{ mr: 1.25 }} />}
-            {mode === "dark" ? t("theme.switchToLight") : t("theme.switchToDark")}
-          </MenuItem>
-
-          {hiddenItems.length > 0 ? <Divider /> : null}
-
-          {hiddenItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <MenuItem
-                key={item.id}
-                onClick={() => {
-                  navigate(item.path);
-                  handleCloseMore();
-                }}
-              >
-                <Icon fontSize="small" sx={{ mr: 1.25 }} />
-                {t(item.labelKey as never)}
-              </MenuItem>
-            );
-          })}
-
-          <Divider />
-
-          {settingsSections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <MenuItem
-                key={section.id}
-                onClick={() => {
-                  navigate(`/settings?section=${section.id}`);
-                  handleCloseMore();
-                }}
-              >
-                <Icon fontSize="small" sx={{ mr: 1.25 }} />
-                {t(section.labelKey as never)}
-              </MenuItem>
-            );
-          })}
-        </Menu>
       </Box>
     );
   }

@@ -593,13 +593,19 @@ export function MealPlanDashboardPage() {
   }
 
   return (
-    <Stack spacing={{ xs: 1, md: 3 }} flex={1}>
+    <Stack spacing={{ xs: 1, md: 3 }} flex={1} sx={{ mt: { xs: -1.1, md: 0 } }}>
       <DashboardTopbar
         onOpenSidebar={openSidebar}
         title={t("mealPlan.dashboard.title")}
         subtitle={t("mealPlan.dashboard.subtitle")}
       />
-      <Stack direction={{ xs: "column", lg: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", lg: "center" }} spacing={2}>
+      <Stack
+        direction={{ xs: "column", lg: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "stretch", lg: "center" }}
+        spacing={2}
+        sx={{ mt: { xs: 0, md: 0 } }}
+      >
         <Box sx={{ display: { xs: "none", lg: "block" } }}>
           <PageTitle title={t("mealPlan.dashboard.title")} />
         </Box>
