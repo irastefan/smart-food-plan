@@ -136,6 +136,10 @@ export function MealPlanDashboardPage() {
   >(null);
   const [pageAssistantOpen, setPageAssistantOpen] = useState(false);
 
+  function handleClosePageAssistant() {
+    setPageAssistantOpen(false);
+  }
+
   useEffect(() => {
     registerPageAgentAction(() => setPageAssistantOpen(true));
     return () => {
@@ -804,7 +808,8 @@ export function MealPlanDashboardPage() {
         open={pageAssistantOpen}
         date={selectedDate}
         day={day}
-        onClose={() => setPageAssistantOpen(false)}
+        onDataChanged={refresh}
+        onClose={handleClosePageAssistant}
       />
     </Stack>
   );

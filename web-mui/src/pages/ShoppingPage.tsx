@@ -1,7 +1,7 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Alert, Box, CircularProgress, Paper, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
@@ -58,6 +58,21 @@ export function ShoppingPage() {
     | null
   >(null);
 
+  const loadShoppingData = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const [list, productList] = await Promise.all([getShoppingList(), getProducts()]);
+      setShoppingList(list);
+      setProducts(productList);
+    } catch (error) {
+      console.error("Failed to load shopping list", error);
+      setLoadError(t("shopping.status.loadError"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     registerPageAgentAction(() => setAssistantOpen(true));
     return () => {
@@ -80,35 +95,16 @@ export function ShoppingPage() {
   }, [clearPageLoading, isLoading, registerPageLoading]);
 
   useEffect(() => {
-    let cancelled = false;
-
     async function load() {
-      try {
-        setIsLoading(true);
-        setLoadError(null);
-        const [list, productList] = await Promise.all([getShoppingList(), getProducts()]);
-        if (!cancelled) {
-          setShoppingList(list);
-          setProducts(productList);
-        }
-      } catch (error) {
-        console.error("Failed to load shopping list", error);
-        if (!cancelled) {
-          setLoadError(t("shopping.status.loadError"));
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
+      await loadShoppingData();
     }
 
     void load();
+  }, [loadShoppingData]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
+  const handleCloseAssistant = useCallback(() => {
+    setAssistantOpen(false);
+  }, []);
 
   const categoryNames = useMemo(() => {
     const names = new Set<string>();
@@ -361,7 +357,8 @@ export function ShoppingPage() {
       <ShoppingAssistantDialog
         open={assistantOpen}
         shoppingList={shoppingList}
-        onClose={() => setAssistantOpen(false)}
+        onDataChanged={loadShoppingData}
+        onClose={handleCloseAssistant}
       />
     </Stack>
   );

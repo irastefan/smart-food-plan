@@ -14,14 +14,16 @@ type MealPlanAssistantDialogProps = {
   date: string;
   day: MealPlanDay | null;
   onClose: () => void;
+  onDataChanged?: () => Promise<void> | void;
 };
 
-export function MealPlanAssistantDialog({ open, date, day, onClose }: MealPlanAssistantDialogProps) {
+export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChanged }: MealPlanAssistantDialogProps) {
   const { t } = useLanguage();
   const agentSettings = getAiAgentSettings();
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
+  const [hasPendingDataRefresh, setHasPendingDataRefresh] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -57,8 +59,22 @@ export function MealPlanAssistantDialog({ open, date, day, onClose }: MealPlanAs
     };
   }, [open, t]);
 
+  useEffect(() => {
+    if (!open) {
+      setHasPendingDataRefresh(false);
+    }
+  }, [open]);
+
+  function handleClose() {
+    onClose();
+    if (hasPendingDataRefresh) {
+      void onDataChanged?.();
+      setHasPendingDataRefresh(false);
+    }
+  }
+
   return (
-    <PageAssistantDialogShell open={open} onClose={onClose} title={t("contextAgent.mealPlan.title")}>
+    <PageAssistantDialogShell open={open} onClose={handleClose} title={t("contextAgent.mealPlan.title")}>
       <Stack sx={{ height: "100%" }}>
         <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2 }}>
           <Stack spacing={2} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
@@ -97,6 +113,10 @@ export function MealPlanAssistantDialog({ open, date, day, onClose }: MealPlanAs
                     userInstructions: agentSettings.userInstructions
                   })
                 });
+
+                if (result.toolMessages.length > 0) {
+                  setHasPendingDataRefresh(true);
+                }
 
                 return { appendedMessages: [...result.toolMessages, result.assistantMessage] };
               }}
