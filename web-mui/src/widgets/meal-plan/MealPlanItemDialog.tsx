@@ -358,8 +358,14 @@ export function MealPlanItemDialog({
             }
       }}
     >
-      <DialogTitle sx={{ paddingInlineEnd: 2, pb: { xs: 0.75, md: 1.5 } }}>
-        <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center" justifyContent="flex-start">
+      <DialogTitle dir={isRtl ? "rtl" : "ltr"} sx={{ paddingInlineEnd: 2, pb: { xs: 0.75, md: 1.5 }, textAlign: "start" }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          justifyContent="flex-start"
+          sx={{ width: "100%", textAlign: "start" }}
+        >
           <IconButton onClick={onClose} edge="start" size="small">
             {isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
           </IconButton>
