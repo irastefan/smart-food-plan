@@ -360,8 +360,7 @@ export function DashboardSidebar({
           width: 392,
           minHeight: "100vh",
           height: "100%",
-          display: "flex",
-          justifyContent: isRtl ? "flex-end" : "flex-start"
+          display: "flex"
         }}
       >
         <Box

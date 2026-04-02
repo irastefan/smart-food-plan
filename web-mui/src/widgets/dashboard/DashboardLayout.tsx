@@ -66,7 +66,7 @@ export function DashboardLayout() {
       sx={{
         minHeight: "100vh",
         display: "flex",
-        flexDirection: { xs: "column", lg: isRtl ? "row-reverse" : "row" },
+        flexDirection: { xs: "column", lg: "row" },
         direction: isRtl ? "rtl" : "ltr",
         background: (theme) =>
           theme.palette.mode === "dark"
