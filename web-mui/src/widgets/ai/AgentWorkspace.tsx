@@ -44,16 +44,28 @@ export function AgentWorkspace<TExtra = void>({
 
   if (isLoading) {
     return (
-      <Stack dir={isRtl ? "rtl" : "ltr"} alignItems="center" justifyContent="center" sx={{ py: 8, direction: isRtl ? "rtl" : "ltr" }} spacing={2}>
+      <Stack
+        dir={isRtl ? "rtl" : "ltr"}
+        style={{ direction: isRtl ? "rtl" : "ltr" }}
+        alignItems="center"
+        justifyContent="center"
+        sx={{ py: 8, direction: isRtl ? "rtl" : "ltr" }}
+        spacing={2}
+      >
         <CircularProgress />
       </Stack>
     );
   }
 
   return (
-    <Stack dir={isRtl ? "rtl" : "ltr"} spacing={2} sx={{ flex: 1, minHeight: 0, direction: isRtl ? "rtl" : "ltr" }}>
+    <Stack
+      dir={isRtl ? "rtl" : "ltr"}
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
+      spacing={2}
+      sx={{ flex: 1, minHeight: 0, direction: isRtl ? "rtl" : "ltr" }}
+    >
       {loadError ? <Alert severity="error">{loadError}</Alert> : null}
-      {header ? <Box>{header}</Box> : null}
+      {header ? <Box sx={{ width: "100%", textAlign: "start" }}>{header}</Box> : null}
 
       <AiAssistantPanel
         key={panelKey}
@@ -67,7 +79,7 @@ export function AgentWorkspace<TExtra = void>({
             ? ({ setDraft, visibleMessages, isSubmitting }) => (
                 visibleMessages.length === 0 && !isSubmitting ? (
                   <Stack
-                    direction="row"
+                    direction={isRtl ? "row-reverse" : "row"}
                     spacing={0.9}
                     useFlexGap
                     flexWrap="wrap"
@@ -103,7 +115,7 @@ export function AgentWorkspace<TExtra = void>({
               extra,
               clearExtra
             })}
-            {hint ? <Box>{hint}</Box> : null}
+            {hint ? <Box sx={{ width: "100%", textAlign: "start" }}>{hint}</Box> : null}
           </Stack>
         )}
       />

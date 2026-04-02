@@ -239,7 +239,7 @@ export function AiAgentComposer({
     >
       <Stack spacing={0.6}>
         {images.length > 0 ? (
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} useFlexGap flexWrap="wrap">
             {images.map((image) => (
               <Stack
                 key={image.id}
@@ -304,7 +304,7 @@ export function AiAgentComposer({
         />
 
         <Stack
-          direction="row"
+          direction={isRtl ? "row-reverse" : "row"}
           spacing={0.5}
           alignItems="center"
           sx={{
@@ -339,6 +339,15 @@ export function AiAgentComposer({
             minRows={1}
             maxRows={6}
             fullWidth
+            inputProps={{
+              dir: isRtl ? "rtl" : "ltr",
+              lang: language,
+              spellCheck: false,
+              style: {
+                direction: isRtl ? "rtl" : "ltr",
+                textAlign: isRtl ? "right" : "left"
+              }
+            }}
             sx={{
               flex: 1,
               fontSize: { xs: 14, md: 15 },
@@ -351,11 +360,15 @@ export function AiAgentComposer({
                 py: 0.58,
                 textAlign: "start",
                 direction: isRtl ? "rtl" : "ltr"
+              },
+              "& textarea": {
+                direction: isRtl ? "rtl" : "ltr",
+                textAlign: isRtl ? "right" : "left"
               }
             }}
           />
 
-          <Stack direction="row" spacing={0.45} alignItems="center" sx={{ alignSelf: "center", paddingInlineEnd: 0.25 }}>
+          <Stack direction={isRtl ? "row-reverse" : "row"} spacing={0.45} alignItems="center" sx={{ alignSelf: "center", paddingInlineEnd: 0.25 }}>
             <Tooltip
               title={
                 SpeechRecognitionApi
@@ -393,7 +406,12 @@ export function AiAgentComposer({
                 }
               }}
             >
-              <SendRoundedIcon sx={{ fontSize: 19 }} />
+              <SendRoundedIcon
+                sx={{
+                  fontSize: 19,
+                  transform: isRtl ? "scaleX(-1)" : "none"
+                }}
+              />
             </IconButton>
           </Stack>
         </Stack>
@@ -412,7 +430,7 @@ export function AiAgentComposer({
               uploadInputRef.current?.click();
             }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center">
               <AddPhotoAlternateRoundedIcon sx={{ fontSize: 18 }} />
               <span>{t("aiAgent.image.upload")}</span>
             </Stack>
@@ -423,7 +441,7 @@ export function AiAgentComposer({
               cameraInputRef.current?.click();
             }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center">
               <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} />
               <span>{t("aiAgent.image.camera")}</span>
             </Stack>

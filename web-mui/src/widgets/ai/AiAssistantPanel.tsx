@@ -100,6 +100,7 @@ export function AiAssistantPanel<TExtra = void>({
   return (
     <Stack
       dir={isRtl ? "rtl" : "ltr"}
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
       spacing={{ xs: 1, md: 1.5 }}
       sx={{
         direction: isRtl ? "rtl" : "ltr",
@@ -121,6 +122,7 @@ export function AiAssistantPanel<TExtra = void>({
       ) : null}
       {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
       <Box
+        style={{ direction: isRtl ? "rtl" : "ltr" }}
         sx={{
           direction: isRtl ? "rtl" : "ltr",
           flex: 1,
@@ -130,6 +132,7 @@ export function AiAssistantPanel<TExtra = void>({
         }}
       >
         <Box
+          style={{ direction: isRtl ? "rtl" : "ltr" }}
           sx={{
             direction: isRtl ? "rtl" : "ltr",
             flex: 1,

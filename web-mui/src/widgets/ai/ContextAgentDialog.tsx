@@ -22,9 +22,12 @@ export function ContextAgentDialog<TExtra = void>({
 
   return (
     <PageAssistantDialogShell open={open} onClose={onClose} title={t("aiAgent.title")}>
-      <Stack dir={isRtl ? "rtl" : "ltr"} sx={{ height: "100%", direction: isRtl ? "rtl" : "ltr" }}>
-        <Box sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2, direction: isRtl ? "rtl" : "ltr" }}>
-          <Stack spacing={2} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
+      <Stack dir={isRtl ? "rtl" : "ltr"} style={{ direction: isRtl ? "rtl" : "ltr" }} sx={{ height: "100%", direction: isRtl ? "rtl" : "ltr" }}>
+        <Box
+          style={{ direction: isRtl ? "rtl" : "ltr" }}
+          sx={{ flex: 1, overflow: "auto", px: { xs: 2, md: 0 }, py: 2, direction: isRtl ? "rtl" : "ltr" }}
+        >
+          <Stack spacing={2} style={{ direction: isRtl ? "rtl" : "ltr" }} sx={{ maxWidth: 980, mx: "auto", height: "100%" }}>
             {outerHeader}
             <AgentWorkspace {...workspaceProps} />
           </Stack>

@@ -22,7 +22,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
       {messages.map((message) => (
         <Stack
           key={message.id}
-          direction="row"
+          direction={isRtl ? "row-reverse" : "row"}
           justifyContent={message.role === "user" ? "flex-end" : "flex-start"}
           alignItems="flex-start"
         >
@@ -39,7 +39,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
               }}
             >
               <Stack spacing={0.75}>
-                <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center" justifyContent="space-between">
                 <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
                     {message.toolName}
                   </Typography>
@@ -120,7 +120,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                 {message.text}
               </Box>
               {message.images && message.images.length > 0 ? (
-                <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.85 }}>
+                <Stack direction={isRtl ? "row-reverse" : "row"} spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 0.85 }}>
                   {message.images.map((image) => (
                     <Box
                       key={`${message.id}-${image.name}`}
@@ -171,7 +171,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
       ))}
 
       {isSubmitting ? (
-        <Stack direction="row" justifyContent="flex-start" alignItems="flex-start">
+        <Stack direction={isRtl ? "row-reverse" : "row"} justifyContent="flex-start" alignItems="flex-start">
           <Box
             sx={{
               minHeight: { xs: 28, md: 32 },
@@ -180,7 +180,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
               paddingInlineStart: 0.25
             }}
           >
-            <Stack direction="row" spacing={0.6} alignItems="center" sx={{ minWidth: 28 }}>
+            <Stack direction={isRtl ? "row-reverse" : "row"} spacing={0.6} alignItems="center" sx={{ minWidth: 28 }}>
               {[0, 1, 2].map((index) => (
                 <Box
                   key={index}

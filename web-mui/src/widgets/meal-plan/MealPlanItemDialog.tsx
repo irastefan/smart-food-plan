@@ -359,7 +359,7 @@ export function MealPlanItemDialog({
       }}
     >
       <DialogTitle sx={{ paddingInlineEnd: 2, pb: { xs: 0.75, md: 1.5 } }}>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center" justifyContent="flex-start">
           <IconButton onClick={onClose} edge="start" size="small">
             {isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
           </IconButton>
@@ -414,7 +414,12 @@ export function MealPlanItemDialog({
             }}
           >
             {activeTab === "ai" ? (
-              <Stack dir={isRtl ? "rtl" : "ltr"} spacing={2.5} sx={{ maxWidth: 980, mx: "auto", direction: isRtl ? "rtl" : "ltr" }}>
+              <Stack
+                dir={isRtl ? "rtl" : "ltr"}
+                style={{ direction: isRtl ? "rtl" : "ltr" }}
+                spacing={2.5}
+                sx={{ maxWidth: 980, mx: "auto", direction: isRtl ? "rtl" : "ltr" }}
+              >
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
                 <AgentWorkspace
                   panelKey={`meal-plan-slot-agent-${open ? "open" : "closed"}-${sectionTitle}-${anchorDate}-${mode}`}
@@ -467,9 +472,9 @@ export function MealPlanItemDialog({
                     }
                   }}
                   header={
-                    <Stack spacing={0.5}>
-                      <Typography variant="h6" fontWeight={800}>{t("mealPlan.ai.title")}</Typography>
-                      <Typography color="text.secondary">{t("mealPlan.ai.subtitle")}</Typography>
+                    <Stack spacing={0.5} sx={{ width: "100%", textAlign: "start", alignItems: "stretch" }}>
+                      <Typography variant="h6" fontWeight={800} sx={{ textAlign: "start" }}>{t("mealPlan.ai.title")}</Typography>
+                      <Typography color="text.secondary" sx={{ textAlign: "start" }}>{t("mealPlan.ai.subtitle")}</Typography>
                     </Stack>
                   }
                   renderTemplate={() => (

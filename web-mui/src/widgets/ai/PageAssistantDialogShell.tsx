@@ -43,8 +43,8 @@ export function PageAssistantDialogShell({ open, title, onClose, children }: Pag
             }
       }}
     >
-      <DialogTitle sx={{ pr: 2, textAlign: "start" }}>
-        <Stack direction="row" spacing={1} alignItems="center">
+      <DialogTitle sx={{ paddingInlineEnd: 2, textAlign: "start" }}>
+        <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center" justifyContent="flex-start">
           <IconButton onClick={onClose} edge="start" size="small">
             {isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
           </IconButton>
