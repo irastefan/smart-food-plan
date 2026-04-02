@@ -1,7 +1,10 @@
 import { Alert, Box, Button, Stack } from "@mui/material";
 import { useState, type ReactNode } from "react";
+import { useLanguage } from "../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { getOpenAiApiKey } from "../../shared/config/openai";
 import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
+import type { Language } from "../../shared/i18n/messages";
 import { AiAgentComposer } from "./AiAgentComposer";
 import { AiAgentConversation } from "./AiAgentConversation";
 
@@ -16,7 +19,7 @@ export type AiAssistantPanelRenderProps = {
 };
 
 export type AiAssistantPanelProps<TExtra = void> = {
-  speechLanguage: "interface" | "en" | "ru";
+  speechLanguage: "interface" | Language;
   showToolOutput: boolean;
   placeholder: string;
   submitLabel: string;
@@ -46,6 +49,8 @@ export function AiAssistantPanel<TExtra = void>({
   renderTop,
   renderBottom
 }: AiAssistantPanelProps<TExtra>) {
+  const { language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,8 +99,10 @@ export function AiAssistantPanel<TExtra = void>({
 
   return (
     <Stack
+      dir={isRtl ? "rtl" : "ltr"}
       spacing={{ xs: 1, md: 1.5 }}
       sx={{
+        direction: isRtl ? "rtl" : "ltr",
         flex: 1,
         minHeight: 0
       }}
@@ -115,6 +122,7 @@ export function AiAssistantPanel<TExtra = void>({
       {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
       <Box
         sx={{
+          direction: isRtl ? "rtl" : "ltr",
           flex: 1,
           minHeight: 0,
           display: "flex",
@@ -123,11 +131,12 @@ export function AiAssistantPanel<TExtra = void>({
       >
         <Box
           sx={{
+            direction: isRtl ? "rtl" : "ltr",
             flex: 1,
             minHeight: 0,
             overflowY: "auto",
             pb: { xs: 1, md: 1.25 },
-            pr: 0.5,
+            paddingInlineEnd: 0.5,
             scrollbarWidth: "thin",
             scrollbarColor: (theme) =>
               theme.palette.mode === "dark" ? "rgba(148,163,184,0.34) transparent" : "rgba(100,116,139,0.24) transparent",

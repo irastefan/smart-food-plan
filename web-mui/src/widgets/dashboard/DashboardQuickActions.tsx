@@ -60,8 +60,8 @@ export function DashboardQuickActions({
       <Box
         sx={{
           position: "fixed",
-          left: 0,
-          right: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
           bottom: 0,
           zIndex: 1250,
           pointerEvents: "none"

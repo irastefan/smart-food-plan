@@ -190,7 +190,7 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
                 </Typography>
                 {latestValue !== null ? (
                   <Typography color="text.secondary" sx={{ fontSize: 13 }}>
-                    {`${Math.round(latestValue)} ${selectedMetric === "weightKg" ? "kg" : "cm"} · ${date}`}
+                    {`${Math.round(latestValue)} ${selectedMetric === "weightKg" ? t("units.short.kg" as never) : t("units.short.cm" as never)} · ${date}`}
                   </Typography>
                 ) : null}
               </Stack>
@@ -216,7 +216,7 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
               onChange={(value) => setSelectedMetric(value as MetricKey)}
             />
 
-            <Box sx={{ width: "100%", maxWidth: 760, mr: "auto" }}>
+            <Box sx={{ width: "100%", maxWidth: 760, marginInlineEnd: "auto" }}>
               <MiniMetricChart points={chartPoints} lineColor="#10b981" emptyLabel={t("bodyMetrics.emptyChart")} />
             </Box>
           </Stack>

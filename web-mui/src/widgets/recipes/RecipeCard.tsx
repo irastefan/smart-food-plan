@@ -45,7 +45,11 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
           backgroundPosition: recipe.photoUrl ? "center" : undefined
         }}
       >
-        <Stack direction="row" spacing={1} sx={{ position: "absolute", top: 16, left: 16, right: 16, justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ position: "absolute", top: 16, insetInlineStart: 16, insetInlineEnd: 16, justifyContent: "space-between" }}
+        >
           <Chip
             label={getRecipeCategoryLabel(recipe.category, t)}
             sx={{

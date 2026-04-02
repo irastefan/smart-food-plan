@@ -3,6 +3,7 @@ import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiA
 import { buildRecipeAssistantPrompt } from "../model/recipeAssistantPrompt";
 import type { RecipeDetail, RecipeFormIngredient, RecipeFormValues } from "../../recipes/model/recipeTypes";
 import { normalizeRecipeCategory } from "../../recipes/model/recipeCategories";
+import type { Language } from "../../../shared/i18n/messages";
 
 export type RecipeAssistantDraft = RecipeFormValues;
 
@@ -101,7 +102,7 @@ export async function runRecipeAssistant(input: {
   userInstructions?: string;
   images?: AgentImageInput[];
   currentRecipe?: RecipeDetail | null;
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
 }): Promise<RecipeAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({

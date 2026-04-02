@@ -1,7 +1,10 @@
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
+
 export function buildMealPlanAssistantPrompt(input: {
   sectionTitle: string;
   existingItems: string[];
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
   userInstructions?: string;
 }): string {
   const currentItems =
@@ -14,7 +17,7 @@ export function buildMealPlanAssistantPrompt(input: {
     `The user is editing the slot: ${input.sectionTitle}.`,
     currentItems,
     "Your job is to help add one meal plan item or, for a composed dish, several separate meal plan items.",
-    `Write the response message in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the response message in ${getAiLanguageName(input.responseLanguage)}.`,
     "Do not invent a random item just because the user opened the meal plan assistant.",
     "If the user has not clearly asked to add a specific item, and there is no clear image to identify, ask a short clarifying question instead of proposing food on your own.",
     "Only prepare a proposal when the user's request is explicit enough or when the attached image is clear enough to identify a likely item.",

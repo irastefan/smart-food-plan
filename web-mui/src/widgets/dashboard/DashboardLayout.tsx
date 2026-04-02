@@ -1,11 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
 import { Box, Stack } from "@mui/material";
 import { Outlet } from "react-router-dom";
+import { useLanguage } from "../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { GlobalAiAgentDialog } from "../ai/GlobalAiAgentDialog";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardQuickActions } from "./DashboardQuickActions";
 
 export function DashboardLayout() {
+  const { language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalAgentOpen, setGlobalAgentOpen] = useState(false);
@@ -56,16 +60,25 @@ export function DashboardLayout() {
 
   return (
     <Box
+      key={isRtl ? "rtl" : "ltr"}
+      dir={isRtl ? "rtl" : "ltr"}
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
       sx={{
         minHeight: "100vh",
         display: "flex",
+        flexDirection: { xs: "column", lg: isRtl ? "row-reverse" : "row" },
+        direction: isRtl ? "rtl" : "ltr",
         background: (theme) =>
           theme.palette.mode === "dark"
             ? "linear-gradient(180deg, #0b1422 0%, #0f1827 100%)"
             : "linear-gradient(180deg, #f4f7f9 0%, #eef3f5 100%)"
       }}
     >
-      <Box sx={{ display: { xs: "none", lg: "flex" }, flexShrink: 0, minHeight: "100vh" }}>
+      <Box
+        dir={isRtl ? "rtl" : "ltr"}
+        style={{ direction: isRtl ? "rtl" : "ltr" }}
+        sx={{ display: { xs: "none", lg: "flex" }, flexShrink: 0, minHeight: "100vh" }}
+      >
         <DashboardSidebar
           variant="desktop"
           collapsed={collapsed}
@@ -87,7 +100,7 @@ export function DashboardLayout() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box dir={isRtl ? "rtl" : "ltr"} style={{ direction: isRtl ? "rtl" : "ltr" }} sx={{ flex: 1, minWidth: 0 }}>
         <Stack
           sx={{
             minHeight: "100vh",

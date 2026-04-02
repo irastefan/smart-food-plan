@@ -1,8 +1,9 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import { Alert, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -22,6 +23,8 @@ type LayoutContext = {
 };
 
 export function ProductDetailsPage() {
+  const theme = useTheme();
+  const isRtl = theme.direction === "rtl";
   const { productId } = useParams();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -143,7 +146,7 @@ export function ProductDetailsPage() {
       <PageTitle title={product.title} />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-        <Button component={RouterLink} to="/products" startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
+        <Button component={RouterLink} to="/products" startIcon={isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
           {t("product.back")}
         </Button>
         <Button component={RouterLink} to={`/products/${product.id}/edit`} startIcon={<EditRoundedIcon />} variant="contained" sx={{ alignSelf: "flex-start" }}>
@@ -196,7 +199,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <Stack direction="row" justifyContent="space-between" spacing={2}>
       <Typography color="text.secondary">{label}</Typography>
-      <Typography fontWeight={700} textAlign="right">{value}</Typography>
+      <Typography fontWeight={700} textAlign="end">{value}</Typography>
     </Stack>
   );
 }

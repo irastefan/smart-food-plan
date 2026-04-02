@@ -1,8 +1,11 @@
-export function buildAgentSystemPrompt(userInstructions?: string, responseLanguage: "en" | "ru" = "en"): string {
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
+
+export function buildAgentSystemPrompt(userInstructions?: string, responseLanguage: Language = "en"): string {
   const sections = [
     "You are SmartFood AI inside a nutrition planning app.",
     "Primary goal: help with meal plans, recipes, shopping list, and food analysis quickly and pragmatically.",
-    `Write the final answer in ${responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the final answer in ${getAiLanguageName(responseLanguage)}.`,
     "Use tools only when they are needed to read real app data or perform an action.",
     "Do not search the product catalog by default when the user asks for a suggestion, meal idea, or recipe idea.",
     "Assume the user's saved product database may be empty unless the user explicitly asks to use existing products or check their saved catalog.",

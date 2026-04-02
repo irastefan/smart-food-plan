@@ -18,6 +18,7 @@ import { useLanguage } from "../../app/providers/LanguageProvider";
 import { useThemeMode } from "../../app/providers/ThemeModeProvider";
 import { BrandMark } from "../../features/auth/components/BrandMark";
 import { getApiBaseUrl } from "../../shared/config/env";
+import { getLanguageDisplayLabel, supportedLanguages } from "../../shared/i18n/languages";
 
 export function AuthLayout() {
   const { language, setLanguage, t } = useLanguage();
@@ -25,7 +26,7 @@ export function AuthLayout() {
   const isDark = mode === "dark";
 
   function handleLanguageChange(event: SelectChangeEvent): void {
-    setLanguage(event.target.value as "en" | "ru");
+    setLanguage(event.target.value as typeof language);
   }
 
   return (
@@ -91,8 +92,11 @@ export function AuthLayout() {
                     color: "text.primary"
                   }}
                 >
-                  <MenuItem value="en">EN</MenuItem>
-                  <MenuItem value="ru">RU</MenuItem>
+                  {supportedLanguages.map((languageOption) => (
+                    <MenuItem key={languageOption} value={languageOption}>
+                      {getLanguageDisplayLabel(languageOption)}
+                    </MenuItem>
+                  ))}
                 </Select>
               </Stack>
               <IconButton
@@ -148,7 +152,7 @@ export function AuthLayout() {
 
           <Typography variant="caption" color="text.secondary" textAlign="center">
             {t("layout.backend")}: {getApiBaseUrl()} · {isDark ? t("theme.dark") : t("theme.light")} ·{" "}
-            {language === "en" ? t("language.en") : t("language.ru")}
+            {t(`language.${language}` as never)}
           </Typography>
         </Stack>
       </Container>

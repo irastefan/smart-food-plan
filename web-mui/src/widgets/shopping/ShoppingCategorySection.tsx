@@ -63,7 +63,7 @@ export function ShoppingCategorySection({
               }}
             >
               <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
-                <Checkbox checked={item.isDone} onChange={() => onToggleDone(item)} sx={{ mt: -0.35, ml: -0.35 }} />
+                <Checkbox checked={item.isDone} onChange={() => onToggleDone(item)} sx={{ mt: -0.35, marginInlineStart: -0.35 }} />
                 <Stack sx={{ minWidth: 0 }}>
                   <Typography
                     fontWeight={700}

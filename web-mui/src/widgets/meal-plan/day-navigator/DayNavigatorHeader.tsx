@@ -3,6 +3,8 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { Button, IconButton, Paper, Popover, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
+import { useLanguage } from "../../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../../shared/i18n/languages";
 import { getTodayIsoDateLocal, parseIsoDate, shiftIsoDate } from "../dayNavigation";
 
 type DayNavigatorHeaderProps = {
@@ -20,6 +22,8 @@ export function DayNavigatorHeader({
   selectDayLabel,
   onDateChange
 }: DayNavigatorHeaderProps) {
+  const { language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
   const selected = parseIsoDate(selectedDate);
   const isToday = selectedDate === getTodayIsoDateLocal();
@@ -45,7 +49,7 @@ export function DayNavigatorHeader({
           flexShrink: 0
         }}
       >
-        <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} />
+        {isRtl ? <ChevronRightRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} />}
       </IconButton>
 
       <Paper
@@ -99,7 +103,7 @@ export function DayNavigatorHeader({
           flexShrink: 0
         }}
       >
-        <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />
+        {isRtl ? <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />}
       </IconButton>
 
       <Button
@@ -134,8 +138,8 @@ export function DayNavigatorHeader({
         open={Boolean(calendarAnchor)}
         anchorEl={calendarAnchor}
         onClose={() => setCalendarAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: isRtl ? "right" : "left" }}
+        transformOrigin={{ vertical: "top", horizontal: isRtl ? "right" : "left" }}
       >
         <Stack spacing={1.25} sx={{ p: 1.5, minWidth: 220 }}>
           <Typography fontWeight={800}>{selectDayLabel}</Typography>

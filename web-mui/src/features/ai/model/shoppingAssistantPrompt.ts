@@ -1,8 +1,10 @@
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
 import type { ShoppingList } from "../../shopping/api/shoppingApi";
 
 export function buildShoppingAssistantPrompt(input: {
   shoppingList: ShoppingList | null;
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
   userInstructions?: string;
 }): string {
   const snapshot = input.shoppingList
@@ -26,7 +28,7 @@ export function buildShoppingAssistantPrompt(input: {
     "You are the SmartFood Shopping List assistant.",
     "You help the user review, organize, and improve the current shopping list.",
     "You can suggest missing items, easier grouping, meal-prep purchases, or identify duplicates and weak spots.",
-    `Write the response in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the response in ${getAiLanguageName(input.responseLanguage)}.`,
     "Do not claim that you already added, deleted, or changed shopping items unless a tool actually performed it.",
     "Prefer clear, practical shopping advice over generic motivational text.",
     `Shopping list snapshot: ${snapshot}`,

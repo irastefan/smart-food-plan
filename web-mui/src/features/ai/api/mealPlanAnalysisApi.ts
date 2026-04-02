@@ -1,6 +1,7 @@
 import { runAgentTurn } from "./openaiAgentApi";
 import { buildMealPlanAnalysisPrompt } from "../model/mealPlanAnalysisPrompt";
 import type { MealPlanDay, MealPlanSection } from "../../meal-plan/api/mealPlanApi";
+import type { Language } from "../../../shared/i18n/messages";
 
 type NutritionTargets = {
   calories: number;
@@ -40,7 +41,7 @@ export async function runMealPlanNutritionAnalysis(input: {
   model: string;
   scope: "day" | "section";
   label: string;
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
   day?: MealPlanDay | null;
   section?: MealPlanSection | null;
   targets?: NutritionTargets;

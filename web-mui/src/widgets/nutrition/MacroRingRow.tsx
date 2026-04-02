@@ -1,4 +1,5 @@
 import { Box, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { useLanguage } from "../../app/providers/LanguageProvider";
 
 export type MacroRingItem = {
   key: string;
@@ -20,6 +21,7 @@ function formatNumber(value: number): string {
 
 export function MacroRingRow({ items, variant = "dashboard" }: MacroRingRowProps) {
   const theme = useTheme();
+  const { t } = useLanguage();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDashboard = variant === "dashboard";
   const ringSize = isDashboard ? (isMobile ? 87 : 104) : isMobile ? 76 : 96;
@@ -77,7 +79,7 @@ export function MacroRingRow({ items, variant = "dashboard" }: MacroRingRowProps
                 sx={{
                   color: item.color,
                   position: "absolute",
-                  left: 0,
+                  insetInlineStart: 0,
                   "& .MuiCircularProgress-circle": {
                     strokeLinecap: "round"
                   }
@@ -114,7 +116,7 @@ export function MacroRingRow({ items, variant = "dashboard" }: MacroRingRowProps
                       }
                     }}
                   >
-                    {item.target ? `/${formatNumber(item.target)}g` : "g"}
+                    {item.target ? `/${formatNumber(item.target)}${t("units.short.g" as never)}` : t("units.short.g" as never)}
                   </Typography>
                 </Box>
               </Box>

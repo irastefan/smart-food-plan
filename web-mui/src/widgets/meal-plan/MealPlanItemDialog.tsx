@@ -1,6 +1,7 @@
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import {
   Alert,
   Autocomplete,
@@ -27,6 +28,7 @@ import { getMealPlanHistory, type MealPlanHistoryItem, type MealPlanItem } from 
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanAssistant, type MealPlanAssistantProposal } from "../../features/ai/api/mealPlanAssistantApi";
 import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { getLocalizedUnitLabel, getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 import { AgentWorkspace } from "../ai/AgentWorkspace";
 
@@ -171,6 +173,7 @@ export function MealPlanItemDialog({
   const { t, language } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isRtl = isRtlLanguage(language);
   const agentSettings = getAiAgentSettings();
   const unitOptions = useMemo(() => getUnitOptions((key) => t(key as never)), [t]);
   const [activeTab, setActiveTab] = useState<DialogTab>("ai");
@@ -355,10 +358,10 @@ export function MealPlanItemDialog({
             }
       }}
     >
-      <DialogTitle sx={{ pr: 2, pb: { xs: 0.75, md: 1.5 } }}>
+      <DialogTitle sx={{ paddingInlineEnd: 2, pb: { xs: 0.75, md: 1.5 } }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <IconButton onClick={onClose} edge="start" size="small">
-            <ArrowBackRoundedIcon />
+            {isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
           </IconButton>
           <Typography component="span" variant="h6" fontWeight={800}>
             {title}
@@ -387,7 +390,7 @@ export function MealPlanItemDialog({
               overflowY: "auto",
               px: { xs: 2, md: 0 },
               py: { xs: 1.5, md: 2.5 },
-              pr: { xs: 1.25, md: 0.5 },
+              paddingInlineEnd: { xs: 1.25, md: 0.5 },
               scrollbarWidth: "thin",
               scrollbarColor: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(148,163,184,0.34) transparent" : "rgba(100,116,139,0.24) transparent",
@@ -411,7 +414,7 @@ export function MealPlanItemDialog({
             }}
           >
             {activeTab === "ai" ? (
-              <Stack spacing={2.5} sx={{ maxWidth: 980, mx: "auto" }}>
+              <Stack dir={isRtl ? "rtl" : "ltr"} spacing={2.5} sx={{ maxWidth: 980, mx: "auto", direction: isRtl ? "rtl" : "ltr" }}>
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
                 <AgentWorkspace
                   panelKey={`meal-plan-slot-agent-${open ? "open" : "closed"}-${sectionTitle}-${anchorDate}-${mode}`}
@@ -494,7 +497,7 @@ export function MealPlanItemDialog({
                                     <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
                                       {singleProposal.name}
                                     </Typography>
-                                    <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                    <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, marginInlineStart: 1 }}>
                                       {`${Math.round(singleProposal.amount)} ${getLocalizedUnitLabel((key) => t(key as never), singleProposal.unit)}`}
                                     </Typography>
                                   </Stack>
@@ -514,7 +517,7 @@ export function MealPlanItemDialog({
                                   sx={{
                                     width: 34,
                                     height: 34,
-                                    ml: 0.75,
+                                    marginInlineStart: 0.75,
                                     bgcolor: "primary.main",
                                     color: "primary.contrastText",
                                     boxShadow: "none",
@@ -565,7 +568,7 @@ export function MealPlanItemDialog({
                                         <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
                                           {entry.name}
                                         </Typography>
-                                        <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                        <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, marginInlineStart: 1 }}>
                                           {`${Math.round(entry.amount)} ${getLocalizedUnitLabel((key) => t(key as never), entry.unit)}`}
                                         </Typography>
                                       </Stack>
@@ -585,7 +588,7 @@ export function MealPlanItemDialog({
                                       sx={{
                                         width: 32,
                                         height: 32,
-                                        ml: 0.75,
+                                        marginInlineStart: 0.75,
                                         bgcolor: "primary.main",
                                         color: "primary.contrastText",
                                         boxShadow: "none",
@@ -685,7 +688,7 @@ export function MealPlanItemDialog({
                                 <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.25 }} noWrap>
                                   {entry.title}
                                 </Typography>
-                                <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, ml: 1 }}>
+                                <Typography color="text.secondary" sx={{ flexShrink: 0, fontSize: 13, lineHeight: 1.25, marginInlineStart: 1 }}>
                                   {entry.type === "recipe"
                                     ? `${Math.round(entry.servings ?? 1)} ${t("units.short.serving" as never)}`
                                     : `${Math.round(entry.amount ?? 100)} ${getLocalizedUnitLabel((key) => t(key as never), entry.unit)}`}
@@ -713,7 +716,7 @@ export function MealPlanItemDialog({
                               sx={{
                                 width: 32,
                                 height: 32,
-                                ml: 0.75,
+                                marginInlineStart: 0.75,
                                 bgcolor: "primary.main",
                                 color: "primary.contrastText",
                                 boxShadow: "none",

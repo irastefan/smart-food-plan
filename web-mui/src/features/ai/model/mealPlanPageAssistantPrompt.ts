@@ -1,9 +1,11 @@
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
 import type { MealPlanDay } from "../../meal-plan/api/mealPlanApi";
 
 export function buildMealPlanPageAssistantPrompt(input: {
   date: string;
   day: MealPlanDay | null;
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
   userInstructions?: string;
 }): string {
   const snapshot = input.day
@@ -31,7 +33,7 @@ export function buildMealPlanPageAssistantPrompt(input: {
     `The selected date is ${input.date}.`,
     "You work specifically with the user's meal plan screen.",
     "Help the user analyze the day, improve meal composition, suggest edits, suggest missing meals, or explain macro balance.",
-    `Write the response in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the response in ${getAiLanguageName(input.responseLanguage)}.`,
     "Do not pretend that you already changed the meal plan unless a tool actually did it.",
     "Prefer concise, practical answers with clear food suggestions.",
     "When suggesting foods, include rough calories, protein, fat, and carbs for the proposed portion if helpful.",

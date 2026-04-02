@@ -3,6 +3,7 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
 import { runAgentTurn } from "../../features/ai/api/openaiAgentApi";
 import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
@@ -15,6 +16,7 @@ type GlobalAiAgentDialogProps = {
 
 export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps) {
   const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [tools, setTools] = useState<McpTool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<{ type: "error"; message: string } | null>(null);
@@ -81,6 +83,7 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
         <Accordion
           disableGutters
           elevation={0}
+          dir={isRtl ? "rtl" : "ltr"}
           sx={{
             borderRadius: 1,
             border: "1px solid",
@@ -92,7 +95,7 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
           <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: 1.25, minHeight: 40 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <HelpOutlineRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-              <Typography fontWeight={700} sx={{ fontSize: { xs: 13, md: 14 } }}>{t("aiAgent.guide.title")}</Typography>
+              <Typography fontWeight={700} sx={{ fontSize: { xs: 13, md: 14 }, textAlign: "start" }}>{t("aiAgent.guide.title")}</Typography>
             </Stack>
           </AccordionSummary>
           <AccordionDetails sx={{ pt: 0, px: 1.25, pb: 1.25 }}>

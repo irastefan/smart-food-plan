@@ -1,11 +1,12 @@
 import { Paper } from "@mui/material";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
+import { getLanguageDateLocale } from "../../../shared/i18n/languages";
 import { DayNavigatorHeader } from "./DayNavigatorHeader";
 import type { MealPlanDayNavigatorProps } from "./types";
 
 export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDayNavigatorProps) {
   const { language, t } = useLanguage();
-  const locale = language === "ru" ? "ru-RU" : "en-US";
+  const locale = getLanguageDateLocale(language);
 
   return (
     <Paper
@@ -30,8 +31,8 @@ export function MealPlanDayNavigator({ selectedDate, onDateChange }: MealPlanDay
           content: '""',
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at left bottom, rgba(14,165,233,0.10), transparent 28%), radial-gradient(circle at center, rgba(16,185,129,0.08), transparent 20%)",
+          background: (theme) =>
+            `${theme.direction === "rtl" ? "radial-gradient(circle at right bottom, rgba(14,165,233,0.10), transparent 28%)" : "radial-gradient(circle at left bottom, rgba(14,165,233,0.10), transparent 28%)"}, radial-gradient(circle at center, rgba(16,185,129,0.08), transparent 20%)`,
           pointerEvents: "none"
         }
       }}

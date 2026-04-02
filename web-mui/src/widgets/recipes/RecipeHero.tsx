@@ -51,7 +51,7 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
                 hasDarkSurface || theme.palette.mode === "dark" ? "none" : "0 6px 18px rgba(15,23,42,0.08)"
             }}
           />
-          <Stack direction="row" spacing={0.9} sx={{ ml: { xs: 1, md: 2 }, flexShrink: 0 }}>
+          <Stack direction="row" spacing={0.9} sx={{ marginInlineStart: { xs: 1, md: 2 }, flexShrink: 0 }}>
             {onEdit ? (
               <Tooltip title={t("recipe.edit")}>
                 <IconButton

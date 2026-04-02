@@ -38,7 +38,7 @@ export function FilterChipRow({ value, items, onChange, addLabel, onAdd, wrapOnD
           flexWrap: { xs: "nowrap", md: wrapOnDesktop ? "wrap" : "nowrap" },
           width: { xs: "max-content", md: wrapOnDesktop ? "auto" : "max-content" },
           minWidth: 0,
-          pr: 0.5
+          paddingInlineEnd: 0.5
         }}
       >
         {items.map((item) => (
@@ -64,8 +64,8 @@ export function FilterChipRow({ value, items, onChange, addLabel, onAdd, wrapOnD
                 px: 1.5
               },
               "& .MuiChip-deleteIcon": {
-                mr: 0.75,
-                ml: -0.25,
+                marginInlineEnd: 0.75,
+                marginInlineStart: -0.25,
                 fontSize: 18
               }
             }}

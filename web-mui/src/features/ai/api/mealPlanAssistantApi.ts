@@ -1,6 +1,7 @@
 import { listMcpTools } from "./mcpApi";
 import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiAgentApi";
 import { buildMealPlanAssistantPrompt } from "../model/mealPlanAssistantPrompt";
+import type { Language } from "../../../shared/i18n/messages";
 
 export type MealPlanAssistantProposal = {
   name: string;
@@ -198,7 +199,7 @@ export async function runMealPlanAssistant(input: {
   userText: string;
   userInstructions?: string;
   images?: AgentImageInput[];
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
 }): Promise<MealPlanAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({

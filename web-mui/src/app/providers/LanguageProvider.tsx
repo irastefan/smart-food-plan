@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import type { Language, TranslationKey } from "../../shared/i18n/messages";
 import { messages } from "../../shared/i18n/messages";
+import { defaultLanguage, isRtlLanguage, isSupportedLanguage } from "../../shared/i18n/languages";
 
 const STORAGE_KEY = "smartFoodPlanMui.language";
 
@@ -14,11 +15,11 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function getInitialLanguage(): Language {
   if (typeof window === "undefined") {
-    return "en";
+    return defaultLanguage;
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "ru" ? "ru" : "en";
+  return stored && isSupportedLanguage(stored) ? stored : defaultLanguage;
 }
 
 export function LanguageProvider({ children }: PropsWithChildren) {
@@ -31,8 +32,29 @@ export function LanguageProvider({ children }: PropsWithChildren) {
     }
   }
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const direction = isRtlLanguage(language) ? "rtl" : "ltr";
+    document.documentElement.lang = language;
+    document.documentElement.dir = direction;
+    document.body.dir = direction;
+    document.body.style.direction = direction;
+    document.body.style.textAlign = "start";
+    const rootElement = document.getElementById("root");
+    if (rootElement) {
+      rootElement.dir = direction;
+      rootElement.setAttribute("data-direction", direction);
+      rootElement.style.direction = direction;
+    }
+  }, [language]);
+
   const t = useCallback((key: TranslationKey, params?: Record<string, string | number>): string => {
-    const template: string = messages[language][key] ?? messages.en[key] ?? key;
+    const dictionaries = messages as unknown as Partial<Record<Language, Partial<Record<TranslationKey, string>>>>;
+    const languageMessages = dictionaries[language];
+    const template: string = languageMessages?.[key] ?? messages.en[key] ?? key;
     if (!params) {
       return template;
     }

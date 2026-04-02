@@ -1,6 +1,7 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { deleteRecipe, getRecipe } from "../features/recipes/api/recipesApi";
@@ -26,6 +27,8 @@ type LayoutContext = {
 };
 
 export function RecipeDetailsPage() {
+  const theme = useTheme();
+  const isRtl = theme.direction === "rtl";
   const { recipeId } = useParams();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -163,7 +166,7 @@ export function RecipeDetailsPage() {
       />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-        <Button component={RouterLink} to="/recipes" startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
+        <Button component={RouterLink} to="/recipes" startIcon={isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
           {t("recipe.back")}
         </Button>
       </Stack>

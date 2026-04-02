@@ -101,7 +101,7 @@ export function MealPlanSummaryCard({
               sx={{
                 color: ringColor,
                 position: "absolute",
-                left: 0,
+                insetInlineStart: 0,
                 "& .MuiCircularProgress-circle": {
                   strokeLinecap: "round"
                 }
@@ -131,7 +131,7 @@ export function MealPlanSummaryCard({
             <SummaryStat
               icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#fb923c" }} />}
               label={goalLabel}
-              value={`${formatNumber(goalValue)} kcal`}
+              value={`${formatNumber(goalValue)} ${t("units.short.kcal" as never)}`}
             />
             <SummaryStat
               icon={
@@ -140,7 +140,7 @@ export function MealPlanSummaryCard({
                   : <ChecklistRoundedIcon sx={{ color: "#62b4ff" }} />
               }
               label={showFoodInCenter ? remainingLabel : usedLabel}
-              value={`${formatNumber(showFoodInCenter ? remainingValue : usedValue)} kcal`}
+              value={`${formatNumber(showFoodInCenter ? remainingValue : usedValue)} ${t("units.short.kcal" as never)}`}
             />
           </Stack>
         </Stack>

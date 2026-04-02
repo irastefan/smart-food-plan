@@ -28,6 +28,7 @@ import { useLanguage } from "../../app/providers/LanguageProvider";
 import { useThemeMode } from "../../app/providers/ThemeModeProvider";
 import { clearAccessToken } from "../../shared/api/http";
 import type { TranslationKey } from "../../shared/i18n/messages";
+import { getLanguageDisplayLabel, isRtlLanguage, supportedLanguages } from "../../shared/i18n/languages";
 import { BrandMark } from "../../features/auth/components/BrandMark";
 import { settingsSections } from "../settings/settingsSections";
 import { dashboardNavigation } from "./navigation";
@@ -61,6 +62,7 @@ export function DashboardSidebar({
   const [settingsOpen, setSettingsOpen] = useState(location.pathname.startsWith("/settings"));
   const currentSettingsSection = useMemo(() => new URLSearchParams(location.search).get("section"), [location.search]);
   const isDark = mode === "dark";
+  const isRtl = isRtlLanguage(language);
 
   useEffect(() => {
     if (location.pathname.startsWith("/settings")) {
@@ -69,7 +71,7 @@ export function DashboardSidebar({
   }, [location.pathname]);
 
   function handleLanguageChange(event: SelectChangeEvent): void {
-    setLanguage(event.target.value as "en" | "ru");
+    setLanguage(event.target.value as typeof language);
   }
 
   function handleLogout(): void {
@@ -79,10 +81,12 @@ export function DashboardSidebar({
 
   const sidebarContent = (
     <Stack
+      dir={isRtl ? "rtl" : "ltr"}
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
       sx={{
         height: "100%",
         p: 1.5,
-        borderRight: isDesktop ? "1px solid" : "none",
+        borderInlineEnd: isDesktop ? "1px solid" : "none",
         borderColor: "divider",
         backgroundColor: theme.palette.mode === "dark" ? "rgba(10, 19, 32, 0.96)" : "rgba(248, 250, 252, 0.98)",
         color: theme.palette.mode === "dark" ? "#f8fafc" : theme.palette.text.primary
@@ -91,7 +95,11 @@ export function DashboardSidebar({
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, py: 1.5, minHeight: 64 }}>
         <BrandMark />
         <IconButton onClick={isDesktop ? onToggleCollapse : onCloseMobile} size="small" sx={{ color: "#cbd5e1" }}>
-          {isDesktop ? (collapsed ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />) : <ChevronLeftRoundedIcon />}
+          {isDesktop
+            ? collapsed
+              ? isRtl ? <ChevronLeftRoundedIcon /> : <ChevronRightRoundedIcon />
+              : isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />
+            : isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
         </IconButton>
       </Stack>
 
@@ -128,14 +136,17 @@ export function DashboardSidebar({
                 fontSize: 13,
                 fontWeight: 700,
                 color: isDark ? "#f8fafc" : "text.primary",
-                ml: -0.5,
+                marginInlineStart: -0.5,
                 "& .MuiSelect-icon": {
                   color: isDark ? "rgba(248,250,252,0.82)" : "text.secondary"
                 }
               }}
             >
-              <MenuItem value="en">EN</MenuItem>
-              <MenuItem value="ru">RU</MenuItem>
+              {supportedLanguages.map((languageOption) => (
+                <MenuItem key={languageOption} value={languageOption}>
+                  {getLanguageDisplayLabel(languageOption)}
+                </MenuItem>
+              ))}
             </Select>
           </Stack>
 
@@ -169,7 +180,7 @@ export function DashboardSidebar({
           px: collapsed ? 0 : 1.5,
           py: 1.5,
           color: theme.palette.mode === "dark" ? "rgba(148, 163, 184, 0.7)" : "rgba(71, 85, 105, 0.8)",
-          textAlign: collapsed ? "center" : "left"
+          textAlign: collapsed ? "center" : "start"
         }}
       >
         {collapsed ? "SF" : t("nav.overview")}
@@ -223,7 +234,16 @@ export function DashboardSidebar({
                 )}
 
                 {settingsOpen && !collapsed ? (
-                  <Stack spacing={0.5} sx={{ mt: 0.25, mb: 0.75, ml: 1.25, pl: 1.5, borderLeft: "1px solid rgba(148, 163, 184, 0.2)" }}>
+                  <Stack
+                    spacing={0.5}
+                    sx={{
+                      mt: 0.25,
+                      mb: 0.75,
+                      marginInlineStart: 1.25,
+                      paddingInlineStart: 1.5,
+                      borderInlineStart: "1px solid rgba(148, 163, 184, 0.2)"
+                    }}
+                  >
                     {settingsSections.map((section) => {
                       const sectionSelected = settingsSelected && (currentSettingsSection ?? "profile") === section.id;
                       const SectionIcon = section.icon;
@@ -325,15 +345,19 @@ export function DashboardSidebar({
   if (isDesktop) {
     return (
       <Box
+        dir={isRtl ? "rtl" : "ltr"}
+        style={{ direction: isRtl ? "rtl" : "ltr" }}
         sx={{
           width: 392,
           minHeight: "100vh",
           height: "100%",
           display: "flex",
-          justifyContent: "flex-start"
+          justifyContent: isRtl ? "flex-end" : "flex-start"
         }}
       >
         <Box
+          dir={isRtl ? "rtl" : "ltr"}
+          style={{ direction: isRtl ? "rtl" : "ltr" }}
           sx={{
             width: collapsed ? 92 : 392,
             minHeight: "100vh",
@@ -350,14 +374,18 @@ export function DashboardSidebar({
 
   return (
     <Drawer
+      anchor={isRtl ? "right" : "left"}
       open={open}
       onClose={onCloseMobile}
+      dir={isRtl ? "rtl" : "ltr"}
       PaperProps={{
         sx: {
           width: "100vw",
           maxWidth: "100vw",
-          height: "100dvh"
-        }
+          height: "100dvh",
+          direction: isRtl ? "rtl" : "ltr"
+        },
+        style: { direction: isRtl ? "rtl" : "ltr" }
       }}
     >
       {sidebarContent}

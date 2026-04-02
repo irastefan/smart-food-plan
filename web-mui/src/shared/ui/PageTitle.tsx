@@ -11,7 +11,8 @@ export function PageTitle({ title }: PageTitleProps) {
       sx={{
         fontSize: { xs: "1.5rem", md: "1.8rem" },
         lineHeight: 1.1,
-        fontWeight: 800
+        fontWeight: 800,
+        textAlign: "start"
       }}
     >
       {title}

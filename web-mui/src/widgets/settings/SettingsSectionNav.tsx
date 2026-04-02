@@ -55,7 +55,7 @@ export function SettingsSectionNav({ value, onChange }: SettingsSectionNavProps)
               onClick={() => onChange(item.id)}
               sx={{
                 width: "100%",
-                textAlign: "left",
+                textAlign: "start",
                 borderRadius: 1.25,
                 p: 1.5,
                 justifyContent: "flex-start",

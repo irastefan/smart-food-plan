@@ -4,6 +4,7 @@ import { Button, FormControlLabel, MenuItem, Stack, Switch, TextField, Typograph
 import { useEffect, useState } from "react";
 import type { AiAgentSettings } from "../../shared/config/aiAgent";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { supportedLanguages } from "../../shared/i18n/languages";
 
 type AiAgentSettingsCardProps = {
   value: AiAgentSettings;
@@ -12,7 +13,7 @@ type AiAgentSettingsCardProps = {
 };
 
 const MODEL_OPTIONS = ["gpt-5-mini", "gpt-5", "gpt-4.1-mini"];
-const SPEECH_LANGUAGE_OPTIONS: Array<AiAgentSettings["speechLanguage"]> = ["interface", "en", "ru"];
+const SPEECH_LANGUAGE_OPTIONS: Array<AiAgentSettings["speechLanguage"]> = ["interface", ...supportedLanguages];
 export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSettingsCardProps) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState<AiAgentSettings>(value);

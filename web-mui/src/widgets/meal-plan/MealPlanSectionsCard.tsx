@@ -53,6 +53,16 @@ function getItemHref(item: MealPlanItem): string | null {
   return null;
 }
 
+function getLocalizedSectionTitle(
+  t: (key: string) => string,
+  sectionId: string,
+  fallbackTitle: string
+): string {
+  const key = `mealPlan.slot.${sectionId}`;
+  const translated = t(key);
+  return translated === key ? fallbackTitle : translated;
+}
+
 export function MealPlanSectionsCard({
   day,
   shoppingCategories,
@@ -107,14 +117,18 @@ export function MealPlanSectionsCard({
                   : "linear-gradient(180deg, #ffffff, #f8fafc)"
             }}
           >
+            {(() => {
+              const sectionTitle = getLocalizedSectionTitle((key) => t(key as never), section.id, section.title);
+              return (
+                <>
             <Box sx={{ px: 3, py: 2.5 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                 <Box sx={{ minWidth: 0 }}>
                   <Typography variant="h4" mb={0.5} sx={{ fontSize: { xs: "1.55rem", sm: "1.75rem" } }}>
-                    {section.title}
+                    {sectionTitle}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {`${t("mealPlan.macro.protein")} ${formatNumber(section.totals.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(section.totals.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(section.totals.carbsG)}g`}
+                    {`${t("mealPlan.macro.protein")} ${formatNumber(section.totals.proteinG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.fat")} ${formatNumber(section.totals.fatG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.carbs")} ${formatNumber(section.totals.carbsG)}${t("units.short.g" as never)}`}
                   </Typography>
                 </Box>
                 <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: "1.45rem", sm: "1.65rem" } }}>
@@ -164,7 +178,7 @@ export function MealPlanSectionsCard({
                           item.type === "recipe"
                             ? `${formatPortion(item.servings ?? 1)} ${servingsLabel}`
                             : `${formatNumber(item.amount ?? 0)} ${getLocalizedUnitLabel((key) => t(key as never), item.unit ?? "g")}`
-                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}g`}
+                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}${t("units.short.g" as never)}`}
                       </Typography>
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
                         {item.type === "product" ? (
@@ -178,7 +192,7 @@ export function MealPlanSectionsCard({
                             onCreateCategory={onCreateShoppingCategory}
                           />
                         ) : null}
-                        <IconButton size="small" onClick={() => onEditItem(section.id, section.title, item)} title={editLabel}>
+                        <IconButton size="small" onClick={() => onEditItem(section.id, sectionTitle, item)} title={editLabel}>
                           <EditRoundedIcon fontSize="small" />
                         </IconButton>
                         <IconButton size="small" onClick={() => onDeleteItem(section.id, item)} title={deleteLabel}>
@@ -200,16 +214,16 @@ export function MealPlanSectionsCard({
             <Box sx={{ px: 3, py: 1.5 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
                 <Stack direction="row" spacing={1.75} alignItems="center">
-                  <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, section.title)}>
+                  <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(section.id, sectionTitle)}>
                     {addLabel}
                   </Button>
                   {section.items.length > 0 ? (
-                    <Tooltip title={t("mealPlan.analysis.tooltip.section", { section: section.title })}>
+                    <Tooltip title={t("mealPlan.analysis.tooltip.section", { section: sectionTitle })}>
                       <Button
                         size="small"
                         variant="text"
                         startIcon={<InsightsRoundedIcon fontSize="small" />}
-                        onClick={() => onAnalyzeSection(section)}
+                        onClick={() => onAnalyzeSection({ ...section, title: sectionTitle })}
                         sx={{ px: 1 }}
                       >
                         {t("mealPlan.actions.analyzeWithAi")}
@@ -228,6 +242,9 @@ export function MealPlanSectionsCard({
                 ) : null}
               </Stack>
             </Box>
+                </>
+              );
+            })()}
           </Card>
         ))}
       </Box>

@@ -23,8 +23,8 @@ export function DayNavigatorTimeline({ days, selectedDate, isToday, locale }: Da
           sx={{
             position: "absolute",
             top: 18,
-            left: 0,
-            right: 0,
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
             borderTop: "2px dotted",
             borderColor: "rgba(148, 163, 184, 0.25)"
           }}

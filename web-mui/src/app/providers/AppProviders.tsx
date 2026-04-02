@@ -1,7 +1,9 @@
 import type { PropsWithChildren } from "react";
-import { CssBaseline, GlobalStyles } from "@mui/material";
+import { Box, CssBaseline, GlobalStyles } from "@mui/material";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { LanguageProvider } from "./LanguageProvider";
 import { ThemeModeProvider, useThemeMode } from "./ThemeModeProvider";
+import { useLanguage } from "./LanguageProvider";
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
@@ -15,6 +17,8 @@ export function AppProviders({ children }: PropsWithChildren) {
 
 function AppFrame({ children }: PropsWithChildren) {
   const { mode, theme } = useThemeMode();
+  const { language } = useLanguage();
+  const direction = isRtlLanguage(language) ? "rtl" : "ltr";
 
   return (
     <>
@@ -31,9 +35,14 @@ function AppFrame({ children }: PropsWithChildren) {
           "html, body, #root": {
             minHeight: "100%"
           },
+          "#root": {
+            direction
+          },
           body: {
             margin: 0,
-            backgroundColor: theme.palette.background.default
+            backgroundColor: theme.palette.background.default,
+            direction,
+            textAlign: "start"
           },
           a: {
             color: "inherit",
@@ -41,7 +50,9 @@ function AppFrame({ children }: PropsWithChildren) {
           }
         }}
       />
-      {children}
+      <Box data-app-root="true" dir={direction} style={{ direction }} sx={{ minHeight: "100%" }}>
+        {children}
+      </Box>
     </>
   );
 }

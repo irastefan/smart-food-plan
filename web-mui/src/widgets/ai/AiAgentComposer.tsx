@@ -8,6 +8,8 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Avatar, IconButton, InputBase, Menu, MenuItem, Paper, Stack, Tooltip } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import type { Language } from "../../shared/i18n/messages";
+import { getLanguageSpeechLocale, isRtlLanguage } from "../../shared/i18n/languages";
 
 type SpeechRecognitionConstructor = new () => {
   continuous: boolean;
@@ -32,7 +34,7 @@ type AiAgentComposerProps = {
   placeholder: string;
   submitLabel: string;
   value: string;
-  speechLanguage: "interface" | "en" | "ru";
+  speechLanguage: "interface" | Language;
   onValueChange: (value: string) => void;
   onSubmit: (payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) => Promise<void>;
 };
@@ -53,6 +55,7 @@ export function AiAgentComposer({
   onSubmit
 }: AiAgentComposerProps) {
   const { language, t } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [isRecording, setIsRecording] = useState(false);
   const [images, setImages] = useState<ComposerImage[]>([]);
   const imagesRef = useRef<ComposerImage[]>([]);
@@ -167,7 +170,7 @@ export function AiAgentComposer({
     recognition.continuous = !isMobileSpeechMode;
     recognition.interimResults = !isMobileSpeechMode;
     const resolvedSpeechLanguage = speechLanguage === "interface" ? language : speechLanguage;
-    recognition.lang = resolvedSpeechLanguage === "ru" ? "ru-RU" : "en-US";
+    recognition.lang = getLanguageSpeechLocale(resolvedSpeechLanguage);
 
     recognition.onresult = (event) => {
       let finalChunk = "";
@@ -217,7 +220,9 @@ export function AiAgentComposer({
 
   return (
     <Paper
+      dir={isRtl ? "rtl" : "ltr"}
       sx={{
+        direction: isRtl ? "rtl" : "ltr",
         px: { xs: 0.6, md: 0.75 },
         py: { xs: 0.28, md: 0.34 },
         borderRadius: 1,
@@ -252,7 +257,14 @@ export function AiAgentComposer({
                 <IconButton
                   size="small"
                   onClick={() => removeImage(image.id)}
-                  sx={{ position: "absolute", top: 2, right: 2, bgcolor: "rgba(15,23,42,0.55)", color: "#fff", "&:hover": { bgcolor: "rgba(15,23,42,0.72)" } }}
+                  sx={{
+                    position: "absolute",
+                    top: 2,
+                    insetInlineEnd: 2,
+                    bgcolor: "rgba(15,23,42,0.55)",
+                    color: "#fff",
+                    "&:hover": { bgcolor: "rgba(15,23,42,0.72)" }
+                  }}
                 >
                   <CloseRoundedIcon sx={{ fontSize: 14 }} />
                 </IconButton>
@@ -296,8 +308,9 @@ export function AiAgentComposer({
           spacing={0.5}
           alignItems="center"
           sx={{
+            direction: isRtl ? "rtl" : "ltr",
             minHeight: 50,
-            pr: 0.35,
+            paddingInlineEnd: 0.35,
             py: 0,
             mt: 0,
             mb: 0
@@ -317,6 +330,7 @@ export function AiAgentComposer({
           </Tooltip>
 
           <InputBase
+            dir={isRtl ? "rtl" : "ltr"}
             value={value}
             onChange={(event) => onValueChange(event.target.value)}
             onKeyDown={handleComposerKeyDown}
@@ -331,13 +345,17 @@ export function AiAgentComposer({
               lineHeight: 1.45,
               alignSelf: "center",
               mt: 0,
+              textAlign: "start",
+              direction: isRtl ? "rtl" : "ltr",
               "& .MuiInputBase-inputMultiline": {
-                py: 0.58
+                py: 0.58,
+                textAlign: "start",
+                direction: isRtl ? "rtl" : "ltr"
               }
             }}
           />
 
-          <Stack direction="row" spacing={0.45} alignItems="center" sx={{ alignSelf: "center", pr: 0.25 }}>
+          <Stack direction="row" spacing={0.45} alignItems="center" sx={{ alignSelf: "center", paddingInlineEnd: 0.25 }}>
             <Tooltip
               title={
                 SpeechRecognitionApi
@@ -381,11 +399,12 @@ export function AiAgentComposer({
         </Stack>
 
         <Menu
+          dir={isRtl ? "rtl" : "ltr"}
           anchorEl={attachAnchor}
           open={Boolean(attachAnchor)}
           onClose={() => setAttachAnchor(null)}
-          anchorOrigin={{ vertical: "top", horizontal: "left" }}
-          transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+          anchorOrigin={{ vertical: "top", horizontal: isRtl ? "right" : "left" }}
+          transformOrigin={{ vertical: "bottom", horizontal: isRtl ? "right" : "left" }}
         >
           <MenuItem
             onClick={() => {

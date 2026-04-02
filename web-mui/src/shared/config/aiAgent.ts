@@ -1,4 +1,5 @@
 import type { Language } from "../i18n/messages";
+import { isSupportedLanguage } from "../i18n/languages";
 
 const AI_AGENT_SETTINGS_STORAGE_KEY = "smartFoodPlanMui.aiAgentSettings";
 
@@ -6,7 +7,7 @@ export type AiAgentSettings = {
   model: string;
   userInstructions: string;
   showToolOutput: boolean;
-  speechLanguage: "interface" | "en" | "ru";
+  speechLanguage: "interface" | Language;
 };
 
 const defaultSettings: AiAgentSettings = {
@@ -35,7 +36,7 @@ export function getAiAgentSettings(): AiAgentSettings {
       showToolOutput:
         typeof parsed.showToolOutput === "boolean" ? parsed.showToolOutput : defaultSettings.showToolOutput,
       speechLanguage:
-        parsed.speechLanguage === "en" || parsed.speechLanguage === "ru" || parsed.speechLanguage === "interface"
+        parsed.speechLanguage === "interface" || (typeof parsed.speechLanguage === "string" && isSupportedLanguage(parsed.speechLanguage))
           ? parsed.speechLanguage
           : defaultSettings.speechLanguage
     };
@@ -55,6 +56,6 @@ export function setAiAgentSettings(value: AiAgentSettings): void {
 export function resolveAiResponseLanguage(
   speechLanguage: AiAgentSettings["speechLanguage"],
   interfaceLanguage: Language
-): "en" | "ru" {
+): Language {
   return speechLanguage === "interface" ? interfaceLanguage : speechLanguage;
 }

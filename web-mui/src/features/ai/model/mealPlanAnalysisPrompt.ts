@@ -1,7 +1,10 @@
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
+
 export function buildMealPlanAnalysisPrompt(input: {
   scope: "day" | "section";
   label: string;
-  responseLanguage: "en" | "ru";
+  responseLanguage: Language;
   userInstructions?: string;
 }): string {
   return [
@@ -15,7 +18,7 @@ export function buildMealPlanAnalysisPrompt(input: {
     "Give concise, practical recommendations in a calm tone. Prefer wording like 'you could', 'it may help', 'consider'.",
     "Avoid alarmist wording, moral judgment, or strict dieting language.",
     "Structure the answer in 3 short parts: 1) what looks good, 2) what could be improved, 3) 2-4 practical suggestions.",
-    `Write the full answer in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the full answer in ${getAiLanguageName(input.responseLanguage)}.`,
     `Current analysis scope: ${input.scope}. Label: ${input.label}.`,
     input.userInstructions?.trim() ? `Additional user instructions: ${input.userInstructions.trim()}` : ""
   ].filter(Boolean).join(" ");

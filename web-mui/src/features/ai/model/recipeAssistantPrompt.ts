@@ -1,3 +1,5 @@
+import type { Language } from "../../../shared/i18n/messages";
+import { getAiLanguageName } from "../../../shared/i18n/languages";
 import type { RecipeDetail } from "../../recipes/model/recipeTypes";
 
 function buildRecipeSnapshot(recipe: RecipeDetail): string {
@@ -17,14 +19,14 @@ function buildRecipeSnapshot(recipe: RecipeDetail): string {
   });
 }
 
-export function buildRecipeAssistantPrompt(input: { userInstructions?: string; currentRecipe?: RecipeDetail | null; responseLanguage: "en" | "ru" }): string {
+export function buildRecipeAssistantPrompt(input: { userInstructions?: string; currentRecipe?: RecipeDetail | null; responseLanguage: Language }): string {
   return [
     "You are a recipe creation assistant inside SmartFood.",
     input.currentRecipe
       ? "You are currently working inside a specific recipe page and may need to modify the current recipe."
       : "You are currently working inside the recipes page and may need to create a new recipe.",
     "Your job is to turn the user's message or food photo into a practical recipe draft.",
-    `Write the response message in ${input.responseLanguage === "ru" ? "Russian" : "English"}.`,
+    `Write the response message in ${getAiLanguageName(input.responseLanguage)}.`,
     "If the user provides a dish idea, ingredient list, spoken dictation, or photo, propose a realistic recipe draft.",
     "When the user sends a photo, identify the likely dish and infer a practical home-style recipe from it.",
     input.currentRecipe

@@ -1,5 +1,7 @@
 import { Alert, Box, Chip, CircularProgress, Stack } from "@mui/material";
 import { useEffect, useState, type ReactNode } from "react";
+import { useLanguage } from "../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 import { AiAssistantPanel, type AiAssistantPanelProps, type AiAssistantPanelRenderProps } from "./AiAssistantPanel";
 
 export type AgentWorkspaceProps<TExtra = void> = Omit<AiAssistantPanelProps<TExtra>, "renderTop" | "renderBottom" | "onExtraResult"> & {
@@ -27,6 +29,8 @@ export function AgentWorkspace<TExtra = void>({
   renderTemplate,
   ...panelProps
 }: AgentWorkspaceProps<TExtra>) {
+  const { language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const [extra, setExtra] = useState<TExtra | undefined>(undefined);
 
   useEffect(() => {
@@ -40,14 +44,14 @@ export function AgentWorkspace<TExtra = void>({
 
   if (isLoading) {
     return (
-      <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }} spacing={2}>
+      <Stack dir={isRtl ? "rtl" : "ltr"} alignItems="center" justifyContent="center" sx={{ py: 8, direction: isRtl ? "rtl" : "ltr" }} spacing={2}>
         <CircularProgress />
       </Stack>
     );
   }
 
   return (
-    <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+    <Stack dir={isRtl ? "rtl" : "ltr"} spacing={2} sx={{ flex: 1, minHeight: 0, direction: isRtl ? "rtl" : "ltr" }}>
       {loadError ? <Alert severity="error">{loadError}</Alert> : null}
       {header ? <Box>{header}</Box> : null}
 

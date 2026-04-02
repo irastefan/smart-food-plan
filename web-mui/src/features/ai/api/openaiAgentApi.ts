@@ -1,5 +1,6 @@
 import { callMcpTool, type McpTool } from "./mcpApi";
 import { buildAgentSystemPrompt } from "../model/agentSystemPrompt";
+import type { Language } from "../../../shared/i18n/messages";
 
 export type AgentMessage = {
   id: string;
@@ -104,7 +105,7 @@ export async function runAgentTurn(input: {
   images?: AgentImageInput[];
   model?: string;
   userInstructions?: string;
-  responseLanguage?: "en" | "ru";
+  responseLanguage?: Language;
   systemPrompt?: string;
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);

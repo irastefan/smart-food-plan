@@ -1,5 +1,6 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import { Alert, Button, CircularProgress, Paper, Stack } from "@mui/material";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import { Alert, Button, CircularProgress, Paper, Stack, useTheme } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { createRecipe, getRecipe, updateRecipe } from "../features/recipes/api/recipesApi";
@@ -27,6 +28,8 @@ const emptyForm: RecipeFormValues = {
 };
 
 export function RecipeEditorPage() {
+  const theme = useTheme();
+  const isRtl = theme.direction === "rtl";
   const navigate = useNavigate();
   const { recipeId } = useParams();
   const isEdit = Boolean(recipeId);
@@ -143,7 +146,12 @@ export function RecipeEditorPage() {
       />
       <PageTitle title={isEdit ? t("recipe.form.editTitle") : t("recipe.form.createTitle")} />
 
-      <Button component={RouterLink} to={isEdit && recipeId ? `/recipes/${recipeId}` : "/recipes"} startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
+      <Button
+        component={RouterLink}
+        to={isEdit && recipeId ? `/recipes/${recipeId}` : "/recipes"}
+        startIcon={isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
+        sx={{ alignSelf: "flex-start" }}
+      >
         {t("recipe.back")}
       </Button>
 

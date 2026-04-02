@@ -1,4 +1,5 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import {
   Alert,
@@ -18,7 +19,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanNutritionAnalysis } from "../../features/ai/api/mealPlanAnalysisApi";
 import type { MealPlanDay, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
-import { getAiAgentSettings } from "../../shared/config/aiAgent";
+import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { getOpenAiApiKey } from "../../shared/config/openai";
 
 type MealPlanAnalysisDialogProps = {
@@ -48,6 +49,7 @@ export function MealPlanAnalysisDialog({
   const { language, t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isRtl = theme.direction === "rtl";
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function MealPlanAnalysisDialog({
       setIsLoading(true);
       setError(null);
       const settings = getAiAgentSettings();
-      const responseLanguage = settings.speechLanguage === "interface" ? language : settings.speechLanguage;
+      const responseLanguage = resolveAiResponseLanguage(settings.speechLanguage, language);
       const text = await runMealPlanNutritionAnalysis({
         apiKey,
         model: settings.model,
@@ -117,7 +119,7 @@ export function MealPlanAnalysisDialog({
       <DialogTitle sx={{ pr: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <IconButton onClick={onClose} edge="start" size="small" disabled={isLoading}>
-            <ArrowBackRoundedIcon />
+            {isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
           </IconButton>
           <InsightsRoundedIcon color="primary" />
           <Typography component="span" variant="h6" fontWeight={800}>

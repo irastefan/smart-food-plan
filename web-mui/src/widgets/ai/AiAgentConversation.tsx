@@ -2,6 +2,7 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typography } from "@mui/material";
 import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 
 type AiAgentConversationProps = {
   messages: AgentMessage[];
@@ -9,14 +10,15 @@ type AiAgentConversationProps = {
 };
 
 export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentConversationProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
 
   if (messages.length === 0 && !isSubmitting) {
     return null;
   }
 
   return (
-    <Stack spacing={{ xs: 1, md: 1.5 }}>
+    <Stack spacing={{ xs: 1, md: 1.5 }} dir={isRtl ? "rtl" : "ltr"} sx={{ direction: isRtl ? "rtl" : "ltr" }}>
       {messages.map((message) => (
         <Stack
           key={message.id}
@@ -38,7 +40,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
             >
               <Stack spacing={0.75}>
                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                  <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
+                <Typography variant="caption" sx={{ opacity: 0.78, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800, fontSize: 11 }}>
                     {message.toolName}
                   </Typography>
                 </Stack>
@@ -77,7 +79,8 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                       fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                       fontSize: { xs: 12, md: 13 },
                       lineHeight: 1.55,
-                      overflowX: "auto"
+                      overflowX: "auto",
+                      textAlign: "start"
                     }}
                   >
                       {message.text}
@@ -110,7 +113,8 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                   fontFamily: "inherit",
                   fontSize: { xs: 13.5, md: 14.5 },
                   lineHeight: 1.5,
-                  overflowX: "auto"
+                  overflowX: "auto",
+                  textAlign: "start"
                 }}
               >
                 {message.text}
@@ -155,7 +159,8 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
                   fontSize: { xs: 14, md: 15 },
                   lineHeight: 1.7,
                   overflowX: "auto",
-                  color: "text.primary"
+                  color: "text.primary",
+                  textAlign: "start"
                 }}
               >
                 {message.text}
@@ -172,7 +177,7 @@ export function AiAgentConversation({ messages, isSubmitting = false }: AiAgentC
               minHeight: { xs: 28, md: 32 },
               display: "flex",
               alignItems: "center",
-              pl: 0.25
+              paddingInlineStart: 0.25
             }}
           >
             <Stack direction="row" spacing={0.6} alignItems="center" sx={{ minWidth: 28 }}>

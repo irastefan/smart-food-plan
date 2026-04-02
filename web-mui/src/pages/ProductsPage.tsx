@@ -177,7 +177,7 @@ export function ProductsPage() {
       <Box
         sx={{
           position: "fixed",
-          right: { xs: 16, md: 24 },
+          insetInlineEnd: { xs: 16, md: 24 },
           bottom: "calc(28px + env(safe-area-inset-bottom, 0px))",
           zIndex: 1200
         }}

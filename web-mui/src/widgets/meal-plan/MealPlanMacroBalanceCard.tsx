@@ -1,4 +1,5 @@
 import { Card, CardContent, Typography } from "@mui/material";
+import { useLanguage } from "../../app/providers/LanguageProvider";
 import { MacroRingRow } from "../nutrition/MacroRingRow";
 
 type MacroItem = {
@@ -21,12 +22,13 @@ function formatNumber(value: number): string {
 }
 
 export function MealPlanMacroBalanceCard({ title, items, leftLabel, overLabel }: MealPlanMacroBalanceCardProps) {
+  const { t } = useLanguage();
   const preparedItems = items.map((item) => {
     const difference = (item.target ?? 0) - item.value;
     const statusLabel = difference >= 0 ? leftLabel : overLabel;
     return {
       ...item,
-      footer: `${formatNumber(Math.abs(difference))}g ${statusLabel}`
+      footer: `${formatNumber(Math.abs(difference))}${t("units.short.g" as never)} ${statusLabel}`
     };
   });
 

@@ -73,7 +73,7 @@ export function DayNavigatorDayCard({
           sx={{
             position: "absolute",
             top: 6,
-            right: 6,
+            insetInlineEnd: 6,
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",

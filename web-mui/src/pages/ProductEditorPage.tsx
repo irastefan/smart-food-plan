@@ -1,5 +1,6 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import { Alert, Button, CircularProgress, Paper, Stack } from "@mui/material";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import { Alert, Button, CircularProgress, Paper, Stack, useTheme } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -25,6 +26,8 @@ const emptyForm: ProductFormValues = {
 };
 
 export function ProductEditorPage() {
+  const theme = useTheme();
+  const isRtl = theme.direction === "rtl";
   const navigate = useNavigate();
   const { productId } = useParams();
   const isEdit = Boolean(productId);
@@ -111,7 +114,12 @@ export function ProductEditorPage() {
       />
       <PageTitle title={isEdit ? t("product.form.editTitle") : t("product.form.createTitle")} />
 
-      <Button component={RouterLink} to={isEdit && productId ? `/products/${productId}` : "/products"} startIcon={<ArrowBackRoundedIcon />} sx={{ alignSelf: "flex-start" }}>
+      <Button
+        component={RouterLink}
+        to={isEdit && productId ? `/products/${productId}` : "/products"}
+        startIcon={isRtl ? <ArrowForwardRoundedIcon /> : <ArrowBackRoundedIcon />}
+        sx={{ alignSelf: "flex-start" }}
+      >
         {t("product.back")}
       </Button>
 

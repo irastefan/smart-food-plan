@@ -36,7 +36,7 @@ export function FloatingActionMenu({ tooltip, items, onClick, bottomOffset = { x
         elevation={6}
         sx={{
           position: "fixed",
-          right: { xs: 16, md: 24 },
+          insetInlineEnd: { xs: 16, md: 24 },
           bottom: bottomOffset,
           zIndex: 1200,
           borderRadius: "999px",

@@ -1,9 +1,10 @@
-import { createTheme, type PaletteMode } from "@mui/material";
+import { createTheme, type Direction, type PaletteMode } from "@mui/material";
 
-export function createAppTheme(mode: PaletteMode) {
+export function createAppTheme(mode: PaletteMode, direction: Direction = "ltr") {
   const isDark = mode === "dark";
 
   return createTheme({
+    direction,
     palette: {
       mode,
       primary: {

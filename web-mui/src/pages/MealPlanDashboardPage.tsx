@@ -613,7 +613,12 @@ export function MealPlanDashboardPage() {
         <Box sx={{ display: { xs: "none", lg: "block" } }}>
           <PageTitle title={t("mealPlan.dashboard.title")} />
         </Box>
-        <Stack direction={{ xs: "column", lg: "row" }} spacing={1} alignItems={{ xs: "stretch", lg: "stretch" }} sx={{ width: { xs: "100%", lg: "auto" }, ml: { lg: "auto" } }}>
+        <Stack
+          direction={{ xs: "column", lg: "row" }}
+          spacing={1}
+          alignItems={{ xs: "stretch", lg: "stretch" }}
+          sx={{ width: { xs: "100%", lg: "auto" }, marginInlineStart: { lg: "auto" } }}
+        >
           <Box sx={{ width: { xs: "100%", lg: 420 }, maxWidth: { lg: "100%" } }}>
             <MealPlanDayNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
           </Box>
