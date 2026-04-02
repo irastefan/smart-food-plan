@@ -22,6 +22,7 @@ import {
   useTheme
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import type { ProductSummary } from "../../features/products/api/productsApi";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { getMealPlanHistory, type MealPlanHistoryItem, type MealPlanItem } from "../../features/meal-plan/api/mealPlanApi";
@@ -183,11 +184,14 @@ export function MealPlanItemDialog({
   const [historyItems, setHistoryItems] = useState<MealPlanHistoryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [recipeQuery, setRecipeQuery] = useState("");
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const [pendingUiAction, setPendingUiAction] = useState<{ kind: "single" | "batch" | "history"; key: string } | null>(null);
 
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
+  const [recipeServingsById, setRecipeServingsById] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(item?.type === "product" ? item.amount ?? 100 : 100);
   const [servings, setServings] = useState(item?.type === "recipe" ? item.servings ?? 1 : 1);
   const initialManualNutrition = inferManualNutritionPer100(item);
@@ -208,10 +212,13 @@ export function MealPlanItemDialog({
     setSingleProposal(null);
     setSingleProposalTotalsOverride(null);
     setHistoryError(null);
+    setHistoryQuery("");
+    setRecipeQuery("");
     setPendingActionKey(null);
     setPendingUiAction(null);
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
+    setRecipeServingsById(item?.type === "recipe" && item.recipeId ? { [item.recipeId]: item.servings ?? 1 } : {});
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
     setServings(item?.type === "recipe" ? item.servings ?? 1 : 1);
     setManualName(item?.isManual ? item.title : "");
@@ -277,16 +284,37 @@ export function MealPlanItemDialog({
   }, [errorMessage, isSubmitting, pendingUiAction]);
 
   const selectedProduct = useMemo(() => products.find((entry) => entry.id === selectedProductId) ?? null, [products, selectedProductId]);
-  const selectedRecipe = useMemo(() => recipes.find((entry) => entry.id === selectedRecipeId) ?? null, [recipes, selectedRecipeId]);
+  const filteredHistoryItems = useMemo(() => {
+    const query = historyQuery.trim().toLowerCase();
+    if (!query) {
+      return historyItems;
+    }
+
+    return historyItems.filter((entry) => {
+      const haystack = [entry.title, entry.date, entry.type, entry.unit].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [historyItems, historyQuery]);
+  const filteredRecipes = useMemo(() => {
+    const query = recipeQuery.trim().toLowerCase();
+    if (!query) {
+      return recipes;
+    }
+
+    return recipes.filter((entry) => {
+      const haystack = [entry.title, entry.category ?? "", entry.description ?? ""].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [recipeQuery, recipes]);
 
   function submitProduct() {
     if (!selectedProduct) return;
     onSubmit({ type: "product", product: selectedProduct, quantity });
   }
 
-  function submitRecipe() {
-    if (!selectedRecipe) return;
-    onSubmit({ type: "recipe", recipe: selectedRecipe, servings });
+  function submitRecipeCard(recipe: RecipeSummary) {
+    const recipeServings = recipeServingsById[recipe.id] ?? (selectedRecipeId === recipe.id ? servings : 1);
+    onSubmit({ type: "recipe", recipe, servings: recipeServings });
   }
 
   function submitManual(nextProposal?: MealPlanAssistantProposal | null) {
@@ -654,17 +682,24 @@ export function MealPlanItemDialog({
                   <Typography color="text.secondary">{t("mealPlan.history.subtitle")}</Typography>
                 </Stack>
 
+                <TextField
+                  value={historyQuery}
+                  onChange={(event) => setHistoryQuery(event.target.value)}
+                  placeholder={t("common.search")}
+                  fullWidth
+                />
+
                 {historyError ? <Alert severity="error">{historyError}</Alert> : null}
 
                 {isHistoryLoading ? (
                   <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
                     <CircularProgress size={28} />
                   </Box>
-                ) : historyItems.length === 0 ? (
+                ) : filteredHistoryItems.length === 0 ? (
                   <Typography color="text.secondary">{t("mealPlan.history.empty")}</Typography>
                 ) : (
                   <Stack spacing={1}>
-                    {historyItems.map((entry) => {
+                    {filteredHistoryItems.map((entry) => {
                       const per100 = entry.nutritionPer100 ?? (() => {
                         if (entry.type === "product" && entry.amount && entry.amount > 0) {
                           const factor = 100 / entry.amount;
@@ -782,25 +817,125 @@ export function MealPlanItemDialog({
             {activeTab === "recipe" ? (
               <Stack spacing={2.5} sx={{ maxWidth: 760, mx: "auto" }}>
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-                <Autocomplete
-                  options={recipes}
-                  value={selectedRecipe}
-                  onChange={(_event, nextValue) => setSelectedRecipeId(nextValue?.id ?? "")}
-                  getOptionLabel={(option) => option.title}
-                  renderInput={(params) => <TextField {...params} label={t("mealPlan.dialog.selectRecipe")} />}
-                />
                 <TextField
-                  label={t("mealPlan.dialog.servings")}
-                  type="number"
-                  inputProps={{ min: 0.1, step: 0.1 }}
-                  value={servings}
-                  onChange={(event) => setServings(parseDecimalInput(event.target.value, servings, 0.1))}
+                  value={recipeQuery}
+                  onChange={(event) => setRecipeQuery(event.target.value)}
+                  placeholder={t("recipes.searchPlaceholder")}
+                  fullWidth
                 />
-                <Box>
-                  <Button onClick={submitRecipe} variant="contained" disabled={isSubmitting || !selectedRecipe}>
-                    {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
-                  </Button>
-                </Box>
+                {filteredRecipes.length === 0 ? (
+                  <Stack spacing={0.4}>
+                    <Typography fontWeight={700}>{t("recipes.emptyTitle")}</Typography>
+                    <Typography color="text.secondary">{t("recipes.emptySearch")}</Typography>
+                  </Stack>
+                ) : (
+                  <Stack spacing={1}>
+                    {filteredRecipes.map((recipe) => {
+                      const isSelected = recipe.id === selectedRecipeId;
+                      const recipeServings = recipeServingsById[recipe.id] ?? (isSelected ? servings : 1);
+
+                      return (
+                        <Box
+                          key={recipe.id}
+                          onClick={() => setSelectedRecipeId(recipe.id)}
+                          sx={{
+                            px: 1.4,
+                            py: 1.1,
+                            borderRadius: 1.5,
+                            cursor: "pointer",
+                            border: "1px solid",
+                            borderColor: isSelected ? "primary.main" : "divider",
+                            backgroundColor: (theme) =>
+                              isSelected
+                                ? theme.palette.mode === "dark"
+                                  ? "rgba(16,185,129,0.12)"
+                                  : "rgba(16,185,129,0.08)"
+                                : theme.palette.mode === "dark"
+                                  ? "rgba(20, 28, 42, 0.92)"
+                                  : "rgba(255,255,255,0.98)",
+                            boxShadow: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                                : "0 8px 24px rgba(15,23,42,0.05)"
+                          }}
+                        >
+                          <Stack direction="row" spacing={1.25} alignItems="center">
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Stack spacing={0.35}>
+                                <Typography
+                                  component={NavLink}
+                                  to={`/recipes/${recipe.id}`}
+                                  onClick={(event) => event.stopPropagation()}
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: 14.5,
+                                    lineHeight: 1.3,
+                                    color: "text.primary",
+                                    textDecoration: "none",
+                                    display: "block",
+                                    "&:hover": {
+                                      color: "primary.main",
+                                      textDecoration: "underline"
+                                    }
+                                  }}
+                                >
+                                  {recipe.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12.5 }}>
+                                  {`${Math.round(recipe.nutritionPerServing.caloriesKcal)} kcal · ${t("mealPlan.macro.protein")} ${Math.round(recipe.nutritionPerServing.proteinG)}g · ${t("mealPlan.macro.fat")} ${Math.round(recipe.nutritionPerServing.fatG)}g · ${t("mealPlan.macro.carbs")} ${Math.round(recipe.nutritionPerServing.carbsG)}g`}
+                                </Typography>
+                              </Stack>
+                            </Box>
+                            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+                              <TextField
+                                label={t("mealPlan.dialog.servings")}
+                                type="number"
+                                inputProps={{ min: 0.1, step: 0.1 }}
+                                value={recipeServings}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) => {
+                                  const nextValue = parseDecimalInput(event.target.value, recipeServings, 0.1);
+                                  setSelectedRecipeId(recipe.id);
+                                  setServings(nextValue);
+                                  setRecipeServingsById((current) => ({ ...current, [recipe.id]: nextValue }));
+                                }}
+                                size="small"
+                                sx={{ width: { xs: 96, sm: 112 } }}
+                              />
+                              <IconButton
+                                color="primary"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setSelectedRecipeId(recipe.id);
+                                  setServings(recipeServings);
+                                  submitRecipeCard(recipe);
+                                }}
+                                disabled={isSubmitting}
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  bgcolor: "primary.main",
+                                  color: "primary.contrastText",
+                                  boxShadow: "none",
+                                  "&.Mui-disabled": {
+                                    bgcolor: "primary.main",
+                                    color: "primary.contrastText",
+                                    opacity: 0.58
+                                  },
+                                  "&:hover": {
+                                    bgcolor: "primary.dark"
+                                  }
+                                }}
+                              >
+                                <AddRoundedIcon sx={{ fontSize: 17 }} />
+                              </IconButton>
+                            </Stack>
+                          </Stack>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                )}
               </Stack>
             ) : null}
 
