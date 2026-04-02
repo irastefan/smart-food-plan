@@ -43,6 +43,18 @@ type DashboardSidebarProps = {
   onCloseMobile: () => void;
 };
 
+function getSidebarToggleIcon(isDesktop: boolean, collapsed: boolean, isRtl: boolean) {
+  if (!isDesktop) {
+    return isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />;
+  }
+
+  if (collapsed) {
+    return isRtl ? <ChevronLeftRoundedIcon /> : <ChevronRightRoundedIcon />;
+  }
+
+  return isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />;
+}
+
 export function DashboardSidebar({
   variant,
   collapsed,
@@ -63,6 +75,7 @@ export function DashboardSidebar({
   const currentSettingsSection = useMemo(() => new URLSearchParams(location.search).get("section"), [location.search]);
   const isDark = mode === "dark";
   const isRtl = isRtlLanguage(language);
+  const direction = isRtl ? "rtl" : "ltr";
 
   useEffect(() => {
     if (location.pathname.startsWith("/settings")) {
@@ -81,8 +94,8 @@ export function DashboardSidebar({
 
   const sidebarContent = (
     <Stack
-      dir={isRtl ? "rtl" : "ltr"}
-      style={{ direction: isRtl ? "rtl" : "ltr" }}
+      dir={direction}
+      style={{ direction }}
       sx={{
         height: "100%",
         p: 1.5,
@@ -95,11 +108,7 @@ export function DashboardSidebar({
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, py: 1.5, minHeight: 64 }}>
         <BrandMark />
         <IconButton onClick={isDesktop ? onToggleCollapse : onCloseMobile} size="small" sx={{ color: "#cbd5e1" }}>
-          {isDesktop
-            ? collapsed
-              ? isRtl ? <ChevronLeftRoundedIcon /> : <ChevronRightRoundedIcon />
-              : isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />
-            : isRtl ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
+          {getSidebarToggleIcon(isDesktop, collapsed, isRtl)}
         </IconButton>
       </Stack>
 
@@ -345,8 +354,8 @@ export function DashboardSidebar({
   if (isDesktop) {
     return (
       <Box
-        dir={isRtl ? "rtl" : "ltr"}
-        style={{ direction: isRtl ? "rtl" : "ltr" }}
+        dir={direction}
+        style={{ direction }}
         sx={{
           width: 392,
           minHeight: "100vh",
@@ -356,8 +365,8 @@ export function DashboardSidebar({
         }}
       >
         <Box
-          dir={isRtl ? "rtl" : "ltr"}
-          style={{ direction: isRtl ? "rtl" : "ltr" }}
+          dir={direction}
+          style={{ direction }}
           sx={{
             width: collapsed ? 92 : 392,
             minHeight: "100vh",
@@ -377,15 +386,15 @@ export function DashboardSidebar({
       anchor={isRtl ? "right" : "left"}
       open={open}
       onClose={onCloseMobile}
-      dir={isRtl ? "rtl" : "ltr"}
+      dir={direction}
       PaperProps={{
         sx: {
           width: "100vw",
           maxWidth: "100vw",
           height: "100dvh",
-          direction: isRtl ? "rtl" : "ltr"
+          direction
         },
-        style: { direction: isRtl ? "rtl" : "ltr" }
+        style: { direction }
       }}
     >
       {sidebarContent}

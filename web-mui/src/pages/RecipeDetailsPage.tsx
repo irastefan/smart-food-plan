@@ -1,7 +1,7 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { deleteRecipe, getRecipe } from "../features/recipes/api/recipesApi";
@@ -9,6 +9,7 @@ import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategori
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { addShoppingCategory, addShoppingItem, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { isRtlLanguage } from "../shared/i18n/languages";
 import { getLocalizedUnitLabel } from "../shared/lib/units";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
@@ -27,10 +28,9 @@ type LayoutContext = {
 };
 
 export function RecipeDetailsPage() {
-  const theme = useTheme();
-  const isRtl = theme.direction === "rtl";
   const { recipeId } = useParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const navigate = useNavigate();
   const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);

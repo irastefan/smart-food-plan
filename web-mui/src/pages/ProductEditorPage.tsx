@@ -1,10 +1,11 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import { Alert, Button, CircularProgress, Paper, Stack, useTheme } from "@mui/material";
+import { Alert, Button, CircularProgress, Paper, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { createProduct, getProduct, type ProductFormValues, updateProduct } from "../features/products/api/productsApi";
+import { isRtlLanguage } from "../shared/i18n/languages";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { ProductForm } from "../widgets/products/ProductForm";
@@ -26,12 +27,11 @@ const emptyForm: ProductFormValues = {
 };
 
 export function ProductEditorPage() {
-  const theme = useTheme();
-  const isRtl = theme.direction === "rtl";
   const navigate = useNavigate();
   const { productId } = useParams();
   const isEdit = Boolean(productId);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [form, setForm] = useState<ProductFormValues>(emptyForm);
   const [isLoading, setIsLoading] = useState(true);

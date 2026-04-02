@@ -1,12 +1,13 @@
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import { Alert, Button, CircularProgress, Paper, Stack, useTheme } from "@mui/material";
+import { Alert, Button, CircularProgress, Paper, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { createRecipe, getRecipe, updateRecipe } from "../features/recipes/api/recipesApi";
 import type { RecipeFormValues } from "../features/recipes/model/recipeTypes";
 import { getProducts, type ProductSummary } from "../features/products/api/productsApi";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { isRtlLanguage } from "../shared/i18n/languages";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeForm } from "../widgets/recipes/RecipeForm";
@@ -28,12 +29,11 @@ const emptyForm: RecipeFormValues = {
 };
 
 export function RecipeEditorPage() {
-  const theme = useTheme();
-  const isRtl = theme.direction === "rtl";
   const navigate = useNavigate();
   const { recipeId } = useParams();
   const isEdit = Boolean(recipeId);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [form, setForm] = useState<RecipeFormValues>(emptyForm);
   const [products, setProducts] = useState<ProductSummary[]>([]);

@@ -24,6 +24,8 @@ export function DayNavigatorHeader({
 }: DayNavigatorHeaderProps) {
   const { language } = useLanguage();
   const isRtl = isRtlLanguage(language);
+  const previousIcon = isRtl ? <ChevronRightRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} />;
+  const nextIcon = isRtl ? <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />;
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
   const selected = parseIsoDate(selectedDate);
   const isToday = selectedDate === getTodayIsoDateLocal();
@@ -49,7 +51,7 @@ export function DayNavigatorHeader({
           flexShrink: 0
         }}
       >
-        {isRtl ? <ChevronRightRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} />}
+        {previousIcon}
       </IconButton>
 
       <Paper
@@ -103,7 +105,7 @@ export function DayNavigatorHeader({
           flexShrink: 0
         }}
       >
-        {isRtl ? <ChevronLeftRoundedIcon sx={{ fontSize: 18 }} /> : <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />}
+        {nextIcon}
       </IconButton>
 
       <Button

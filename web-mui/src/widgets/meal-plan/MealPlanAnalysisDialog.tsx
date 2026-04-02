@@ -21,6 +21,7 @@ import { runMealPlanNutritionAnalysis } from "../../features/ai/api/mealPlanAnal
 import type { MealPlanDay, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
 import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { getOpenAiApiKey } from "../../shared/config/openai";
+import { isRtlLanguage } from "../../shared/i18n/languages";
 
 type MealPlanAnalysisDialogProps = {
   open: boolean;
@@ -49,7 +50,7 @@ export function MealPlanAnalysisDialog({
   const { language, t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isRtl = theme.direction === "rtl";
+  const isRtl = isRtlLanguage(language);
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [error, setError] = useState<string | null>(null);

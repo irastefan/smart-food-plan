@@ -3,12 +3,13 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import { Alert, Button, CircularProgress, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Alert, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { deleteProduct, getProduct, type ProductDetail } from "../features/products/api/productsApi";
 import { addProductToShoppingList, addShoppingCategory, getShoppingList } from "../features/shopping/api/shoppingApi";
+import { isRtlLanguage } from "../shared/i18n/languages";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
@@ -23,10 +24,9 @@ type LayoutContext = {
 };
 
 export function ProductDetailsPage() {
-  const theme = useTheme();
-  const isRtl = theme.direction === "rtl";
   const { productId } = useParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRtl = isRtlLanguage(language);
   const navigate = useNavigate();
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
