@@ -4,7 +4,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Box, Button, Card, Divider, IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import {
   getCurrentWeekdayKey,
@@ -289,10 +289,9 @@ export function SelfCareWeekBoard({
 }: SelfCareWeekBoardProps) {
   const { t, language } = useLanguage();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  useMediaQuery(theme.breakpoints.down("md"));
   const todayWeekday = getCurrentWeekdayKey();
   const [selectedDay, setSelectedDay] = useState<DayFilter>(todayWeekday);
-  const dayRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const orderedWeekdays = useMemo(
     () => (language === "he" ? [...selfCareWeekdayOrder.slice(-1), ...selfCareWeekdayOrder.slice(0, -1)] : selfCareWeekdayOrder),
@@ -319,25 +318,6 @@ export function SelfCareWeekBoard({
       setSelectedDay(todayWeekday);
     }
   }, [orderedWeek, selectedDay, todayWeekday]);
-
-  useEffect(() => {
-    if (!isMobile || !week || selectedDay === "all") {
-      return;
-    }
-
-    const node = dayRefs.current[selectedDay];
-    if (!node) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      node.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-    }, 120);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [isMobile, selectedDay, week]);
 
   if (!week) {
     return null;
@@ -371,34 +351,25 @@ export function SelfCareWeekBoard({
               }
             }}
             sx={{
-              flexWrap: "wrap",
+              flexWrap: { xs: "nowrap", md: "wrap" },
+              overflowX: { xs: "auto", md: "visible" },
+              overflowY: "hidden",
+              whiteSpace: "nowrap",
+              pr: { xs: 0.5, md: 0 },
+              pb: { xs: 0.5, md: 0 },
               gap: 0.75,
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none"
+              },
               "& .MuiToggleButtonGroup-grouped": {
+                flex: "0 0 auto",
                 m: 0,
                 borderRadius: "999px !important",
                 border: "none !important"
               }
             }}
           >
-            <ToggleButton
-              value="all"
-              sx={{
-                px: 1.2,
-                fontWeight: 700,
-                borderRadius: "999px",
-                bgcolor: "action.hover",
-                color: "text.secondary",
-                "&.Mui-selected": {
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText"
-                },
-                "&.Mui-selected:hover": {
-                  bgcolor: "primary.dark"
-                }
-              }}
-            >
-              {t("selfCare.filters.allDays")}
-            </ToggleButton>
             {orderedWeek.map((weekday) => (
               <ToggleButton
                 key={weekday.weekday}
@@ -422,6 +393,25 @@ export function SelfCareWeekBoard({
                 {t(`selfCare.weekdayShort.${weekday.weekday.toLowerCase()}` as never)}
               </ToggleButton>
             ))}
+            <ToggleButton
+              value="all"
+              sx={{
+                px: 1.2,
+                fontWeight: 700,
+                borderRadius: "999px",
+                bgcolor: "action.hover",
+                color: "text.secondary",
+                "&.Mui-selected": {
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText"
+                },
+                "&.Mui-selected:hover": {
+                  bgcolor: "primary.dark"
+                }
+              }}
+            >
+              {t("selfCare.filters.allDays")}
+            </ToggleButton>
           </ToggleButtonGroup>
         </Stack>
       </Box>
@@ -438,12 +428,7 @@ export function SelfCareWeekBoard({
         }}
       >
         {filteredWeek.map((weekday) => (
-          <Box
-            key={weekday.weekday}
-            ref={(node) => {
-              dayRefs.current[weekday.weekday] = node as HTMLDivElement | null;
-            }}
-          >
+          <Box key={weekday.weekday}>
             <DayColumn
               weekday={weekday}
               onAddSlot={onAddSlot}
