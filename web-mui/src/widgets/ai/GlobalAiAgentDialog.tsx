@@ -119,7 +119,7 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
           </AccordionDetails>
         </Accordion>
       }
-      onRun={async ({ apiKey, payload, messages }) => {
+      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const result = await runAgentTurn({
           apiKey,
@@ -129,7 +129,9 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
           images: payload.images,
           model: agentSettings.model,
           userInstructions: agentSettings.userInstructions,
-          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
+          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
+          onToolStart,
+          onToolEnd
         });
 
         return {

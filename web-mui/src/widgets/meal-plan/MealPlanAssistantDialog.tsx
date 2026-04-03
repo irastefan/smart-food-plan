@@ -93,7 +93,7 @@ export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChange
       onMissingApiKeyAction={() => {
         window.location.href = "/settings";
       }}
-      onRun={async ({ apiKey, payload, messages }) => {
+      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const result = await runAgentTurn({
           apiKey,
@@ -109,7 +109,9 @@ export function MealPlanAssistantDialog({ open, date, day, onClose, onDataChange
             day,
             responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
             userInstructions: agentSettings.userInstructions
-          })
+          }),
+          onToolStart,
+          onToolEnd
         });
 
         if (result.toolMessages.length > 0) {

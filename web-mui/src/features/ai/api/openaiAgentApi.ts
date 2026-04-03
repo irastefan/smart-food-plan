@@ -107,6 +107,8 @@ export async function runAgentTurn(input: {
   userInstructions?: string;
   responseLanguage?: Language;
   systemPrompt?: string;
+  onToolStart?: (toolName: string) => void;
+  onToolEnd?: () => void;
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);
   const openAiTools = toOpenAiTools(input.tools);
@@ -184,8 +186,13 @@ export async function runAgentTurn(input: {
         }, null, 2);
       } else {
         seenToolCalls.add(callSignature);
-        const result = await callMcpTool(tool.name, parsedArgs);
-        output = JSON.stringify(result, null, 2);
+        input.onToolStart?.(tool.name);
+        try {
+          const result = await callMcpTool(tool.name, parsedArgs);
+          output = JSON.stringify(result, null, 2);
+        } finally {
+          input.onToolEnd?.();
+        }
       }
 
       toolMessages.push({

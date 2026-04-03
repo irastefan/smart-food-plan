@@ -462,7 +462,7 @@ export function MealPlanItemDialog({
                   placeholder={t("aiAgent.placeholder")}
                   submitLabel={t("aiAgent.send")}
                   missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-                  onRun={async ({ apiKey, payload, messages }) => {
+                  onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
                     const normalizedText = payload.text.trim();
                     const userText =
                       normalizedText.length > 0
@@ -480,7 +480,9 @@ export function MealPlanItemDialog({
                       userText,
                       images: payload.images,
                       userInstructions: agentSettings.userInstructions,
-                      responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
+                      responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
+                      onToolStart,
+                      onToolEnd
                     });
 
                     return {

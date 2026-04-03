@@ -200,6 +200,8 @@ export async function runMealPlanAssistant(input: {
   userInstructions?: string;
   images?: AgentImageInput[];
   responseLanguage: Language;
+  onToolStart?: (toolName: string) => void;
+  onToolEnd?: () => void;
 }): Promise<MealPlanAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({
@@ -211,6 +213,8 @@ export async function runMealPlanAssistant(input: {
     model: input.model,
     userInstructions: input.userInstructions,
     responseLanguage: input.responseLanguage,
+    onToolStart: input.onToolStart,
+    onToolEnd: input.onToolEnd,
     systemPrompt: buildMealPlanAssistantPrompt({
       sectionTitle: input.sectionTitle,
       existingItems: input.existingItems,

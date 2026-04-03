@@ -140,7 +140,7 @@ export function AiAgentPage() {
             onMissingApiKeyAction={() => {
               window.location.href = "/settings";
             }}
-            onRun={async ({ apiKey, payload, messages }) => {
+            onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
               const normalizedText = payload.text.trim();
               const result = await runAgentTurn({
                 apiKey,
@@ -150,7 +150,9 @@ export function AiAgentPage() {
                 images: payload.images,
                 model: agentSettings.model,
                 userInstructions: agentSettings.userInstructions,
-                responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
+                responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
+                onToolStart,
+                onToolEnd
               });
 
               return {

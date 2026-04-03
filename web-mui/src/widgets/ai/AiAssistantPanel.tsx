@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Stack } from "@mui/material";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { isRtlLanguage } from "../../shared/i18n/languages";
 import { getOpenAiApiKey } from "../../shared/config/openai";
@@ -16,6 +16,8 @@ export type AiAssistantPanelRenderProps = {
   messages: AgentMessage[];
   visibleMessages: AgentMessage[];
   isSubmitting: boolean;
+  activeToolName: string | null;
+  completedToolName: string | null;
 };
 
 export type AiAssistantPanelProps<TExtra = void> = {
@@ -30,6 +32,8 @@ export type AiAssistantPanelProps<TExtra = void> = {
     apiKey: string;
     payload: ComposerPayload;
     messages: AgentMessage[];
+    onToolStart: (toolName: string) => void;
+    onToolEnd: () => void;
   }) => Promise<{ appendedMessages: AgentMessage[]; extra?: TExtra }>;
   onExtraResult?: (extra: TExtra | undefined) => void;
   renderTop?: (props: AiAssistantPanelRenderProps) => ReactNode;
@@ -54,9 +58,12 @@ export function AiAssistantPanel<TExtra = void>({
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeToolName, setActiveToolName] = useState<string | null>(null);
+  const [completedToolName, setCompletedToolName] = useState<string | null>(null);
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
+  const activeToolNameRef = useRef<string | null>(null);
 
-  const visibleMessages = showToolOutput ? messages : messages.filter((message) => message.role !== "tool");
+  const visibleMessages = messages;
 
   async function handleSubmit(payload: ComposerPayload) {
     const apiKey = getOpenAiApiKey();
@@ -82,8 +89,25 @@ export function AiAssistantPanel<TExtra = void>({
 
     try {
       setIsSubmitting(true);
+      setActiveToolName(null);
+      setCompletedToolName(null);
       setStatus(null);
-      const result = await onRun({ apiKey, payload, messages });
+      const result = await onRun({
+        apiKey,
+        payload,
+        messages,
+        onToolStart: (toolName) => {
+          activeToolNameRef.current = toolName;
+          setActiveToolName(toolName);
+          setCompletedToolName(null);
+        },
+        onToolEnd: () => {
+          setCompletedToolName(activeToolNameRef.current);
+          setActiveToolName(null);
+          activeToolNameRef.current = null;
+        }
+      });
+      setCompletedToolName(null);
       setMessages([...nextHistory, ...result.appendedMessages]);
       onExtraResult?.(result.extra);
     } catch (error) {
@@ -93,6 +117,8 @@ export function AiAssistantPanel<TExtra = void>({
         message: error instanceof Error && error.message.trim() ? error.message : "AI request failed."
       });
     } finally {
+      setActiveToolName(null);
+      activeToolNameRef.current = null;
       setIsSubmitting(false);
     }
   }
@@ -120,7 +146,7 @@ export function AiAssistantPanel<TExtra = void>({
           {status.message}
         </Alert>
       ) : null}
-      {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
+      {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting, activeToolName, completedToolName })}
       <Box
         style={{ direction: isRtl ? "rtl" : "ltr" }}
         sx={{
@@ -162,9 +188,15 @@ export function AiAssistantPanel<TExtra = void>({
             }
           }}
         >
-          <AiAgentConversation messages={visibleMessages} isSubmitting={isSubmitting} />
+          <AiAgentConversation
+            messages={visibleMessages}
+            isSubmitting={isSubmitting}
+            activeToolName={activeToolName}
+            completedToolName={completedToolName}
+            showToolOutput={showToolOutput}
+          />
           <Box sx={{ pt: { xs: 1.5, md: 2 } }}>
-            {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting })}
+            {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting, activeToolName, completedToolName })}
           </Box>
         </Box>
         <AiAgentComposer

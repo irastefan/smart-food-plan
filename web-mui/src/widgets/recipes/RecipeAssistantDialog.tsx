@@ -115,7 +115,7 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
             ]
       }
       outerHeader={status ? <Alert severity={status.type}>{status.message}</Alert> : null}
-      onRun={async ({ apiKey, payload, messages }) => {
+      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const userText =
           normalizedText.length > 0
@@ -132,7 +132,9 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
           images: payload.images,
           userInstructions: agentSettings.userInstructions,
           currentRecipe: recipe,
-          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language)
+          responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
+          onToolStart,
+          onToolEnd
         });
 
         return {

@@ -92,7 +92,7 @@ export function ShoppingAssistantDialog({ open, shoppingList, onClose, onDataCha
       onMissingApiKeyAction={() => {
         window.location.href = "/settings";
       }}
-      onRun={async ({ apiKey, payload, messages }) => {
+      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const result = await runAgentTurn({
           apiKey,
@@ -107,7 +107,9 @@ export function ShoppingAssistantDialog({ open, shoppingList, onClose, onDataCha
             shoppingList,
             responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
             userInstructions: agentSettings.userInstructions
-          })
+          }),
+          onToolStart,
+          onToolEnd
         });
 
         if (result.toolMessages.length > 0) {
