@@ -15,6 +15,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: process.env.VITE_API_PROXY_TARGET || "https://foodieai-59215576464.me-west1.run.app",
+        //target: process.env.VITE_API_PROXY_TARGET || "http://localhost:8080",
         changeOrigin: true,
         secure: false,
         rewrite: (pathValue) => pathValue.replace(/^\/api/, "")
