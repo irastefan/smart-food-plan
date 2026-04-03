@@ -109,6 +109,22 @@ function extractAssistantText(response: OpenAiResponse): string {
   return text || "No response generated.";
 }
 
+function serializeHistoryMessage(message: AgentMessage) {
+  if (message.role === "tool") {
+    const action = message.toolAction ?? "generic";
+    const entitySuffix = message.toolEntity ? ` "${message.toolEntity}"` : "";
+    return {
+      role: "assistant" as const,
+      content: `[Tool result] Action: ${action}${entitySuffix}\n${message.text}`
+    };
+  }
+
+  return {
+    role: message.role,
+    content: message.text
+  };
+}
+
 export async function runAgentTurn(input: {
   apiKey: string;
   tools: McpTool[];
@@ -133,9 +149,7 @@ export async function runAgentTurn(input: {
 
   const baseInput = [
     { role: "system", content: systemPrompt },
-    ...input.history
-      .filter((message) => message.role !== "tool")
-      .map((message) => ({ role: message.role, content: message.text })),
+    ...input.history.map(serializeHistoryMessage),
     {
       role: "user",
       content: [
