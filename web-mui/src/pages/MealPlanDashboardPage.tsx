@@ -1,5 +1,5 @@
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -29,6 +29,7 @@ import {
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
 import { getAppPreferences } from "../shared/config/appPreferences";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { getMacroColor } from "../shared/theme/macroColors";
@@ -798,11 +799,7 @@ export function MealPlanDashboardPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={Boolean(feedback)} autoHideDuration={2500} onClose={() => setFeedback(null)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert severity={feedback?.type ?? "success"} onClose={() => setFeedback(null)} sx={{ width: "100%" }}>
-          {feedback?.message}
-        </Alert>
-      </Snackbar>
+      <AppFeedbackToast feedback={feedback} onClose={() => setFeedback(null)} autoHideDuration={2500} />
 
       <MealPlanAnalysisDialog
         open={Boolean(analysisTarget)}

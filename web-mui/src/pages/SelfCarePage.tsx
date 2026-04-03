@@ -1,6 +1,6 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, CircularProgress, Paper, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Alert, CircularProgress, Paper, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -18,6 +18,7 @@ import {
 } from "../features/self-care/api/selfCareApi";
 import { useSelfCareRoutine } from "../features/self-care/hooks/useSelfCareRoutine";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
@@ -375,13 +376,7 @@ export function SelfCarePage() {
         onDataChanged={refresh}
       />
 
-      <Snackbar
-        open={Boolean(feedback)}
-        autoHideDuration={2800}
-        onClose={() => setFeedback(null)}
-        message={feedback?.message ?? ""}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
+      <AppFeedbackToast feedback={feedback} onClose={() => setFeedback(null)} autoHideDuration={2800} />
     </Stack>
   );
 }

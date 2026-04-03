@@ -1,18 +1,8 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import {
-  Alert,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  IconButton,
-  Snackbar,
-  Tooltip,
-  Stack
-} from "@mui/material";
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, IconButton, Stack, Tooltip } from "@mui/material";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import { AppFeedbackToast } from "../../shared/ui/AppFeedbackToast";
 import { ShoppingCategorySelector } from "./ShoppingCategorySelector";
 
 type ShoppingCategoryPickerButtonProps = {
@@ -142,11 +132,7 @@ export function ShoppingCategoryPickerButton({
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={Boolean(feedback)} autoHideDuration={2500} onClose={() => setFeedback(null)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert severity={feedback?.type ?? "success"} onClose={() => setFeedback(null)} sx={{ width: "100%" }}>
-          {feedback?.message}
-        </Alert>
-      </Snackbar>
+      <AppFeedbackToast feedback={feedback} onClose={() => setFeedback(null)} autoHideDuration={2500} />
     </>
   );
 }

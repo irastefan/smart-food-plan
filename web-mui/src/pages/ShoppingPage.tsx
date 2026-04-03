@@ -1,6 +1,6 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, Box, CircularProgress, Paper, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Alert, Box, CircularProgress, Paper, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -16,6 +16,7 @@ import {
   type ShoppingList
 } from "../features/shopping/api/shoppingApi";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { FilterChipRow } from "../shared/ui/FilterChipRow";
 import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
@@ -352,16 +353,7 @@ export function ShoppingPage() {
         }}
       />
 
-      <Snackbar
-        open={Boolean(feedback)}
-        autoHideDuration={2500}
-        onClose={() => setFeedback(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity={feedback?.type ?? "success"} onClose={() => setFeedback(null)} sx={{ width: "100%" }}>
-          {feedback?.message}
-        </Alert>
-      </Snackbar>
+      <AppFeedbackToast feedback={feedback} onClose={() => setFeedback(null)} autoHideDuration={2500} />
 
       <ShoppingAssistantDialog
         open={assistantOpen}
