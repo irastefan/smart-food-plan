@@ -1,5 +1,5 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { type SelfCareSlot, type SelfCareWeekdayKey, selfCareWeekdayOrder } from "../../features/self-care/api/selfCareApi";
 
@@ -12,9 +12,13 @@ type SelfCareSlotDialogProps = {
 };
 
 export function SelfCareSlotDialog({ open, initialWeekday, slot, onClose, onSubmit }: SelfCareSlotDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [weekday, setWeekday] = useState<SelfCareWeekdayKey>(initialWeekday);
   const [name, setName] = useState("");
+  const orderedWeekdays = useMemo(
+    () => (language === "he" ? [...selfCareWeekdayOrder.slice(-1), ...selfCareWeekdayOrder.slice(0, -1)] : selfCareWeekdayOrder),
+    [language]
+  );
 
   useEffect(() => {
     if (!open) {
@@ -39,7 +43,7 @@ export function SelfCareSlotDialog({ open, initialWeekday, slot, onClose, onSubm
             value={weekday}
             onChange={(event) => setWeekday(event.target.value as SelfCareWeekdayKey)}
           >
-            {selfCareWeekdayOrder.map((weekdayOption) => (
+            {orderedWeekdays.map((weekdayOption) => (
               <MenuItem key={weekdayOption} value={weekdayOption}>
                 {t(`selfCare.weekday.${weekdayOption.toLowerCase()}` as never)}
               </MenuItem>
