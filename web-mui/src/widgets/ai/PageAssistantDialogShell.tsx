@@ -27,6 +27,15 @@ export function PageAssistantDialogShell({ open, title, onClose, children }: Pag
       fullScreen={isMobile}
       fullWidth
       maxWidth={false}
+      BackdropProps={
+        isMobile
+          ? {
+              sx: {
+                bottom: mobileDockOffset
+              }
+            }
+          : undefined
+      }
       sx={
         isMobile
           ? {
