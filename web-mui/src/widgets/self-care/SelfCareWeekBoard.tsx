@@ -1,4 +1,5 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
@@ -20,10 +21,11 @@ type SelfCareWeekBoardProps = {
   onAddSlot: (weekday: SelfCareWeekdayKey) => void;
   onEditSlot: (slot: SelfCareSlot) => void;
   onDeleteSlot: (slot: SelfCareSlot) => void;
+  onCopySlot: (slot: SelfCareSlot) => void;
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
-  onOpenAgent: () => void;
+  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey; slotName?: string | null }) => void;
 };
 
 function DayColumn({
@@ -31,6 +33,7 @@ function DayColumn({
   onAddSlot,
   onEditSlot,
   onDeleteSlot,
+  onCopySlot,
   onAddItem,
   onEditItem,
   onDeleteItem,
@@ -41,10 +44,11 @@ function DayColumn({
   onAddSlot: (weekday: SelfCareWeekdayKey) => void;
   onEditSlot: (slot: SelfCareSlot) => void;
   onDeleteSlot: (slot: SelfCareSlot) => void;
+  onCopySlot: (slot: SelfCareSlot) => void;
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
-  onOpenAgent: () => void;
+  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey; slotName?: string | null }) => void;
   isCurrentDay?: boolean;
 }) {
   const { t } = useLanguage();
@@ -140,10 +144,14 @@ function DayColumn({
                 <Box sx={{ px: 2, py: 1.5 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle1" fontWeight={800}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={800}
+                        sx={{ fontSize: { xs: "1.08rem", md: "1.14rem" }, lineHeight: 1.25 }}
+                      >
                         {slot.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: "0.69rem", md: "0.73rem" } }}>
                         {slot.items.length === 0
                           ? t("selfCare.slot.emptyShort")
                           : t("selfCare.slot.stepCount", { count: slot.items.length } as never)}
@@ -172,16 +180,28 @@ function DayColumn({
                       <Box key={item.id} sx={{ px: 2, py: 1.35, borderBottom: "1px solid", borderColor: "divider" }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography variant="body1" fontWeight={700}>
+                            <Typography
+                              variant="body1"
+                              fontWeight={700}
+                              sx={{ fontSize: { xs: "0.92rem", md: "0.98rem" }, lineHeight: 1.35 }}
+                            >
                               {item.title}
                             </Typography>
                             {item.description ? (
-                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 0.35, fontSize: { xs: "0.8rem", md: "0.875rem" }, lineHeight: 1.45 }}
+                              >
                                 {item.description}
                               </Typography>
                             ) : null}
                             {item.note ? (
-                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.4, display: "block" }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.4, display: "block", fontSize: { xs: "0.68rem", md: "0.73rem" }, lineHeight: 1.45 }}
+                              >
                                 {item.note}
                               </Typography>
                             ) : null}
@@ -204,11 +224,25 @@ function DayColumn({
 
                 <Box sx={{ px: 2, py: 1.25 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                    <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(slot)}>
-                      {t("selfCare.actions.addStep")}
-                    </Button>
-                    <Button size="small" startIcon={<SmartToyRoundedIcon fontSize="small" />} onClick={onOpenAgent}>
-                      {t("selfCare.actions.askAi")}
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(slot)}>
+                        {t("selfCare.actions.addStep")}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<SmartToyRoundedIcon fontSize="small" />}
+                        onClick={() => onOpenAgent({ weekday: weekday.weekday, slotName: slot.name })}
+                      >
+                        {t("selfCare.actions.useAiAgent")}
+                      </Button>
+                    </Stack>
+                    <Button
+                      size="small"
+                      variant="text"
+                      startIcon={<ContentCopyRoundedIcon fontSize="small" />}
+                      onClick={() => onCopySlot(slot)}
+                    >
+                      {t("selfCare.actions.copySlot")}
                     </Button>
                   </Stack>
                 </Box>
@@ -226,6 +260,7 @@ export function SelfCareWeekBoard({
   onAddSlot,
   onEditSlot,
   onDeleteSlot,
+  onCopySlot,
   onAddItem,
   onEditItem,
   onDeleteItem,
@@ -300,6 +335,7 @@ export function SelfCareWeekBoard({
               onAddSlot={onAddSlot}
               onEditSlot={onEditSlot}
               onDeleteSlot={onDeleteSlot}
+              onCopySlot={onCopySlot}
               onAddItem={onAddItem}
               onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}

@@ -1,20 +1,30 @@
+import { Chip, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { listMcpTools, type McpTool } from "../../features/ai/api/mcpApi";
 import { runAgentTurn } from "../../features/ai/api/openaiAgentApi";
 import { buildSelfCareAssistantPrompt } from "../../features/ai/model/selfCareAssistantPrompt";
-import type { SelfCareRoutineWeek } from "../../features/self-care/api/selfCareApi";
+import type { SelfCareRoutineWeek, SelfCareWeekdayKey } from "../../features/self-care/api/selfCareApi";
 import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
 import { ContextAgentDialog } from "../ai/ContextAgentDialog";
 
 type SelfCareAssistantDialogProps = {
   open: boolean;
   week: SelfCareRoutineWeek | null;
+  focusWeekday?: SelfCareWeekdayKey | null;
+  focusSlotName?: string | null;
   onClose: () => void;
   onDataChanged?: () => Promise<void> | void;
 };
 
-export function SelfCareAssistantDialog({ open, week, onClose, onDataChanged }: SelfCareAssistantDialogProps) {
+export function SelfCareAssistantDialog({
+  open,
+  week,
+  focusWeekday = null,
+  focusSlotName = null,
+  onClose,
+  onDataChanged
+}: SelfCareAssistantDialogProps) {
   const { t, language } = useLanguage();
   const agentSettings = getAiAgentSettings();
   const [tools, setTools] = useState<McpTool[]>([]);
@@ -77,6 +87,14 @@ export function SelfCareAssistantDialog({ open, week, onClose, onDataChanged }: 
       panelKey={`self-care-page-agent-${open ? "open" : "closed"}`}
       isLoading={isLoading}
       loadError={status}
+      outerHeader={
+        focusWeekday ? (
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Chip size="small" label={t(`selfCare.weekday.${focusWeekday.toLowerCase()}` as never)} />
+            {focusSlotName ? <Chip size="small" label={focusSlotName} /> : null}
+          </Stack>
+        ) : undefined
+      }
       quickPrompts={[
         t("contextAgent.selfCare.prompt.analyze"),
         t("contextAgent.selfCare.prompt.simplify"),
@@ -106,7 +124,9 @@ export function SelfCareAssistantDialog({ open, week, onClose, onDataChanged }: 
           systemPrompt: buildSelfCareAssistantPrompt({
             week,
             responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
-            userInstructions: agentSettings.userInstructions
+            userInstructions: agentSettings.userInstructions,
+            focusWeekday: focusWeekday ? t(`selfCare.weekday.${focusWeekday.toLowerCase()}` as never) : undefined,
+            focusSlotName
           }),
           onToolStart,
           onToolEnd

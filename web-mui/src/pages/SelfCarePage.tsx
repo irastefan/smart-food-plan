@@ -22,6 +22,7 @@ import { PageActionButton } from "../shared/ui/PageActionButton";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { SelfCareAssistantDialog } from "../widgets/self-care/SelfCareAssistantDialog";
+import { SelfCareCopySlotDialog } from "../widgets/self-care/SelfCareCopySlotDialog";
 import { SelfCareItemDialog } from "../widgets/self-care/SelfCareItemDialog";
 import { SelfCareSlotDialog } from "../widgets/self-care/SelfCareSlotDialog";
 import { SelfCareWeekBoard } from "../widgets/self-care/SelfCareWeekBoard";
@@ -56,6 +57,10 @@ export function SelfCarePage() {
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { week, setWeek, isLoading, errorMessage, refresh } = useSelfCareRoutine();
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantContext, setAssistantContext] = useState<{ weekday: SelfCareWeekdayKey | null; slotName: string | null }>({
+    weekday: null,
+    slotName: null
+  });
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [slotDialogState, setSlotDialogState] = useState<{ open: boolean; weekday: SelfCareWeekdayKey; slot?: SelfCareSlot | null }>({
     open: false,
@@ -72,9 +77,13 @@ export function SelfCarePage() {
     | { type: "item"; slot: SelfCareSlot; item: SelfCareItem }
     | null
   >(null);
+  const [copySlotTarget, setCopySlotTarget] = useState<SelfCareSlot | null>(null);
 
   useEffect(() => {
-    registerPageAgentAction(() => setAssistantOpen((current) => !current));
+    registerPageAgentAction(() => {
+      setAssistantContext({ weekday: null, slotName: null });
+      setAssistantOpen((current) => !current);
+    });
     return () => {
       clearPageAgentAction();
     };
@@ -167,7 +176,67 @@ export function SelfCarePage() {
     }
   }
 
+  async function handleCopySlot(targetWeekdays: SelfCareWeekdayKey[]) {
+    if (!copySlotTarget || !week) {
+      return;
+    }
+
+    try {
+      let nextWeek = week;
+
+      for (const weekday of targetWeekdays) {
+        const existingSlot = nextWeek.weekdays
+          .find((entry) => entry.weekday === weekday)
+          ?.slots
+          .filter((slot) => slot.name.trim().toLowerCase() === copySlotTarget.name.trim().toLowerCase())
+          .sort((left, right) => right.order - left.order)[0];
+
+        const targetSlots = nextWeek.weekdays.find((entry) => entry.weekday === weekday)?.slots ?? [];
+        let targetSlotId = existingSlot?.id ?? null;
+        let targetSlotItemCount = existingSlot?.items.length ?? 0;
+
+        if (!targetSlotId) {
+          nextWeek = await createSelfCareSlot({
+            weekday,
+            name: copySlotTarget.name,
+            order: targetSlots.length + 1
+          });
+
+          const createdSlot = nextWeek.weekdays
+            .find((entry) => entry.weekday === weekday)
+            ?.slots
+            .filter((slot) => slot.name.trim().toLowerCase() === copySlotTarget.name.trim().toLowerCase())
+            .sort((left, right) => right.order - left.order)[0];
+
+          targetSlotId = createdSlot?.id ?? null;
+          targetSlotItemCount = createdSlot?.items.length ?? 0;
+        }
+
+        if (!targetSlotId) {
+          continue;
+        }
+
+        for (const [index, item] of copySlotTarget.items.entries()) {
+          nextWeek = await createSelfCareItem(targetSlotId, {
+            title: item.title,
+            description: item.description,
+            note: item.note,
+            order: targetSlotItemCount + index + 1
+          });
+        }
+      }
+
+      setWeek(nextWeek);
+      setCopySlotTarget(null);
+      setFeedback({ type: "success", message: t("selfCare.status.slotCopied") });
+    } catch (error) {
+      console.error("Failed to copy self-care slot", error);
+      setFeedback({ type: "error", message: t("selfCare.status.slotCopyError") });
+    }
+  }
+
   const handleCloseAssistant = useCallback(() => {
+    setAssistantContext({ weekday: null, slotName: null });
     setAssistantOpen(false);
   }, []);
 
@@ -187,7 +256,10 @@ export function SelfCarePage() {
             <PageActionButton
               icon={<SmartToyRoundedIcon fontSize="small" />}
               label={t("aiAgent.title")}
-              onClick={() => setAssistantOpen(true)}
+              onClick={() => {
+                setAssistantContext({ weekday: null, slotName: null });
+                setAssistantOpen(true);
+              }}
               variant="agent"
             />
           </Stack>
@@ -243,10 +315,17 @@ export function SelfCarePage() {
           onAddSlot={(weekday) => setSlotDialogState({ open: true, weekday, slot: null })}
           onEditSlot={(slot) => setSlotDialogState({ open: true, weekday: slot.weekday, slot })}
           onDeleteSlot={(slot) => setPendingDelete({ type: "slot", slot })}
+          onCopySlot={(slot) => setCopySlotTarget(slot)}
           onAddItem={(slot) => setItemDialogState({ open: true, slot, item: null })}
           onEditItem={(slot, item) => setItemDialogState({ open: true, slot, item })}
           onDeleteItem={(slot, item) => setPendingDelete({ type: "item", slot, item })}
-          onOpenAgent={() => setAssistantOpen(true)}
+          onOpenAgent={(context) => {
+            setAssistantContext({
+              weekday: context?.weekday ?? null,
+              slotName: context?.slotName ?? null
+            });
+            setAssistantOpen(true);
+          }}
         />
       )}
 
@@ -280,7 +359,21 @@ export function SelfCarePage() {
         onConfirm={() => void handleConfirmDelete()}
       />
 
-      <SelfCareAssistantDialog open={assistantOpen} week={week} onClose={handleCloseAssistant} onDataChanged={refresh} />
+      <SelfCareCopySlotDialog
+        open={Boolean(copySlotTarget)}
+        slot={copySlotTarget}
+        onClose={() => setCopySlotTarget(null)}
+        onSubmit={handleCopySlot}
+      />
+
+      <SelfCareAssistantDialog
+        open={assistantOpen}
+        week={week}
+        focusWeekday={assistantContext.weekday}
+        focusSlotName={assistantContext.slotName}
+        onClose={handleCloseAssistant}
+        onDataChanged={refresh}
+      />
 
       <Snackbar
         open={Boolean(feedback)}
