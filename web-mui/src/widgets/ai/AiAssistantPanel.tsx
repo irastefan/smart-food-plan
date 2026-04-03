@@ -3,7 +3,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { isRtlLanguage } from "../../shared/i18n/languages";
 import { getOpenAiApiKey } from "../../shared/config/openai";
-import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
+import type { AgentMessage, AgentToolAction } from "../../features/ai/api/openaiAgentApi";
 import type { Language } from "../../shared/i18n/messages";
 import { AiAgentComposer } from "./AiAgentComposer";
 import { AiAgentConversation } from "./AiAgentConversation";
@@ -16,8 +16,8 @@ export type AiAssistantPanelRenderProps = {
   messages: AgentMessage[];
   visibleMessages: AgentMessage[];
   isSubmitting: boolean;
-  activeToolName: string | null;
-  completedToolName: string | null;
+  activeToolStatus: { action: AgentToolAction; entity: string | null } | null;
+  completedToolStatus: { action: AgentToolAction; entity: string | null } | null;
 };
 
 export type AiAssistantPanelProps<TExtra = void> = {
@@ -32,7 +32,7 @@ export type AiAssistantPanelProps<TExtra = void> = {
     apiKey: string;
     payload: ComposerPayload;
     messages: AgentMessage[];
-    onToolStart: (toolName: string) => void;
+    onToolStart: (tool: { name: string; action: AgentToolAction; entity: string | null }) => void;
     onToolEnd: () => void;
   }) => Promise<{ appendedMessages: AgentMessage[]; extra?: TExtra }>;
   onExtraResult?: (extra: TExtra | undefined) => void;
@@ -58,10 +58,10 @@ export function AiAssistantPanel<TExtra = void>({
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeToolName, setActiveToolName] = useState<string | null>(null);
-  const [completedToolName, setCompletedToolName] = useState<string | null>(null);
+  const [activeToolStatus, setActiveToolStatus] = useState<{ action: AgentToolAction; entity: string | null } | null>(null);
+  const [completedToolStatus, setCompletedToolStatus] = useState<{ action: AgentToolAction; entity: string | null } | null>(null);
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
-  const activeToolNameRef = useRef<string | null>(null);
+  const activeToolStatusRef = useRef<{ action: AgentToolAction; entity: string | null } | null>(null);
 
   const visibleMessages = messages;
 
@@ -89,26 +89,27 @@ export function AiAssistantPanel<TExtra = void>({
 
     try {
       setIsSubmitting(true);
-      setActiveToolName(null);
-      setCompletedToolName(null);
+      setActiveToolStatus(null);
+      setCompletedToolStatus(null);
       setStatus(null);
       const result = await onRun({
         apiKey,
         payload,
         messages,
-        onToolStart: (toolName) => {
-          activeToolNameRef.current = toolName;
-          setActiveToolName(toolName);
-          setCompletedToolName(null);
+        onToolStart: (tool) => {
+          const nextStatus = { action: tool.action, entity: tool.entity };
+          activeToolStatusRef.current = nextStatus;
+          setActiveToolStatus(nextStatus);
+          setCompletedToolStatus(null);
         },
         onToolEnd: () => {
-          setCompletedToolName(activeToolNameRef.current);
-          setActiveToolName(null);
-          activeToolNameRef.current = null;
+          setCompletedToolStatus(activeToolStatusRef.current);
+          setActiveToolStatus(null);
+          activeToolStatusRef.current = null;
         }
       });
-      setCompletedToolName(null);
       setMessages([...nextHistory, ...result.appendedMessages]);
+      setCompletedToolStatus(null);
       onExtraResult?.(result.extra);
     } catch (error) {
       console.error("Failed to run AI assistant panel", error);
@@ -117,8 +118,8 @@ export function AiAssistantPanel<TExtra = void>({
         message: error instanceof Error && error.message.trim() ? error.message : "AI request failed."
       });
     } finally {
-      setActiveToolName(null);
-      activeToolNameRef.current = null;
+      setActiveToolStatus(null);
+      activeToolStatusRef.current = null;
       setIsSubmitting(false);
     }
   }
@@ -146,7 +147,15 @@ export function AiAssistantPanel<TExtra = void>({
           {status.message}
         </Alert>
       ) : null}
-      {renderTop?.({ draft, setDraft, messages, visibleMessages, isSubmitting, activeToolName, completedToolName })}
+      {renderTop?.({
+        draft,
+        setDraft,
+        messages,
+        visibleMessages,
+        isSubmitting,
+        activeToolStatus,
+        completedToolStatus
+      })}
       <Box
         style={{ direction: isRtl ? "rtl" : "ltr" }}
         sx={{
@@ -191,12 +200,20 @@ export function AiAssistantPanel<TExtra = void>({
           <AiAgentConversation
             messages={visibleMessages}
             isSubmitting={isSubmitting}
-            activeToolName={activeToolName}
-            completedToolName={completedToolName}
+            activeToolStatus={activeToolStatus}
+            completedToolStatus={completedToolStatus}
             showToolOutput={showToolOutput}
           />
           <Box sx={{ pt: { xs: 1.5, md: 2 } }}>
-            {renderBottom?.({ draft, setDraft, messages, visibleMessages, isSubmitting, activeToolName, completedToolName })}
+            {renderBottom?.({
+              draft,
+              setDraft,
+              messages,
+              visibleMessages,
+              isSubmitting,
+              activeToolStatus,
+              completedToolStatus
+            })}
           </Box>
         </Box>
         <AiAgentComposer

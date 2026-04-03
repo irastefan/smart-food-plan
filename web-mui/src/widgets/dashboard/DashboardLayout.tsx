@@ -8,12 +8,14 @@ import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardQuickActions } from "./DashboardQuickActions";
 
 export function DashboardLayout() {
+  const mobileDockOffset = "calc(68px + env(safe-area-inset-bottom, 0px))";
   const { language } = useLanguage();
   const isRtl = isRtlLanguage(language);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalAgentOpen, setGlobalAgentOpen] = useState(false);
   const [pageAgentAction, setPageAgentAction] = useState<(() => void) | null>(null);
+  const [pageAgentOpen, setPageAgentOpen] = useState(false);
   const [pageAddAction, setPageAddAction] = useState<(() => void) | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const openSidebar = useCallback(() => setMobileOpen(true), []);
@@ -23,6 +25,12 @@ export function DashboardLayout() {
   }, []);
   const clearPageAgentAction = useCallback(() => {
     setPageAgentAction(null);
+  }, []);
+  const registerPageAgentOpen = useCallback((value: boolean) => {
+    setPageAgentOpen(value);
+  }, []);
+  const clearPageAgentOpen = useCallback(() => {
+    setPageAgentOpen(false);
   }, []);
   const registerPageAddAction = useCallback((action: (() => void) | null) => {
     setPageAddAction(() => action);
@@ -42,21 +50,39 @@ export function DashboardLayout() {
       collapsed,
       registerPageAgentAction,
       clearPageAgentAction,
+      registerPageAgentOpen,
+      clearPageAgentOpen,
       registerPageAddAction,
       clearPageAddAction,
       registerPageLoading,
       clearPageLoading
     }),
-    [clearPageAddAction, clearPageAgentAction, clearPageLoading, collapsed, openSidebar, registerPageAddAction, registerPageAgentAction, registerPageLoading]
+    [
+      clearPageAddAction,
+      clearPageAgentAction,
+      clearPageAgentOpen,
+      clearPageLoading,
+      collapsed,
+      openSidebar,
+      registerPageAddAction,
+      registerPageAgentAction,
+      registerPageAgentOpen,
+      registerPageLoading
+    ]
   );
   const handleOpenAgent = useCallback(() => {
+    if (globalAgentOpen) {
+      setGlobalAgentOpen(false);
+      return;
+    }
+
     if (pageAgentAction) {
       pageAgentAction();
       return;
     }
 
     setGlobalAgentOpen(true);
-  }, [pageAgentAction]);
+  }, [globalAgentOpen, pageAgentAction]);
 
   return (
     <Box
@@ -106,7 +132,7 @@ export function DashboardLayout() {
             minHeight: "100vh",
             px: { xs: 2, md: 3 },
             pt: { xs: 2, md: 3 },
-            pb: { xs: "calc(92px + env(safe-area-inset-bottom, 0px))", md: 3 }
+            pb: { xs: mobileDockOffset, md: 3 }
           }}
         >
           <Outlet context={outletContext} />
@@ -116,6 +142,7 @@ export function DashboardLayout() {
       <DashboardQuickActions
         onOpenAgent={handleOpenAgent}
         onOpenAdd={pageAddAction ?? undefined}
+        isAgentOpen={globalAgentOpen || pageAgentOpen}
         isMoreOpen={mobileOpen}
         onToggleMore={toggleMobileSidebar}
         isAgentLoading={pageLoading}

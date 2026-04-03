@@ -30,6 +30,8 @@ type LayoutContext = {
   collapsed: boolean;
   registerPageAgentAction: (action: (() => void) | null) => void;
   clearPageAgentAction: () => void;
+  registerPageAgentOpen: (value: boolean) => void;
+  clearPageAgentOpen: () => void;
   registerPageAddAction: (action: (() => void) | null) => void;
   clearPageAddAction: () => void;
   registerPageLoading: (value: boolean) => void;
@@ -38,7 +40,7 @@ type LayoutContext = {
 
 export function ShoppingPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAgentOpen, clearPageAgentOpen, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
     useOutletContext<LayoutContext>();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -74,11 +76,18 @@ export function ShoppingPage() {
   }, [t]);
 
   useEffect(() => {
-    registerPageAgentAction(() => setAssistantOpen(true));
+    registerPageAgentAction(() => setAssistantOpen((current) => !current));
     return () => {
       clearPageAgentAction();
     };
   }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageAgentOpen(assistantOpen);
+    return () => {
+      clearPageAgentOpen();
+    };
+  }, [assistantOpen, clearPageAgentOpen, registerPageAgentOpen]);
 
   useEffect(() => {
     registerPageAddAction(() => setDialogOpen(true));

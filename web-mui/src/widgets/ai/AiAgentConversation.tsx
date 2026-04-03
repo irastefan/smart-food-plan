@@ -2,23 +2,23 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PrecisionManufacturingRoundedIcon from "@mui/icons-material/PrecisionManufacturingRounded";
 import { Accordion, AccordionDetails, AccordionSummary, Box, LinearProgress, Paper, Stack, Typography } from "@mui/material";
-import type { AgentMessage } from "../../features/ai/api/openaiAgentApi";
+import type { AgentMessage, AgentToolAction } from "../../features/ai/api/openaiAgentApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { isRtlLanguage } from "../../shared/i18n/languages";
 
 type AiAgentConversationProps = {
   messages: AgentMessage[];
   isSubmitting?: boolean;
-  activeToolName?: string | null;
-  completedToolName?: string | null;
+  activeToolStatus?: { action: AgentToolAction; entity: string | null } | null;
+  completedToolStatus?: { action: AgentToolAction; entity: string | null } | null;
   showToolOutput?: boolean;
 };
 
 export function AiAgentConversation({
   messages,
   isSubmitting = false,
-  activeToolName = null,
-  completedToolName = null,
+  activeToolStatus = null,
+  completedToolStatus = null,
   showToolOutput = false
 }: AiAgentConversationProps) {
   const { t, language } = useLanguage();
@@ -68,7 +68,7 @@ export function AiAgentConversation({
                   </Box>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography fontWeight={700} sx={{ fontSize: 13.5, textAlign: "start" }}>
-                      {t("aiAgent.actionDone")}
+                      {formatActionLabel(t, "done", message.toolAction ?? "generic", message.toolEntity ?? null)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12.5, textAlign: "start" }}>
                       {t("aiAgent.actionDoneHint")}
@@ -203,7 +203,7 @@ export function AiAgentConversation({
         </Stack>
       ))}
 
-      {activeToolName ? (
+      {activeToolStatus ? (
         <Stack direction={isRtl ? "row-reverse" : "row"} justifyContent="flex-start" alignItems="flex-start">
           <Paper
             sx={{
@@ -235,7 +235,7 @@ export function AiAgentConversation({
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={700} sx={{ fontSize: 13.5, textAlign: "start" }}>
-                    {t("aiAgent.actionWorking")}
+                    {formatActionLabel(t, "working", activeToolStatus.action, activeToolStatus.entity)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12.5, textAlign: "start" }}>
                     {t("aiAgent.actionWorkingHint")}
@@ -253,7 +253,7 @@ export function AiAgentConversation({
             </Stack>
           </Paper>
         </Stack>
-      ) : completedToolName ? (
+      ) : completedToolStatus ? (
         <Stack direction={isRtl ? "row-reverse" : "row"} justifyContent="flex-start" alignItems="flex-start">
           <Paper
             sx={{
@@ -285,7 +285,7 @@ export function AiAgentConversation({
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={700} sx={{ fontSize: 13.5, textAlign: "start" }}>
-                    {t("aiAgent.actionDone")}
+                    {formatActionLabel(t, "done", completedToolStatus.action, completedToolStatus.entity)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12.5, textAlign: "start" }}>
                     {t("aiAgent.actionDoneHint")}
@@ -338,4 +338,29 @@ export function AiAgentConversation({
       ) : null}
     </Stack>
   );
+}
+
+function formatActionLabel(
+  t: (key: never, params?: Record<string, string>) => string,
+  phase: "working" | "done",
+  action: AgentToolAction,
+  entity: string | null
+) {
+  const suffix = phase === "working" ? "Working" : "Done";
+  const actionKey = `aiAgent.action.${action}.${suffix}` as never;
+  const actionGenericKey = `aiAgent.action.${action}.${suffix}Generic` as never;
+  const genericKey = `aiAgent.action.generic.${suffix}` as never;
+  if (!entity) {
+    const actionGenericValue = t(actionGenericKey);
+    if (actionGenericValue !== actionGenericKey) {
+      return actionGenericValue;
+    }
+    return t(genericKey);
+  }
+  const params = { item: entity };
+  const value = t(actionKey, params);
+  if (value !== actionKey) {
+    return value;
+  }
+  return t(genericKey, params);
 }

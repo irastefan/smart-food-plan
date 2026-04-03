@@ -7,8 +7,20 @@ export type AgentMessage = {
   role: "user" | "assistant" | "tool";
   text: string;
   toolName?: string;
+  toolAction?: AgentToolAction;
+  toolEntity?: string | null;
   images?: AgentImageInput[];
 };
+
+export type AgentToolAction =
+  | "add"
+  | "remove"
+  | "update"
+  | "create"
+  | "analyze"
+  | "copy"
+  | "load"
+  | "generic";
 
 export type AgentImageInput = {
   name: string;
@@ -89,7 +101,7 @@ function extractAssistantText(response: OpenAiResponse): string {
 
   const text = (response.output ?? [])
     .flatMap((item) => item.content ?? [])
-    .filter((item) => item.type === "output_text" && typeof item.text === "string")
+    .filter((item) => typeof item.text === "string")
     .map((item) => item.text?.trim() ?? "")
     .filter(Boolean)
     .join("\n\n");
@@ -107,7 +119,7 @@ export async function runAgentTurn(input: {
   userInstructions?: string;
   responseLanguage?: Language;
   systemPrompt?: string;
-  onToolStart?: (toolName: string) => void;
+  onToolStart?: (tool: { name: string; action: AgentToolAction; entity: string | null }) => void;
   onToolEnd?: () => void;
 }): Promise<AgentResult> {
   const toolMap = buildToolMap(input.tools);
@@ -177,6 +189,8 @@ export async function runAgentTurn(input: {
 
       const parsedArgs = call.arguments ? (JSON.parse(call.arguments) as Record<string, unknown>) : {};
       const callSignature = JSON.stringify({ name: tool.name, args: parsedArgs });
+      const toolAction = inferToolAction(tool.name);
+      let toolEntity = inferToolEntity(parsedArgs);
       let output: string;
 
       if (seenToolCalls.has(callSignature)) {
@@ -186,9 +200,10 @@ export async function runAgentTurn(input: {
         }, null, 2);
       } else {
         seenToolCalls.add(callSignature);
-        input.onToolStart?.(tool.name);
+        input.onToolStart?.({ name: tool.name, action: toolAction, entity: toolEntity });
         try {
           const result = await callMcpTool(tool.name, parsedArgs);
+          toolEntity = toolEntity ?? inferToolEntity(result);
           output = JSON.stringify(result, null, 2);
         } finally {
           input.onToolEnd?.();
@@ -199,6 +214,8 @@ export async function runAgentTurn(input: {
         id: crypto.randomUUID(),
         role: "tool",
         toolName: tool.name,
+        toolAction,
+        toolEntity,
         text: output
       });
 
@@ -229,4 +246,132 @@ export async function runAgentTurn(input: {
     },
     toolMessages
   };
+}
+
+function inferToolAction(toolName: string): AgentToolAction {
+  const normalized = toolName.toLowerCase();
+
+  if (/(add|append|insert)/.test(normalized)) return "add";
+  if (/(delete|remove|clear)/.test(normalized)) return "remove";
+  if (/(update|edit|modify|patch|save)/.test(normalized)) return "update";
+  if (/(create|generate|draft)/.test(normalized)) return "create";
+  if (/(analy[sz]e|review|inspect)/.test(normalized)) return "analyze";
+  if (/(copy|duplicate)/.test(normalized)) return "copy";
+  if (/(get|list|fetch|load|read|history)/.test(normalized)) return "load";
+  return "generic";
+}
+
+function inferToolEntity(value: unknown): string | null {
+  return inferToolEntityFromUnknown(value);
+}
+
+function inferToolEntityFromUnknown(value: unknown): string | null {
+  if (typeof value === "string") {
+    return sanitizeEntityCandidate(value);
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const candidate = inferToolEntityFromUnknown(entry);
+      if (candidate) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const priorityKeys = [
+    "name",
+    "title",
+    "itemName",
+    "productName",
+    "recipeName",
+    "mealName",
+    "displayName",
+    "productTitle",
+    "recipeTitle",
+    "label",
+    "slot",
+    "item",
+    "product",
+    "recipe"
+  ];
+
+  for (const key of priorityKeys) {
+    const candidate = inferToolEntityFromUnknown(record[key]);
+    if (candidate) {
+      return candidate;
+    }
+  }
+
+  for (const candidate of Object.values(record)) {
+    const resolved = inferToolEntityFromUnknown(candidate);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+}
+
+function sanitizeEntityCandidate(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 80) {
+    return null;
+  }
+
+  const normalized = trimmed.toLowerCase();
+  if ([
+    "text",
+    "message",
+    "content",
+    "input",
+    "output",
+    "result",
+    "item",
+    "product",
+    "recipe",
+    "meal",
+    "slot",
+    "id"
+  ].includes(normalized)) {
+    return null;
+  }
+
+  if (looksLikeTechnicalId(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function looksLikeTechnicalId(value: string): boolean {
+  const normalized = value.trim();
+
+  if (/^[a-f0-9]{24,}$/i.test(normalized)) {
+    return true;
+  }
+
+  if (/^[a-z0-9]{20,}$/i.test(normalized) && /[0-9]/.test(normalized)) {
+    return true;
+  }
+
+  if (/^[a-z]+[0-9][a-z0-9]{10,}$/i.test(normalized)) {
+    return true;
+  }
+
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)) {
+    return true;
+  }
+
+  if (/^[A-Z0-9_-]{12,}$/i.test(normalized) && !/\s/.test(normalized)) {
+    return true;
+  }
+
+  return false;
 }

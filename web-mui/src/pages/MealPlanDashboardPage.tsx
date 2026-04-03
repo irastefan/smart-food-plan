@@ -47,6 +47,8 @@ type LayoutContext = {
   collapsed: boolean;
   registerPageAgentAction: (action: (() => void) | null) => void;
   clearPageAgentAction: () => void;
+  registerPageAgentOpen: (value: boolean) => void;
+  clearPageAgentOpen: () => void;
   registerPageLoading: (value: boolean) => void;
   clearPageLoading: () => void;
 };
@@ -105,7 +107,7 @@ function toOptionalNumber(value: string): number | undefined {
 
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAgentOpen, clearPageAgentOpen, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage, refresh } = useMealPlanDashboard();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -141,11 +143,18 @@ export function MealPlanDashboardPage() {
   }
 
   useEffect(() => {
-    registerPageAgentAction(() => setPageAssistantOpen(true));
+    registerPageAgentAction(() => setPageAssistantOpen((current) => !current));
     return () => {
       clearPageAgentAction();
     };
   }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageAgentOpen(pageAssistantOpen);
+    return () => {
+      clearPageAgentOpen();
+    };
+  }, [clearPageAgentOpen, pageAssistantOpen, registerPageAgentOpen]);
 
   useEffect(() => {
     registerPageLoading(isLoading);

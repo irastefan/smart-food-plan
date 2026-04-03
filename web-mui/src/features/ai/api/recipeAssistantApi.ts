@@ -1,5 +1,5 @@
 import { listMcpTools } from "./mcpApi";
-import { runAgentTurn, type AgentImageInput, type AgentMessage } from "./openaiAgentApi";
+import { runAgentTurn, type AgentImageInput, type AgentMessage, type AgentToolAction } from "./openaiAgentApi";
 import { buildRecipeAssistantPrompt } from "../model/recipeAssistantPrompt";
 import type { RecipeDetail, RecipeFormIngredient, RecipeFormValues } from "../../recipes/model/recipeTypes";
 import { normalizeRecipeCategory } from "../../recipes/model/recipeCategories";
@@ -103,7 +103,7 @@ export async function runRecipeAssistant(input: {
   images?: AgentImageInput[];
   currentRecipe?: RecipeDetail | null;
   responseLanguage: Language;
-  onToolStart?: (toolName: string) => void;
+  onToolStart?: (tool: { name: string; action: AgentToolAction; entity: string | null }) => void;
   onToolEnd?: () => void;
 }): Promise<RecipeAssistantResult> {
   const tools = await listMcpTools();

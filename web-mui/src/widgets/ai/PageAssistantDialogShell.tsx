@@ -13,6 +13,7 @@ type PageAssistantDialogShellProps = {
 };
 
 export function PageAssistantDialogShell({ open, title, onClose, children }: PageAssistantDialogShellProps) {
+  const mobileDockOffset = "calc(68px + env(safe-area-inset-bottom, 0px))";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { language } = useLanguage();
@@ -26,11 +27,27 @@ export function PageAssistantDialogShell({ open, title, onClose, children }: Pag
       fullScreen={isMobile}
       fullWidth
       maxWidth={false}
+      sx={
+        isMobile
+          ? {
+              "& .MuiDialog-container": {
+                alignItems: "flex-start"
+              }
+            }
+          : undefined
+      }
       PaperProps={{
         dir: isRtl ? "rtl" : "ltr",
         sx: isMobile
           ? {
-              direction: isRtl ? "rtl" : "ltr"
+              direction: isRtl ? "rtl" : "ltr",
+              width: "100%",
+              maxWidth: "100%",
+              height: `calc(100dvh - ${mobileDockOffset})`,
+              maxHeight: `calc(100dvh - ${mobileDockOffset})`,
+              margin: 0,
+              borderRadius: 0,
+              overflow: "hidden"
             }
           : {
               width: "76vw",

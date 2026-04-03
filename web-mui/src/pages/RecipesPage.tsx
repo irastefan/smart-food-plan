@@ -20,6 +20,8 @@ type LayoutContext = {
   collapsed: boolean;
   registerPageAgentAction: (action: (() => void) | null) => void;
   clearPageAgentAction: () => void;
+  registerPageAgentOpen: (value: boolean) => void;
+  clearPageAgentOpen: () => void;
   registerPageAddAction: (action: (() => void) | null) => void;
   clearPageAddAction: () => void;
   registerPageLoading: (value: boolean) => void;
@@ -28,7 +30,7 @@ type LayoutContext = {
 
 export function RecipesPage() {
   const { t } = useLanguage();
-  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
+  const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAgentOpen, clearPageAgentOpen, registerPageAddAction, clearPageAddAction, registerPageLoading, clearPageLoading } =
     useOutletContext<LayoutContext>();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -42,11 +44,18 @@ export function RecipesPage() {
   const [assistantOpen, setAssistantOpen] = useState(false);
 
   useEffect(() => {
-    registerPageAgentAction(() => setAssistantOpen(true));
+    registerPageAgentAction(() => setAssistantOpen((current) => !current));
     return () => {
       clearPageAgentAction();
     };
   }, [clearPageAgentAction, registerPageAgentAction]);
+
+  useEffect(() => {
+    registerPageAgentOpen(assistantOpen);
+    return () => {
+      clearPageAgentOpen();
+    };
+  }, [assistantOpen, clearPageAgentOpen, registerPageAgentOpen]);
 
   useEffect(() => {
     registerPageAddAction(() => navigate("/recipes/new"));

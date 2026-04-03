@@ -13,6 +13,7 @@ type DashboardQuickActionsProps = {
   onOpenAgent?: () => void;
   onOpenAdd?: () => void;
   isAgentLoading?: boolean;
+  isAgentOpen?: boolean;
   isMoreOpen?: boolean;
   onToggleMore?: () => void;
 };
@@ -21,6 +22,7 @@ export function DashboardQuickActions({
   onOpenAgent,
   onOpenAdd,
   isAgentLoading = false,
+  isAgentOpen = false,
   isMoreOpen = false,
   onToggleMore
 }: DashboardQuickActionsProps) {
@@ -106,7 +108,11 @@ export function DashboardQuickActions({
 
             <Tooltip title={t("layout.contextAgent")}>
               <DockActionButton
-                icon={<AiAgentAvatarIcon size={26} variant={isAgentLoading ? "loading" : "active"} />}
+                icon={
+                  isAgentOpen
+                    ? <CloseRoundedIcon sx={{ fontSize: 24 }} />
+                    : <AiAgentAvatarIcon size={26} variant={isAgentLoading ? "loading" : "active"} />
+                }
                 active
                 onClick={handleOpenAgent}
               />
