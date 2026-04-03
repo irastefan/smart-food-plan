@@ -12,6 +12,7 @@ import { RecipesPage } from "../pages/RecipesPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ShoppingPage } from "../pages/ShoppingPage";
+import { SelfCarePage } from "../pages/SelfCarePage";
 import { ProtectedRoute, PublicOnlyRoute } from "./routerGuards";
 
 export const router = createBrowserRouter([
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
           {
             path: "shopping",
             element: <ShoppingPage />
+          },
+          {
+            path: "self-care",
+            element: <SelfCarePage />
           },
           {
             path: "ai-agent",

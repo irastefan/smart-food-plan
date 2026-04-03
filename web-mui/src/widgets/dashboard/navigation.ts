@@ -4,6 +4,7 @@ import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
+import SpaRoundedIcon from "@mui/icons-material/SpaRounded";
 
 export const dashboardNavigation = [
   {
@@ -29,6 +30,12 @@ export const dashboardNavigation = [
     labelKey: "nav.shopping",
     path: "/shopping",
     icon: ShoppingCartRoundedIcon
+  },
+  {
+    id: "self-care",
+    labelKey: "nav.selfCare",
+    path: "/self-care",
+    icon: SpaRoundedIcon
   },
   {
     id: "ai-agent",

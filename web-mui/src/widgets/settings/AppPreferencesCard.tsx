@@ -13,7 +13,7 @@ type AppPreferencesCardProps = {
 
 const MEAL_PLAN_SUMMARY_OPTIONS: Array<AppPreferences["mealPlanSummaryMetric"]> = ["remaining", "food"];
 const BODY_METRICS_HISTORY_OPTIONS: Array<AppPreferences["bodyMetricsHistoryDays"]> = [30, 60, 90, 180];
-const MOBILE_NAV_OPTIONS: AppPreferences["mobileQuickNavItems"] = ["meal-plan", "recipes", "products", "shopping", "settings"];
+const MOBILE_NAV_OPTIONS: AppPreferences["mobileQuickNavItems"] = ["meal-plan", "recipes", "products", "shopping", "self-care", "settings"];
 const BODY_METRIC_FIELD_OPTIONS: AppPreferences["visibleBodyMetricFields"] = [
   "weightKg",
   "neckCm",

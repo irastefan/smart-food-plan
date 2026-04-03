@@ -3,7 +3,7 @@ const APP_PREFERENCES_STORAGE_KEY = "smartFoodPlanMui.appPreferences";
 export type AppPreferences = {
   mealPlanSummaryMetric: "remaining" | "food";
   bodyMetricsHistoryDays: 30 | 60 | 90 | 180;
-  mobileQuickNavItems: Array<"meal-plan" | "recipes" | "products" | "shopping" | "settings">;
+  mobileQuickNavItems: Array<"meal-plan" | "recipes" | "products" | "shopping" | "self-care" | "settings">;
   visibleBodyMetricFields: Array<
     "weightKg" | "neckCm" | "bustCm" | "underbustCm" | "waistCm" | "hipsCm" | "bicepsCm" | "forearmCm" | "thighCm" | "calfCm"
   >;
@@ -21,6 +21,7 @@ const VALID_MOBILE_NAV_ITEMS = new Set<AppPreferences["mobileQuickNavItems"][num
   "recipes",
   "products",
   "shopping",
+  "self-care",
   "settings"
 ]);
 
