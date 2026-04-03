@@ -58,9 +58,8 @@ export function SelfCarePage() {
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { week, setWeek, isLoading, errorMessage, refresh } = useSelfCareRoutine();
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [assistantContext, setAssistantContext] = useState<{ weekday: SelfCareWeekdayKey | null; slotName: string | null }>({
-    weekday: null,
-    slotName: null
+  const [assistantContext, setAssistantContext] = useState<{ weekday: SelfCareWeekdayKey | null }>({
+    weekday: null
   });
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [slotDialogState, setSlotDialogState] = useState<{ open: boolean; weekday: SelfCareWeekdayKey; slot?: SelfCareSlot | null }>({
@@ -82,7 +81,7 @@ export function SelfCarePage() {
 
   useEffect(() => {
     registerPageAgentAction(() => {
-      setAssistantContext({ weekday: null, slotName: null });
+      setAssistantContext({ weekday: null });
       setAssistantOpen((current) => !current);
     });
     return () => {
@@ -237,7 +236,7 @@ export function SelfCarePage() {
   }
 
   const handleCloseAssistant = useCallback(() => {
-    setAssistantContext({ weekday: null, slotName: null });
+    setAssistantContext({ weekday: null });
     setAssistantOpen(false);
   }, []);
 
@@ -258,7 +257,7 @@ export function SelfCarePage() {
               icon={<SmartToyRoundedIcon fontSize="small" />}
               label={t("aiAgent.title")}
               onClick={() => {
-                setAssistantContext({ weekday: null, slotName: null });
+                setAssistantContext({ weekday: null });
                 setAssistantOpen(true);
               }}
               variant="agent"
@@ -321,10 +320,7 @@ export function SelfCarePage() {
           onEditItem={(slot, item) => setItemDialogState({ open: true, slot, item })}
           onDeleteItem={(slot, item) => setPendingDelete({ type: "item", slot, item })}
           onOpenAgent={(context) => {
-            setAssistantContext({
-              weekday: context?.weekday ?? null,
-              slotName: context?.slotName ?? null
-            });
+            setAssistantContext({ weekday: context?.weekday ?? null });
             setAssistantOpen(true);
           }}
         />
@@ -371,7 +367,6 @@ export function SelfCarePage() {
         open={assistantOpen}
         week={week}
         focusWeekday={assistantContext.weekday}
-        focusSlotName={assistantContext.slotName}
         onClose={handleCloseAssistant}
         onDataChanged={refresh}
       />

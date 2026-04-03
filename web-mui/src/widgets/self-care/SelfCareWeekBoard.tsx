@@ -25,7 +25,7 @@ type SelfCareWeekBoardProps = {
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
-  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey; slotName?: string | null }) => void;
+  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey | null }) => void;
 };
 
 function DayColumn({
@@ -48,7 +48,7 @@ function DayColumn({
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
-  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey; slotName?: string | null }) => void;
+  onOpenAgent: (context?: { weekday: SelfCareWeekdayKey | null }) => void;
   isCurrentDay?: boolean;
 }) {
   const { t } = useLanguage();
@@ -105,9 +105,24 @@ function DayColumn({
                 : t("selfCare.day.slotCount", { count: weekday.slots.length } as never)}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={() => onAddSlot(weekday.weekday)} title={t("selfCare.actions.addSlot")}>
-            <AddRoundedIcon fontSize="small" />
-          </IconButton>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<SmartToyRoundedIcon fontSize="small" />}
+              onClick={() => onOpenAgent({ weekday: weekday.weekday })}
+              sx={{
+                minWidth: 0,
+                px: 0.9,
+                whiteSpace: "nowrap"
+              }}
+            >
+              {t("selfCare.actions.useAiAgent")}
+            </Button>
+            <IconButton size="small" onClick={() => onAddSlot(weekday.weekday)} title={t("selfCare.actions.addSlot")}>
+              <AddRoundedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
         </Stack>
 
         <Stack spacing={1.1} sx={{ flex: 1 }}>
@@ -124,9 +139,14 @@ function DayColumn({
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.25 }}>
                 {t("selfCare.day.empty")}
               </Typography>
-              <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddSlot(weekday.weekday)}>
-                {t("selfCare.actions.addSlot")}
-              </Button>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddSlot(weekday.weekday)}>
+                  {t("selfCare.actions.addSlot")}
+                </Button>
+                <Button size="small" startIcon={<SmartToyRoundedIcon fontSize="small" />} onClick={() => onOpenAgent({ weekday: weekday.weekday })}>
+                  {t("selfCare.actions.useAiAgent")}
+                </Button>
+              </Stack>
             </Paper>
           ) : (
             weekday.slots.map((slot) => (
@@ -224,18 +244,9 @@ function DayColumn({
 
                 <Box sx={{ px: 2, py: 1.25 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(slot)}>
-                        {t("selfCare.actions.addStep")}
-                      </Button>
-                      <Button
-                        size="small"
-                        startIcon={<SmartToyRoundedIcon fontSize="small" />}
-                        onClick={() => onOpenAgent({ weekday: weekday.weekday, slotName: slot.name })}
-                      >
-                        {t("selfCare.actions.useAiAgent")}
-                      </Button>
-                    </Stack>
+                    <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddItem(slot)}>
+                      {t("selfCare.actions.addStep")}
+                    </Button>
                     <Button
                       size="small"
                       variant="text"

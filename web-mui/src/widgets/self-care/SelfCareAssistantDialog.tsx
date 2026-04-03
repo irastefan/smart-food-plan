@@ -12,7 +12,6 @@ type SelfCareAssistantDialogProps = {
   open: boolean;
   week: SelfCareRoutineWeek | null;
   focusWeekday?: SelfCareWeekdayKey | null;
-  focusSlotName?: string | null;
   onClose: () => void;
   onDataChanged?: () => Promise<void> | void;
 };
@@ -21,7 +20,6 @@ export function SelfCareAssistantDialog({
   open,
   week,
   focusWeekday = null,
-  focusSlotName = null,
   onClose,
   onDataChanged
 }: SelfCareAssistantDialogProps) {
@@ -91,7 +89,6 @@ export function SelfCareAssistantDialog({
         focusWeekday ? (
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip size="small" label={t(`selfCare.weekday.${focusWeekday.toLowerCase()}` as never)} />
-            {focusSlotName ? <Chip size="small" label={focusSlotName} /> : null}
           </Stack>
         ) : undefined
       }
@@ -125,8 +122,7 @@ export function SelfCareAssistantDialog({
             week,
             responseLanguage: resolveAiResponseLanguage(agentSettings.speechLanguage, language),
             userInstructions: agentSettings.userInstructions,
-            focusWeekday: focusWeekday ? t(`selfCare.weekday.${focusWeekday.toLowerCase()}` as never) : undefined,
-            focusSlotName
+            focusWeekday: focusWeekday ? t(`selfCare.weekday.${focusWeekday.toLowerCase()}` as never) : undefined
           }),
           onToolStart,
           onToolEnd
