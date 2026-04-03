@@ -1,0 +1,16 @@
+{
+  "name": "smart-food-plan",
+  "private": true,
+  "workspaces": [
+    "web",
+    "web-mui",
+    "mobile"
+  ],
+  "scripts": {
+    "dev:web-mui": "npm --prefix web-mui run dev",
+    "build:web-mui": "npm --prefix web-mui run build",
+    "start:mobile": "npm --prefix mobile run start",
+    "android:mobile": "npm --prefix mobile run android",
+    "ios:mobile": "npm --prefix mobile run ios"
+  }
+}
