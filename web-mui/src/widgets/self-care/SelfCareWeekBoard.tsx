@@ -139,14 +139,9 @@ function DayColumn({
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.25 }}>
                 {t("selfCare.day.empty")}
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddSlot(weekday.weekday)}>
-                  {t("selfCare.actions.addSlot")}
-                </Button>
-                <Button size="small" startIcon={<SmartToyRoundedIcon fontSize="small" />} onClick={() => onOpenAgent({ weekday: weekday.weekday })}>
-                  {t("selfCare.actions.useAiAgent")}
-                </Button>
-              </Stack>
+              <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => onAddSlot(weekday.weekday)}>
+                {t("selfCare.actions.addSlot")}
+              </Button>
             </Paper>
           ) : (
             weekday.slots.map((slot) => (
