@@ -49,8 +49,6 @@ export function SelfCarePage() {
     clearPageAgentAction,
     registerPageAgentOpen,
     clearPageAgentOpen,
-    registerPageAddAction,
-    clearPageAddAction,
     registerPageLoading,
     clearPageLoading
   } = useOutletContext<LayoutContext>();
@@ -95,15 +93,6 @@ export function SelfCarePage() {
       clearPageAgentOpen();
     };
   }, [assistantOpen, clearPageAgentOpen, registerPageAgentOpen]);
-
-  useEffect(() => {
-    registerPageAddAction(() => {
-      setSlotDialogState({ open: true, weekday: getCurrentWeekdayKey(), slot: null });
-    });
-    return () => {
-      clearPageAddAction();
-    };
-  }, [clearPageAddAction, registerPageAddAction]);
 
   useEffect(() => {
     registerPageLoading(isLoading);
