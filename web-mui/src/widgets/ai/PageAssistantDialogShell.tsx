@@ -13,7 +13,7 @@ type PageAssistantDialogShellProps = {
 };
 
 export function PageAssistantDialogShell({ open, title, onClose, children }: PageAssistantDialogShellProps) {
-  const mobileDockOffset = "calc(68px + env(safe-area-inset-bottom, 0px))";
+  const mobileDockOffset = "var(--dashboard-mobile-dock-height, calc(68px + env(safe-area-inset-bottom, 0px)))";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { language } = useLanguage();

@@ -2,7 +2,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import { Box, IconButton, Paper, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { useMemo, type MouseEvent, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, type MouseEvent, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getAppPreferences } from "../../shared/config/appPreferences";
@@ -29,9 +29,40 @@ export function DashboardQuickActions({
   const { t } = useLanguage();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const dockRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const preferences = getAppPreferences();
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+
+    if (!isMobile) {
+      root.style.removeProperty("--dashboard-mobile-dock-height");
+      return;
+    }
+
+    const updateDockHeight = () => {
+      const height = dockRef.current?.offsetHeight ?? 0;
+      if (height > 0) {
+        root.style.setProperty("--dashboard-mobile-dock-height", `${height}px`);
+      }
+    };
+
+    updateDockHeight();
+
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateDockHeight) : null;
+    if (observer && dockRef.current) {
+      observer.observe(dockRef.current);
+    } else {
+      window.addEventListener("resize", updateDockHeight);
+    }
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateDockHeight);
+    };
+  }, [isMobile, isMoreOpen, isAgentOpen, onOpenAdd]);
 
   const currentNavId = useMemo<DashboardNavigationId | null>(() => {
     const match = dashboardNavigation.find((item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`));
@@ -70,6 +101,7 @@ export function DashboardQuickActions({
         }}
       >
         <Paper
+          ref={dockRef}
           elevation={12}
           sx={{
             borderRadius: 0,

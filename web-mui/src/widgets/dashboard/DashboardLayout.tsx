@@ -8,7 +8,7 @@ import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardQuickActions } from "./DashboardQuickActions";
 
 export function DashboardLayout() {
-  const mobileDockOffset = "calc(68px + env(safe-area-inset-bottom, 0px))";
+  const mobileDockOffset = "var(--dashboard-mobile-dock-height, calc(68px + env(safe-area-inset-bottom, 0px)))";
   const { language } = useLanguage();
   const isRtl = isRtlLanguage(language);
   const [collapsed, setCollapsed] = useState(false);
