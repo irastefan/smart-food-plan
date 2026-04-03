@@ -1,7 +1,7 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Alert, CircularProgress, Paper, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import {
@@ -111,8 +111,6 @@ export function SelfCarePage() {
       clearPageLoading();
     };
   }, [clearPageLoading, isLoading, registerPageLoading]);
-
-  const weekdayCount = useMemo(() => week?.weekdays.filter((weekday) => weekday.slots.length > 0).length ?? 0, [week]);
 
   async function handleSubmitSlot(input: { weekday: SelfCareWeekdayKey; name: string }) {
     try {
@@ -265,37 +263,6 @@ export function SelfCarePage() {
           </Stack>
         ) : null}
       </Stack>
-
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1 }}>
-        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-          <div>
-            <Typography variant="h6" fontWeight={800} sx={{ textAlign: "start" }}>
-              {t("selfCare.summary.title")}
-            </Typography>
-            <Typography color="text.secondary">
-              {t("selfCare.summary.subtitle")}
-            </Typography>
-          </div>
-          <Stack direction="row" spacing={3}>
-            <div>
-              <Typography variant="caption" color="text.secondary">{t("selfCare.summary.days")}</Typography>
-              <Typography variant="h5" fontWeight={800}>{weekdayCount}</Typography>
-            </div>
-            <div>
-              <Typography variant="caption" color="text.secondary">{t("selfCare.summary.slots")}</Typography>
-              <Typography variant="h5" fontWeight={800}>
-                {week?.weekdays.reduce((sum, weekday) => sum + weekday.slots.length, 0) ?? 0}
-              </Typography>
-            </div>
-            <div>
-              <Typography variant="caption" color="text.secondary">{t("selfCare.summary.steps")}</Typography>
-              <Typography variant="h5" fontWeight={800}>
-                {week?.weekdays.reduce((sum, weekday) => sum + weekday.slots.reduce((slotSum, slot) => slotSum + slot.items.length, 0), 0) ?? 0}
-              </Typography>
-            </div>
-          </Stack>
-        </Stack>
-      </Paper>
 
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
       {errorMessage ? <Alert severity="error">{t(errorMessage as never)}</Alert> : null}
