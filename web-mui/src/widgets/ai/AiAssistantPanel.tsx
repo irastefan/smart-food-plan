@@ -17,7 +17,7 @@ export type AiAssistantPanelRenderProps = {
   visibleMessages: AgentMessage[];
   isSubmitting: boolean;
   activeToolStatus: { action: AgentToolAction; entity: string | null } | null;
-  completedToolStatus: { action: AgentToolAction; entity: string | null } | null;
+  completedToolStatuses: Array<{ action: AgentToolAction; entity: string | null }>;
 };
 
 export type AiAssistantPanelProps<TExtra = void> = {
@@ -59,7 +59,7 @@ export function AiAssistantPanel<TExtra = void>({
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeToolStatus, setActiveToolStatus] = useState<{ action: AgentToolAction; entity: string | null } | null>(null);
-  const [completedToolStatus, setCompletedToolStatus] = useState<{ action: AgentToolAction; entity: string | null } | null>(null);
+  const [completedToolStatuses, setCompletedToolStatuses] = useState<Array<{ action: AgentToolAction; entity: string | null }>>([]);
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
   const activeToolStatusRef = useRef<{ action: AgentToolAction; entity: string | null } | null>(null);
 
@@ -90,7 +90,7 @@ export function AiAssistantPanel<TExtra = void>({
     try {
       setIsSubmitting(true);
       setActiveToolStatus(null);
-      setCompletedToolStatus(null);
+      setCompletedToolStatuses([]);
       setStatus(null);
       const result = await onRun({
         apiKey,
@@ -100,16 +100,18 @@ export function AiAssistantPanel<TExtra = void>({
           const nextStatus = { action: tool.action, entity: tool.entity };
           activeToolStatusRef.current = nextStatus;
           setActiveToolStatus(nextStatus);
-          setCompletedToolStatus(null);
         },
         onToolEnd: () => {
-          setCompletedToolStatus(activeToolStatusRef.current);
+          const completedStatus = activeToolStatusRef.current;
+          if (completedStatus) {
+            setCompletedToolStatuses((current) => [...current, completedStatus]);
+          }
           setActiveToolStatus(null);
           activeToolStatusRef.current = null;
         }
       });
       setMessages([...nextHistory, ...result.appendedMessages]);
-      setCompletedToolStatus(null);
+      setCompletedToolStatuses([]);
       onExtraResult?.(result.extra);
     } catch (error) {
       console.error("Failed to run AI assistant panel", error);
@@ -154,7 +156,7 @@ export function AiAssistantPanel<TExtra = void>({
         visibleMessages,
         isSubmitting,
         activeToolStatus,
-        completedToolStatus
+        completedToolStatuses
       })}
       <Box
         style={{ direction: isRtl ? "rtl" : "ltr" }}
@@ -201,7 +203,7 @@ export function AiAssistantPanel<TExtra = void>({
             messages={visibleMessages}
             isSubmitting={isSubmitting}
             activeToolStatus={activeToolStatus}
-            completedToolStatus={completedToolStatus}
+            completedToolStatuses={completedToolStatuses}
             showToolOutput={showToolOutput}
           />
           <Box sx={{ pt: { xs: 1.5, md: 2 } }}>
@@ -212,7 +214,7 @@ export function AiAssistantPanel<TExtra = void>({
               visibleMessages,
               isSubmitting,
               activeToolStatus,
-              completedToolStatus
+              completedToolStatuses
             })}
           </Box>
         </Box>

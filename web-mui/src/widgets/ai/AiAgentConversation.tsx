@@ -10,7 +10,7 @@ type AiAgentConversationProps = {
   messages: AgentMessage[];
   isSubmitting?: boolean;
   activeToolStatus?: { action: AgentToolAction; entity: string | null } | null;
-  completedToolStatus?: { action: AgentToolAction; entity: string | null } | null;
+  completedToolStatuses?: Array<{ action: AgentToolAction; entity: string | null }>;
   showToolOutput?: boolean;
 };
 
@@ -18,7 +18,7 @@ export function AiAgentConversation({
   messages,
   isSubmitting = false,
   activeToolStatus = null,
-  completedToolStatus = null,
+  completedToolStatuses = [],
   showToolOutput = false
 }: AiAgentConversationProps) {
   const { t, language } = useLanguage();
@@ -253,8 +253,15 @@ export function AiAgentConversation({
             </Stack>
           </Paper>
         </Stack>
-      ) : completedToolStatus ? (
-        <Stack direction={isRtl ? "row-reverse" : "row"} justifyContent="flex-start" alignItems="flex-start">
+      ) : null}
+
+      {completedToolStatuses.filter(Boolean).map((status, index) => (
+        <Stack
+          key={`completed-tool-${index}-${status.action}-${status.entity ?? "none"}`}
+          direction={isRtl ? "row-reverse" : "row"}
+          justifyContent="flex-start"
+          alignItems="flex-start"
+        >
           <Paper
             sx={{
               width: "100%",
@@ -285,7 +292,7 @@ export function AiAgentConversation({
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography fontWeight={700} sx={{ fontSize: 13.5, textAlign: "start" }}>
-                    {formatActionLabel(t, "done", completedToolStatus.action, completedToolStatus.entity)}
+                    {formatActionLabel(t, "done", status.action, status.entity)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12.5, textAlign: "start" }}>
                     {t("aiAgent.actionDoneHint")}
@@ -295,7 +302,7 @@ export function AiAgentConversation({
             </Stack>
           </Paper>
         </Stack>
-      ) : null}
+      ))}
 
       {isSubmitting ? (
         <Stack direction={isRtl ? "row-reverse" : "row"} justifyContent="flex-start" alignItems="flex-start">
