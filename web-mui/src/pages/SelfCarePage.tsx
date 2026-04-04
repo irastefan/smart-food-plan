@@ -4,6 +4,7 @@ import { Alert, CircularProgress, Paper, Stack, Typography, useMediaQuery, useTh
 import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { addShoppingItem } from "../features/shopping/api/shoppingApi";
 import {
   createSelfCareItem,
   createSelfCareSlot,
@@ -60,6 +61,7 @@ export function SelfCarePage() {
     weekday: null
   });
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [pendingShoppingItemId, setPendingShoppingItemId] = useState<string | null>(null);
   const [slotDialogState, setSlotDialogState] = useState<{ open: boolean; weekday: SelfCareWeekdayKey; slot?: SelfCareSlot | null }>({
     open: false,
     weekday: getCurrentWeekdayKey(),
@@ -222,6 +224,23 @@ export function SelfCarePage() {
     }
   }
 
+  async function handleAddItemToShopping(slot: SelfCareSlot, item: SelfCareItem) {
+    try {
+      setPendingShoppingItemId(item.id);
+      await addShoppingItem({
+        customName: item.title,
+        note: item.note || item.description || slot.name,
+        categoryName: t("selfCare.title")
+      });
+      setFeedback({ type: "success", message: t("shopping.status.addedFromSelfCare") });
+    } catch (error) {
+      console.error("Failed to add self-care item to shopping list", error);
+      setFeedback({ type: "error", message: t("shopping.status.addError") });
+    } finally {
+      setPendingShoppingItemId(null);
+    }
+  }
+
   const handleCloseAssistant = useCallback(() => {
     setAssistantContext({ weekday: null });
     setAssistantOpen(false);
@@ -275,6 +294,8 @@ export function SelfCarePage() {
           onAddItem={(slot) => setItemDialogState({ open: true, slot, item: null })}
           onEditItem={(slot, item) => setItemDialogState({ open: true, slot, item })}
           onDeleteItem={(slot, item) => setPendingDelete({ type: "item", slot, item })}
+          onAddItemToShopping={handleAddItemToShopping}
+          pendingShoppingItemId={pendingShoppingItemId}
           onOpenAgent={(context) => {
             setAssistantContext({ weekday: context?.weekday ?? null });
             setAssistantOpen(true);

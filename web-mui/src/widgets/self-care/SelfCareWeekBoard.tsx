@@ -1,9 +1,10 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Box, Button, Card, Divider, IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Card, CircularProgress, Divider, IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import {
@@ -25,6 +26,8 @@ type SelfCareWeekBoardProps = {
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
+  onAddItemToShopping: (slot: SelfCareSlot, item: SelfCareItem) => void;
+  pendingShoppingItemId?: string | null;
   onOpenAgent: (context?: { weekday: SelfCareWeekdayKey | null }) => void;
 };
 
@@ -39,6 +42,8 @@ function DayColumn({
   onAddItem,
   onEditItem,
   onDeleteItem,
+  onAddItemToShopping,
+  pendingShoppingItemId,
   onOpenAgent,
   isCurrentDay = false
 }: {
@@ -50,6 +55,8 @@ function DayColumn({
   onAddItem: (slot: SelfCareSlot) => void;
   onEditItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
   onDeleteItem: (slot: SelfCareSlot, item: SelfCareItem) => void;
+  onAddItemToShopping: (slot: SelfCareSlot, item: SelfCareItem) => void;
+  pendingShoppingItemId?: string | null;
   onOpenAgent: (context?: { weekday: SelfCareWeekdayKey | null }) => void;
   isCurrentDay?: boolean;
 }) {
@@ -237,6 +244,18 @@ function DayColumn({
                             ) : null}
                           </Box>
                           <Stack direction="row" spacing={0.25}>
+                            <IconButton
+                              size="small"
+                              onClick={() => onAddItemToShopping(slot, item)}
+                              title={t("shopping.tooltip.addToList")}
+                              disabled={pendingShoppingItemId === item.id}
+                            >
+                              {pendingShoppingItemId === item.id ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <AddShoppingCartRoundedIcon fontSize="small" />
+                              )}
+                            </IconButton>
                             <IconButton size="small" onClick={() => onEditItem(slot, item)} title={t("common.edit")}>
                               <EditRoundedIcon fontSize="small" />
                             </IconButton>
@@ -285,6 +304,8 @@ export function SelfCareWeekBoard({
   onAddItem,
   onEditItem,
   onDeleteItem,
+  onAddItemToShopping,
+  pendingShoppingItemId,
   onOpenAgent
 }: SelfCareWeekBoardProps) {
   const { t, language } = useLanguage();
@@ -438,6 +459,8 @@ export function SelfCareWeekBoard({
               onAddItem={onAddItem}
               onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}
+              onAddItemToShopping={onAddItemToShopping}
+              pendingShoppingItemId={pendingShoppingItemId}
               onOpenAgent={onOpenAgent}
               isCurrentDay={weekday.weekday === todayWeekday}
             />
