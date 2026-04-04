@@ -215,7 +215,12 @@ function DayColumn({
                   ) : (
                     slot.items.map((item) => (
                       <Box key={item.id} sx={{ px: 2, py: 1.35, borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          justifyContent="space-between"
+                          alignItems={{ xs: "stretch", sm: "flex-start" }}
+                          spacing={{ xs: 1, sm: 1 }}
+                        >
                           <Box sx={{ minWidth: 0 }}>
                             <Typography
                               variant="body1"
@@ -243,7 +248,12 @@ function DayColumn({
                               </Typography>
                             ) : null}
                           </Box>
-                          <Stack direction="row" spacing={0.25}>
+                          <Stack
+                            direction="row"
+                            spacing={0.25}
+                            justifyContent={{ xs: "flex-end", sm: "flex-start" }}
+                            sx={{ flexShrink: 0, alignSelf: { xs: "flex-end", sm: "auto" } }}
+                          >
                             <IconButton
                               size="small"
                               onClick={() => onAddItemToShopping(slot, item)}
