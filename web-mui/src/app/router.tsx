@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AuthLayout } from "../widgets/auth/AuthLayout";
 import { DashboardLayout } from "../widgets/dashboard/DashboardLayout";
+import { LandingPage } from "../pages/LandingPage";
 import { LoginPage } from "../pages/LoginPage";
 import { MealPlanDashboardPage } from "../pages/MealPlanDashboardPage";
 import { ProductDetailsPage } from "../pages/ProductDetailsPage";
@@ -18,12 +19,15 @@ import { ProtectedRoute, PublicOnlyRoute } from "./routerGuards";
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <LandingPage />
+  },
+  {
+    path: "/welcome",
+    element: <LandingPage />
+  },
+  {
     element: <PublicOnlyRoute />,
     children: [
-      {
-        index: true,
-        element: <Navigate to="/login" replace />
-      },
       {
         element: <AuthLayout />,
         children: [

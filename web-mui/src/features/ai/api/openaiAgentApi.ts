@@ -106,7 +106,7 @@ function extractAssistantText(response: OpenAiResponse): string {
     .filter(Boolean)
     .join("\n\n");
 
-  return text || "No response generated.";
+  return text || "";
 }
 
 function serializeHistoryMessage(message: AgentMessage) {
@@ -252,14 +252,117 @@ export async function runAgentTurn(input: {
     throw new Error("OpenAI request failed.");
   }
 
+  const assistantText = extractAssistantText(latestPayload).trim() || buildToolOnlyFallback(toolMessages, input.responseLanguage);
+
   return {
     assistantMessage: {
       id: crypto.randomUUID(),
       role: "assistant",
-      text: extractAssistantText(latestPayload)
+      text: assistantText
     },
     toolMessages
   };
+}
+
+function buildToolOnlyFallback(toolMessages: AgentMessage[], language?: Language): string {
+  if (toolMessages.length === 0) {
+    return getLocalizedNoResponseFallback(language);
+  }
+
+  const localized = toolMessages
+    .slice(-3)
+    .map((message) => localizeToolAction(message.toolAction ?? "generic", message.toolEntity, language));
+
+  if (language === "ru") {
+    return localized.length === 1
+      ? `${localized[0]}.`
+      : `Готово.\n\n${localized.map((line) => `• ${line}`).join("\n")}`;
+  }
+
+  if (language === "he") {
+    return localized.length === 1
+      ? `${localized[0]}.`
+      : `בוצע.\n\n${localized.map((line) => `• ${line}`).join("\n")}`;
+  }
+
+  return localized.length === 1
+    ? `${localized[0]}.`
+    : `Done.\n\n${localized.map((line) => `• ${line}`).join("\n")}`;
+}
+
+function getLocalizedNoResponseFallback(language?: Language): string {
+  if (language === "ru") {
+    return "Запрос выполнен.";
+  }
+  if (language === "he") {
+    return "הבקשה הושלמה.";
+  }
+  return "Request completed.";
+}
+
+function localizeToolAction(action: AgentToolAction, entity: string | null | undefined, language?: Language): string {
+  const item = entity?.trim();
+
+  if (language === "ru") {
+    switch (action) {
+      case "add":
+        return item ? `Добавлено: ${item}` : "Добавление выполнено";
+      case "remove":
+        return item ? `Удалено: ${item}` : "Удаление выполнено";
+      case "update":
+        return item ? `Обновлено: ${item}` : "Обновление выполнено";
+      case "create":
+        return item ? `Создано: ${item}` : "Создание выполнено";
+      case "analyze":
+        return item ? `Проанализировано: ${item}` : "Анализ выполнен";
+      case "copy":
+        return item ? `Скопировано: ${item}` : "Копирование выполнено";
+      case "load":
+        return item ? `Загружено: ${item}` : "Загрузка выполнена";
+      default:
+        return item ? `Выполнено: ${item}` : "Действие выполнено";
+    }
+  }
+
+  if (language === "he") {
+    switch (action) {
+      case "add":
+        return item ? `נוסף: ${item}` : "ההוספה בוצעה";
+      case "remove":
+        return item ? `הוסר: ${item}` : "ההסרה בוצעה";
+      case "update":
+        return item ? `עודכן: ${item}` : "העדכון בוצע";
+      case "create":
+        return item ? `נוצר: ${item}` : "היצירה בוצעה";
+      case "analyze":
+        return item ? `נותח: ${item}` : "הניתוח בוצע";
+      case "copy":
+        return item ? `הועתק: ${item}` : "ההעתקה בוצעה";
+      case "load":
+        return item ? `נטען: ${item}` : "הטעינה בוצעה";
+      default:
+        return item ? `בוצע: ${item}` : "הפעולה בוצעה";
+    }
+  }
+
+  switch (action) {
+    case "add":
+      return item ? `Added: ${item}` : "Add completed";
+    case "remove":
+      return item ? `Removed: ${item}` : "Removal completed";
+    case "update":
+      return item ? `Updated: ${item}` : "Update completed";
+    case "create":
+      return item ? `Created: ${item}` : "Creation completed";
+    case "analyze":
+      return item ? `Analyzed: ${item}` : "Analysis completed";
+    case "copy":
+      return item ? `Copied: ${item}` : "Copy completed";
+    case "load":
+      return item ? `Loaded: ${item}` : "Load completed";
+    default:
+      return item ? `Completed: ${item}` : "Action completed";
+  }
 }
 
 function inferToolAction(toolName: string): AgentToolAction {
