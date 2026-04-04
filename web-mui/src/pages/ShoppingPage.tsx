@@ -50,6 +50,7 @@ export function ShoppingPage() {
   const [filter, setFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
+  const [pendingItemStateId, setPendingItemStateId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -146,6 +147,7 @@ export function ShoppingPage() {
 
   async function handleToggleDone(item: ShoppingItem) {
     try {
+      setPendingItemStateId(item.id);
       setIsMutating(true);
       const nextList = await setShoppingItemState(item.id, !item.isDone);
       setShoppingList(nextList);
@@ -153,6 +155,7 @@ export function ShoppingPage() {
       console.error("Failed to toggle shopping item", error);
       setFeedback({ type: "error", message: t("shopping.status.toggleError") });
     } finally {
+      setPendingItemStateId(null);
       setIsMutating(false);
     }
   }
@@ -305,7 +308,6 @@ export function ShoppingPage() {
               <ShoppingCategorySection
                 title={categoryName}
                 items={items}
-                doneLabel={t("shopping.done")}
                 onDeleteCategory={
                   categoryByName.get(categoryName)
                     ? () => setPendingDelete({ type: "category", categoryId: categoryByName.get(categoryName)!.id, categoryName })
@@ -313,6 +315,7 @@ export function ShoppingPage() {
                 }
                 onToggleDone={handleToggleDone}
                 onDelete={(item) => setPendingDelete({ type: "item", item })}
+                pendingItemId={pendingItemStateId}
               />
             </Box>
           ))}

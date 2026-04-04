@@ -1,6 +1,5 @@
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
-import { Checkbox, Chip, IconButton, Paper, Stack, Typography } from "@mui/material";
+import { Checkbox, CircularProgress, Chip, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
 import type { ShoppingItem } from "../../features/shopping/api/shoppingApi";
@@ -8,10 +7,10 @@ import type { ShoppingItem } from "../../features/shopping/api/shoppingApi";
 type ShoppingCategorySectionProps = {
   title: string;
   items: ShoppingItem[];
-  doneLabel: string;
   onDeleteCategory?: () => void;
   onToggleDone: (item: ShoppingItem) => void;
   onDelete: (item: ShoppingItem) => void;
+  pendingItemId?: string | null;
 };
 
 function formatAmount(item: ShoppingItem, unitLabel: string): string {
@@ -24,10 +23,10 @@ function formatAmount(item: ShoppingItem, unitLabel: string): string {
 export function ShoppingCategorySection({
   title,
   items,
-  doneLabel,
   onDeleteCategory,
   onToggleDone,
-  onDelete
+  onDelete,
+  pendingItemId = null
 }: ShoppingCategorySectionProps) {
   const { t } = useLanguage();
 
@@ -55,7 +54,7 @@ export function ShoppingCategorySection({
               alignItems="flex-start"
               justifyContent="space-between"
               sx={{
-                p: { xs: 1, md: 1.25 },
+                p: { xs: 0.75, md: 1.1 },
                 borderRadius: 1.25,
                 border: "1px solid",
                 borderColor: "divider",
@@ -63,11 +62,22 @@ export function ShoppingCategorySection({
               }}
             >
               <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
-                <Checkbox checked={item.isDone} onChange={() => onToggleDone(item)} sx={{ mt: -0.35, marginInlineStart: -0.35 }} />
+                {pendingItemId === item.id ? (
+                  <Stack sx={{ width: 42, pt: 0.55, alignItems: "center", flexShrink: 0 }}>
+                    <CircularProgress size={18} thickness={5} />
+                  </Stack>
+                ) : (
+                  <Checkbox
+                    checked={item.isDone}
+                    onChange={() => onToggleDone(item)}
+                    sx={{ mt: -0.35, marginInlineStart: -0.35 }}
+                  />
+                )}
                 <Stack sx={{ minWidth: 0 }}>
                   <Typography
                     fontWeight={700}
                     sx={{
+                      fontSize: { xs: "0.94rem", md: "1rem" },
                       textDecoration: item.isDone ? "line-through" : "none",
                       opacity: item.isDone ? 0.7 : 1,
                       lineHeight: 1.25,
@@ -77,11 +87,15 @@ export function ShoppingCategorySection({
                     {item.title}
                   </Typography>
                   <Stack direction="row" spacing={0.8} alignItems="center" useFlexGap flexWrap="wrap" sx={{ mt: 0.2 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2, fontSize: { xs: "0.78rem", md: "0.875rem" } }}>
                       {formatAmount(item, getLocalizedUnitLabel((key) => t(key as never), item.unit))}
                     </Typography>
                     {item.note ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ lineHeight: 1.2, overflowWrap: "anywhere", fontSize: { xs: "0.78rem", md: "0.875rem" } }}
+                      >
                         {item.note}
                       </Typography>
                     ) : null}
@@ -89,8 +103,7 @@ export function ShoppingCategorySection({
                 </Stack>
               </Stack>
 
-              <Stack direction="row" spacing={0.25} alignItems="center" sx={{ pt: 0.1, flexShrink: 0 }}>
-                {item.isDone ? <Chip size="small" icon={<ShoppingCartRoundedIcon />} label={doneLabel} /> : null}
+              <Stack direction="row" spacing={0.25} alignItems="center" sx={{ pt: 0.05, flexShrink: 0 }}>
                 <IconButton size="small" onClick={() => onDelete(item)}>
                   <DeleteOutlineRoundedIcon fontSize="small" />
                 </IconButton>
