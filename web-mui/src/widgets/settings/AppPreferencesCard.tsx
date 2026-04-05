@@ -1,6 +1,6 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import { Button, Checkbox, ListItemText, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Button, Checkbox, FormControlLabel, Radio, RadioGroup, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { AppPreferences } from "../../shared/config/appPreferences";
@@ -27,6 +27,18 @@ const BODY_METRIC_FIELD_OPTIONS: AppPreferences["visibleBodyMetricFields"] = [
   "calfCm"
 ];
 
+function toggleArrayValue<T extends string>(values: T[], nextValue: T, maxCount?: number): T[] {
+  if (values.includes(nextValue)) {
+    return values.filter((value) => value !== nextValue);
+  }
+
+  if (typeof maxCount === "number" && values.length >= maxCount) {
+    return values;
+  }
+
+  return [...values, nextValue];
+}
+
 export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferencesCardProps) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState(value);
@@ -44,102 +56,116 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
           <Typography color="text.secondary">{t("settings.preferences.subtitle")}</Typography>
         </div>
       </Stack>
+      <Stack spacing={1}>
+        <Typography fontWeight={700}>{t("settings.preferences.mealPlanSummaryMetric")}</Typography>
+        <RadioGroup
+          value={draft.mealPlanSummaryMetric}
+          onChange={(event) =>
+            setDraft({
+              ...draft,
+              mealPlanSummaryMetric: event.target.value as AppPreferences["mealPlanSummaryMetric"]
+            })
+          }
+        >
+          {MEAL_PLAN_SUMMARY_OPTIONS.map((option) => (
+            <FormControlLabel
+              key={option}
+              value={option}
+              control={<Radio />}
+              label={t(`settings.preferences.mealPlanSummaryMetric.${option}` as never)}
+            />
+          ))}
+        </RadioGroup>
+      </Stack>
 
-      <TextField
-        select
-        label={t("settings.preferences.mealPlanSummaryMetric")}
-        value={draft.mealPlanSummaryMetric}
-        onChange={(event) =>
-          setDraft({
-            ...draft,
-            mealPlanSummaryMetric: event.target.value as AppPreferences["mealPlanSummaryMetric"]
-          })
-        }
-        fullWidth
-      >
-        {MEAL_PLAN_SUMMARY_OPTIONS.map((option) => (
-          <MenuItem key={option} value={option}>
-            {t(`settings.preferences.mealPlanSummaryMetric.${option}` as never)}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Stack spacing={1}>
+        <Typography fontWeight={700}>{t("settings.preferences.mobileQuickNavItems")}</Typography>
+        <Typography color="text.secondary" sx={{ fontSize: 13 }}>
+          {t("settings.preferences.mobileQuickNavItemsHint")}
+        </Typography>
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          columnGap={3}
+          rowGap={0.25}
+        >
+          {MOBILE_NAV_OPTIONS.map((item) => {
+            const checked = draft.mobileQuickNavItems.includes(item);
+            const disabled = !checked && draft.mobileQuickNavItems.length >= 4;
 
-      <TextField
-        select
-        label={t("settings.preferences.mobileQuickNavItems")}
-        value={draft.mobileQuickNavItems}
-        onChange={(event) =>
-          setDraft({
-            ...draft,
-            mobileQuickNavItems:
-              (typeof event.target.value === "string"
-                ? event.target.value.split(",")
-                : event.target.value as string[]).slice(0, 4) as AppPreferences["mobileQuickNavItems"]
-          })
-        }
-        SelectProps={{
-          multiple: true,
-          renderValue: (selected) =>
-            (selected as AppPreferences["mobileQuickNavItems"])
-              .map((item) => t(`settings.preferences.mobileQuickNavItems.${item}` as never))
-              .join(", ")
-        }}
-        helperText={t("settings.preferences.mobileQuickNavItemsHint")}
-        fullWidth
-      >
-        {MOBILE_NAV_OPTIONS.map((item) => (
-          <MenuItem key={item} value={item}>
-            <Checkbox checked={draft.mobileQuickNavItems.includes(item)} />
-            <ListItemText primary={t(`settings.preferences.mobileQuickNavItems.${item}` as never)} />
-          </MenuItem>
-        ))}
-      </TextField>
+            return (
+              <FormControlLabel
+                key={item}
+                sx={{ width: { xs: "100%", sm: "calc(50% - 12px)" }, mr: 0 }}
+                control={
+                  <Checkbox
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={() =>
+                      setDraft({
+                        ...draft,
+                        mobileQuickNavItems: toggleArrayValue(draft.mobileQuickNavItems, item, 4) as AppPreferences["mobileQuickNavItems"]
+                      })
+                    }
+                  />
+                }
+                label={t(`settings.preferences.mobileQuickNavItems.${item}` as never)}
+              />
+            );
+          })}
+        </Stack>
+      </Stack>
 
-      <TextField
-        select
-        label={t("settings.preferences.visibleBodyMetricFields")}
-        value={draft.visibleBodyMetricFields}
-        onChange={(event) =>
-          setDraft({
-            ...draft,
-            visibleBodyMetricFields: typeof event.target.value === "string" ? event.target.value.split(",") as AppPreferences["visibleBodyMetricFields"] : event.target.value as AppPreferences["visibleBodyMetricFields"]
-          })
-        }
-        SelectProps={{
-          multiple: true,
-          renderValue: (selected) =>
-            (selected as AppPreferences["visibleBodyMetricFields"])
-              .map((field) => t(`settings.preferences.visibleBodyMetricFields.${field}` as never))
-              .join(", ")
-        }}
-        fullWidth
-      >
-        {BODY_METRIC_FIELD_OPTIONS.map((field) => (
-          <MenuItem key={field} value={field}>
-            <Checkbox checked={draft.visibleBodyMetricFields.includes(field)} />
-            <ListItemText primary={t(`settings.preferences.visibleBodyMetricFields.${field}` as never)} />
-          </MenuItem>
-        ))}
-      </TextField>
+      <Stack spacing={1}>
+        <Typography fontWeight={700}>{t("settings.preferences.visibleBodyMetricFields")}</Typography>
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          columnGap={3}
+          rowGap={0.25}
+        >
+          {BODY_METRIC_FIELD_OPTIONS.map((field) => (
+            <FormControlLabel
+              key={field}
+              sx={{ width: { xs: "100%", sm: "calc(50% - 12px)" }, mr: 0 }}
+              control={
+                <Checkbox
+                  checked={draft.visibleBodyMetricFields.includes(field)}
+                  onChange={() =>
+                    setDraft({
+                      ...draft,
+                      visibleBodyMetricFields: toggleArrayValue(draft.visibleBodyMetricFields, field) as AppPreferences["visibleBodyMetricFields"]
+                    })
+                  }
+                />
+              }
+              label={t(`settings.preferences.visibleBodyMetricFields.${field}` as never)}
+            />
+          ))}
+        </Stack>
+      </Stack>
 
-      <TextField
-        select
-        label={t("settings.preferences.bodyMetricsHistoryDays")}
-        value={draft.bodyMetricsHistoryDays}
-        onChange={(event) =>
-          setDraft({
-            ...draft,
-            bodyMetricsHistoryDays: Number(event.target.value) as AppPreferences["bodyMetricsHistoryDays"]
-          })
-        }
-        fullWidth
-      >
-        {BODY_METRICS_HISTORY_OPTIONS.map((value) => (
-          <MenuItem key={value} value={value}>
-            {t("settings.preferences.bodyMetricsHistoryDays.option" as never, { value })}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Stack spacing={1}>
+        <Typography fontWeight={700}>{t("settings.preferences.bodyMetricsHistoryDays")}</Typography>
+        <RadioGroup
+          value={String(draft.bodyMetricsHistoryDays)}
+          onChange={(event) =>
+            setDraft({
+              ...draft,
+              bodyMetricsHistoryDays: Number(event.target.value) as AppPreferences["bodyMetricsHistoryDays"]
+            })
+          }
+        >
+          {BODY_METRICS_HISTORY_OPTIONS.map((value) => (
+            <FormControlLabel
+              key={value}
+              value={String(value)}
+              control={<Radio />}
+              label={t("settings.preferences.bodyMetricsHistoryDays.option" as never, { value })}
+            />
+          ))}
+        </RadioGroup>
+      </Stack>
 
       <Button onClick={() => onSave(draft)} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
         {t("settings.preferences.save")}
