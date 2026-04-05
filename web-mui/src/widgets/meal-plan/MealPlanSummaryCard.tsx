@@ -127,7 +127,15 @@ export function MealPlanSummaryCard({
             </Box>
           </Box>
 
-          <Stack spacing={{ xs: 1.25, sm: 2 }} sx={{ flex: 1, width: "100%" }}>
+          <Box
+            sx={{
+              flex: 1,
+              width: "100%",
+              display: "grid",
+              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "1fr" },
+              gap: { xs: 1.1, sm: 2 }
+            }}
+          >
             <SummaryStat
               icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#fb923c" }} />}
               label={goalLabel}
@@ -142,7 +150,7 @@ export function MealPlanSummaryCard({
               label={showFoodInCenter ? remainingLabel : usedLabel}
               value={`${formatNumber(showFoodInCenter ? remainingValue : usedValue)} ${t("units.short.kcal" as never)}`}
             />
-          </Stack>
+          </Box>
         </Stack>
       </CardContent>
     </Card>
@@ -151,7 +159,18 @@ export function MealPlanSummaryCard({
 
 function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <Stack direction="row" spacing={1.5} alignItems="center">
+    <Stack
+      direction="row"
+      spacing={{ xs: 1, sm: 1.5 }}
+      alignItems="center"
+      sx={{
+        minWidth: 0,
+        borderRadius: { xs: 2.5, sm: 0 },
+        px: { xs: 1, sm: 0 },
+        py: { xs: 0.85, sm: 0 },
+        backgroundColor: { xs: "rgba(255,255,255,0.04)", sm: "transparent" }
+      }}
+    >
       <Box
         sx={{
           width: { xs: 34, sm: 40 },
@@ -164,11 +183,19 @@ function SummaryStat({ icon, label, value }: { icon: ReactNode; label: string; v
       >
         {icon}
       </Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.78rem", sm: "0.875rem" } }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.72rem", sm: "0.875rem" }, lineHeight: 1.25 }}
+        >
           {label}
         </Typography>
-        <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}>
+        <Typography
+          variant="h6"
+          fontWeight={800}
+          sx={{ fontSize: { xs: "0.95rem", sm: "1.25rem" }, lineHeight: 1.15, wordBreak: "break-word" }}
+        >
           {value}
         </Typography>
       </Box>
