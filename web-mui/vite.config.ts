@@ -6,8 +6,11 @@ export default defineConfig({
   base: process.env.GITHUB_ACTIONS ? "/smart-food-plan/" : "/",
   plugins: [react()],
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
-      "@": path.resolve(__dirname, "./src")
+      "@": path.resolve(__dirname, "./src"),
+      react: path.resolve(__dirname, "./node_modules/react"),
+      "react-dom": path.resolve(__dirname, "./node_modules/react-dom")
     }
   },
   server: {

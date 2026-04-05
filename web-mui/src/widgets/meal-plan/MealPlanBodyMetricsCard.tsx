@@ -2,6 +2,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
 import StraightenRoundedIcon from "@mui/icons-material/StraightenRounded";
 import { Box, Button, Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useMemo, useState } from "react";
 import type { BodyMetricsEntry } from "../../features/body-metrics/api/bodyMetricsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -61,6 +62,47 @@ function formatTickDate(date: string): string {
   return `${month}/${day}`;
 }
 
+function getValuePrecision(points: Array<{ date: string; value: number }>): number {
+  if (points.length <= 1) {
+    return 1;
+  }
+
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.abs(max - min);
+
+  if (range >= 8) {
+    return 0;
+  }
+  if (range >= 2) {
+    return 1;
+  }
+  return 2;
+}
+
+function getYAxisBounds(points: Array<{ date: string; value: number }>): { min: number; max: number } {
+  const values = points.map((point) => point.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+
+  if (minValue === maxValue) {
+    const padding = Math.max(Math.abs(minValue) * 0.02, 0.5);
+    return {
+      min: minValue - padding,
+      max: maxValue + padding
+    };
+  }
+
+  const range = maxValue - minValue;
+  const padding = Math.max(range * 0.18, 0.2);
+
+  return {
+    min: minValue - padding,
+    max: maxValue + padding
+  };
+}
+
 function MiniMetricChart({
   points,
   lineColor,
@@ -70,14 +112,7 @@ function MiniMetricChart({
   lineColor: string;
   emptyLabel: string;
 }) {
-  const width = 320;
-  const height = 160;
-  const left = 26;
-  const right = 22;
-  const top = 16;
-  const bottom = 28;
-  const innerWidth = width - left - right;
-  const innerHeight = height - top - bottom;
+  const height = 184;
 
   if (points.length === 0) {
     return (
@@ -89,56 +124,85 @@ function MiniMetricChart({
     );
   }
 
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const paddedMin = min === max ? min - 1 : min - (max - min) * 0.15;
-  const paddedMax = min === max ? max + 1 : max + (max - min) * 0.15;
-  const ticks = [0, 1, 2, 3].map((index) => paddedMax - ((paddedMax - paddedMin) / 3) * index);
-
-  const coordinates = points.map((point, index) => {
-    const x = left + (points.length === 1 ? innerWidth / 2 : (innerWidth / (points.length - 1)) * index);
-    const y = top + ((paddedMax - point.value) / (paddedMax - paddedMin || 1)) * innerHeight;
-    return { x, y, ...point };
-  });
-
-  const linePath = coordinates.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+  const precision = getValuePrecision(points);
+  const xData = points.map((point) => point.date);
+  const yData = points.map((point) => point.value);
+  const yAxisBounds = getYAxisBounds(points);
 
   return (
     <Box sx={{ width: "100%", height, overflow: "hidden" }}>
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-        {ticks.map((tick, index) => {
-          const y = top + (innerHeight / 3) * index;
-          return (
-            <g key={index}>
-              <line x1={left} y1={y} x2={width - right} y2={y} stroke="rgba(148,163,184,0.22)" strokeWidth="1" />
-              <text x={left - 8} y={y + 4} textAnchor="end" fill="rgba(148,163,184,0.82)" fontSize="11">
-                {Math.round(tick)}
-              </text>
-            </g>
-          );
-        })}
-
-        <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        {coordinates.map((point, index) => (
-          <circle key={index} cx={point.x} cy={point.y} r={index === coordinates.length - 1 ? 4 : 3} fill={lineColor}>
-            <title>{`${point.date} · ${point.value}`}</title>
-          </circle>
-        ))}
-
-        {coordinates.map((point, index) => (
-          <text
-            key={`${point.date}-${index}`}
-            x={point.x}
-            y={height - 8}
-            textAnchor="middle"
-            fill={index === coordinates.length - 1 ? lineColor : "rgba(148,163,184,0.82)"}
-            fontSize="11"
-          >
-            {formatTickDate(point.date)}
-          </text>
-        ))}
-      </svg>
+      <LineChart
+        height={height}
+        margin={{ top: 12, right: 14, bottom: 28, left: 40 }}
+        slotProps={{
+          tooltip: {
+            trigger: "item"
+          }
+        }}
+        xAxis={[
+          {
+            id: "dates",
+            scaleType: "point",
+            data: xData,
+            tickLabelStyle: {
+              fontSize: 11,
+              fill: "rgba(148,163,184,0.82)"
+            },
+            valueFormatter: (value) => formatTickDate(String(value))
+          }
+        ]}
+        yAxis={[
+          {
+            id: "values",
+            min: yAxisBounds.min,
+            max: yAxisBounds.max,
+            tickNumber: 4,
+            tickLabelStyle: {
+              fontSize: 11,
+              fill: "rgba(148,163,184,0.82)"
+            },
+            valueFormatter: (value: number) => Number(value).toFixed(precision)
+          }
+        ]}
+        series={[
+          {
+            id: "metric",
+            type: "line",
+            data: yData,
+            label: "",
+            color: lineColor,
+            curve: "linear",
+            showMark: true,
+            area: false,
+            valueFormatter: (value, context) => {
+              const date = xData[context.dataIndex] ?? "";
+              return `${Number(value).toFixed(precision)} · ${date}`;
+            }
+          }
+        ]}
+        grid={{ horizontal: true }}
+        axisHighlight={{ x: "none", y: "none" }}
+        hideLegend
+        sx={{
+          "& .MuiLineElement-root": {
+            strokeWidth: 2.5
+          },
+          "& .MuiMarkElement-root": {
+            stroke: lineColor,
+            fill: lineColor,
+            strokeWidth: 1.5
+          },
+          "& .MuiChartsAxis-line": {
+            stroke: "rgba(148,163,184,0.18)"
+          },
+          "& .MuiChartsAxis-tick": {
+            stroke: "rgba(148,163,184,0.18)"
+          },
+          "& .MuiChartsGrid-line": {
+            stroke: "rgba(148,163,184,0.18)"
+          }
+        }}
+      />
     </Box>
   );
 }
@@ -160,10 +224,9 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
   const chartPoints = useMemo(
     () =>
       history
-        .slice()
-        .reverse()
         .map((entry) => ({ date: entry.date, value: getMetricValue(entry, selectedMetric) }))
-        .filter((entry): entry is { date: string; value: number } => entry.value !== null),
+        .filter((entry): entry is { date: string; value: number } => entry.value !== null)
+        .sort((left, right) => left.date.localeCompare(right.date)),
     [history, selectedMetric]
   );
   const latestValue = chartPoints.length > 0 ? chartPoints[chartPoints.length - 1].value : null;

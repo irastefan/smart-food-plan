@@ -99,7 +99,9 @@ export async function getBodyMetricsHistory(params?: {
 
   const suffix = query.toString() ? `?${query.toString()}` : "";
   const response = await apiRequest<BackendBodyMetricsHistory>(`/v1/body-metrics/history${suffix}`);
-  return (response.items ?? []).map(mapEntry);
+  return (response.items ?? [])
+    .map(mapEntry)
+    .sort((left, right) => left.date.localeCompare(right.date));
 }
 
 export async function upsertBodyMetrics(input: {
