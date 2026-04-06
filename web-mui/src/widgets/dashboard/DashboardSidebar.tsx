@@ -106,7 +106,7 @@ export function DashboardSidebar({
       }}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, py: 1.5, minHeight: 64 }}>
-        <BrandMark />
+        <BrandMark showText={!collapsed} />
         <IconButton onClick={isDesktop ? onToggleCollapse : onCloseMobile} size="small" sx={{ color: "#cbd5e1" }}>
           {getSidebarToggleIcon(isDesktop, collapsed, isRtl)}
         </IconButton>

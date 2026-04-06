@@ -1,20 +1,20 @@
 import ArrowOutwardRoundedIcon from "@mui/icons-material/ArrowOutwardRounded";
-import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
-import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import LanguageRoundedIcon from "@mui/icons-material/LanguageRounded";
 import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
-import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
-import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
+import MonitorHeartRoundedIcon from "@mui/icons-material/MonitorHeartRounded";
+import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import SpaRoundedIcon from "@mui/icons-material/SpaRounded";
-import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import {
   Box,
   Button,
-  Card,
   Container,
   IconButton,
   MenuItem,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
   Paper,
   Select,
   Stack,
@@ -24,18 +24,38 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { useThemeMode } from "../app/providers/ThemeModeProvider";
-import { BrandMark } from "../features/auth/components/BrandMark";
 import { getAccessToken } from "../shared/api/http";
 import { getLanguageDisplayLabel, supportedLanguages } from "../shared/i18n/languages";
 
 const featureIcons = [
-  TodayRoundedIcon,
-  MenuBookRoundedIcon,
-  ShoppingCartRoundedIcon,
+  RestaurantMenuRoundedIcon,
   SpaRoundedIcon,
-  InsightsRoundedIcon,
-  AutoAwesomeRoundedIcon
+  MonitorHeartRoundedIcon
 ] as const;
+
+function WellinMark() {
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        borderRadius: "50%",
+        position: "relative",
+        background: "conic-gradient(from 215deg, #04624f 0deg, #0c8e74 120deg, #26b96d 220deg, #8fe24d 290deg, #04624f 360deg)",
+        boxShadow: "inset 0 2px 18px rgba(255,255,255,0.08)"
+      }}
+    >
+      <Box
+        sx={{
+          position: "absolute",
+          inset: "17%",
+          borderRadius: "50%",
+          background: "#111827"
+        }}
+      />
+    </Box>
+  );
+}
 
 export function LandingPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -49,11 +69,8 @@ export function LandingPage() {
 
   const featureKeys = [
     "landing.features.mealPlan",
-    "landing.features.recipes",
-    "landing.features.shopping",
     "landing.features.selfCare",
-    "landing.features.metrics",
-    "landing.features.ai"
+    "landing.features.metrics"
   ] as const;
 
   return (
@@ -84,28 +101,24 @@ export function LandingPage() {
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Box
                 sx={{
-                  width: { xs: 40, md: 52 },
-                  height: { xs: 40, md: 52 },
+                  width: { xs: 52, md: 82 },
+                  height: { xs: 52, md: 82 },
                   borderRadius: "50%",
-                  display: "grid",
-                  placeItems: "center",
-                  background: isDark
-                    ? "radial-gradient(circle at 35% 30%, rgba(71, 227, 163, 0.30), rgba(18, 47, 43, 0.65) 72%)"
-                    : "radial-gradient(circle at 35% 30%, rgba(34, 197, 94, 0.18), rgba(15, 118, 110, 0.12) 72%)",
+                  overflow: "hidden",
                   boxShadow: isDark ? "0 20px 50px rgba(16,185,129,0.18)" : "0 18px 38px rgba(15,118,110,0.12)"
                 }}
               >
-                <BrandMark />
+                <WellinMark />
               </Box>
               <Typography
                 variant="h4"
                 sx={{
                   fontWeight: 900,
                   letterSpacing: "-0.04em",
-                  fontSize: { xs: "1.65rem", md: "2.35rem" }
+                  fontSize: { xs: "2rem", md: "3.35rem" }
                 }}
               >
-                SmartFoodPlan
+                Wellin
               </Typography>
             </Stack>
 
@@ -164,20 +177,9 @@ export function LandingPage() {
           <Stack direction={{ xs: "column", lg: "row" }} spacing={{ xs: 5, lg: 6 }} alignItems="center">
             <Stack spacing={3} sx={{ flex: 1.05, maxWidth: 700 }}>
               <Typography
-                variant="overline"
                 sx={{
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: "0.14em",
-                  color: "primary.main"
-                }}
-              >
-                {t("landing.eyebrow")}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: "2.5rem", md: "4.6rem" },
-                  lineHeight: 0.95,
+                  fontSize: { xs: "2.65rem", md: "4.8rem" },
+                  lineHeight: 0.98,
                   fontWeight: 950,
                   letterSpacing: "-0.06em",
                   maxWidth: 780
@@ -199,7 +201,7 @@ export function LandingPage() {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
                 <Button
                   component={RouterLink}
-                  to={isAuthenticated ? "/meal-plan" : "/login"}
+                  to={isAuthenticated ? "/meal-plan" : "/register"}
                   variant="contained"
                   endIcon={<ArrowOutwardRoundedIcon />}
                   sx={{
@@ -208,14 +210,15 @@ export function LandingPage() {
                     borderRadius: 999,
                     fontSize: "1rem",
                     fontWeight: 900,
-                    boxShadow: "0 16px 36px rgba(16,185,129,0.24)"
+                    boxShadow: "0 16px 36px rgba(16,185,129,0.24)",
+                    alignSelf: { xs: "stretch", sm: "flex-start" }
                   }}
                 >
                   {t("landing.actions.primary")}
                 </Button>
                 <Button
                   component={RouterLink}
-                  to={isAuthenticated ? "/self-care" : "/register"}
+                  to={isAuthenticated ? "/self-care" : "/login"}
                   variant="outlined"
                   sx={{
                     minHeight: 54,
@@ -229,165 +232,69 @@ export function LandingPage() {
                 </Button>
               </Stack>
 
-              <Stack spacing={1.25} sx={{ pt: 1 }}>
-                {featureKeys.slice(0, 3).map((key, index) => {
+              <List disablePadding sx={{ pt: 1 }}>
+                {featureKeys.map((key, index) => {
                   const Icon = featureIcons[index];
                   return (
-                    <Stack key={key} direction="row" spacing={1.5} alignItems="flex-start">
-                      <Box
-                        sx={{
-                          mt: 0.25,
-                          width: 44,
-                          height: 44,
-                          borderRadius: "50%",
-                          display: "grid",
-                          placeItems: "center",
-                          background: isDark ? "rgba(19, 48, 46, 0.8)" : "rgba(16,185,129,0.10)",
-                          color: "primary.main",
-                          flexShrink: 0
-                        }}
-                      >
-                        <Icon fontSize="small" />
-                      </Box>
-                      <Typography sx={{ fontSize: { xs: "0.98rem", md: "1.08rem" }, lineHeight: 1.6 }}>
-                        {t(key)}
-                      </Typography>
-                    </Stack>
+                    <ListItem key={key} disableGutters sx={{ py: 1, alignItems: "flex-start" }}>
+                      <ListItemIcon sx={{ minWidth: 58, pt: 0.3 }}>
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "50%",
+                            display: "grid",
+                            placeItems: "center",
+                            background: isDark ? "rgba(19, 48, 46, 0.8)" : "rgba(16,185,129,0.10)",
+                            color: "primary.main"
+                          }}
+                        >
+                          <Icon fontSize="small" />
+                        </Box>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Typography sx={{ fontSize: { xs: "1.15rem", md: "1.45rem" }, fontWeight: 900, mb: 0.5 }}>
+                            {t(`landing.featureTitles.${index}` as never)}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography color="text.secondary" sx={{ fontSize: { xs: "0.98rem", md: "1.08rem" }, lineHeight: 1.6 }}>
+                            {t(key)}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
                   );
                 })}
-              </Stack>
+              </List>
             </Stack>
 
-            <Box sx={{ flex: 0.95, width: "100%", maxWidth: 620 }}>
+            <Box sx={{ flex: 0.95, width: "100%", maxWidth: 620, display: "grid", placeItems: "center" }}>
               <Paper
                 sx={{
-                  p: { xs: 1.25, md: 1.8 },
-                  borderRadius: 4,
+                  p: { xs: 0.8, md: 1.1 },
+                  borderRadius: 5,
                   border: "1px solid",
                   borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)",
                   background: isDark
                     ? "linear-gradient(180deg, rgba(10,18,31,0.98), rgba(15,24,37,0.98))"
                     : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,250,251,0.96))",
-                  boxShadow: isDark ? "0 32px 80px rgba(3,10,22,0.55)" : "0 28px 64px rgba(15,23,42,0.12)"
+                  boxShadow: isDark ? "0 40px 100px rgba(3,10,22,0.55)" : "0 28px 64px rgba(15,23,42,0.12)",
+                  transform: "none",
+                  width: { xs: 250, sm: 300, md: 330 }
                 }}
               >
-                <Stack spacing={1.4}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h6" fontWeight={900}>
-                      {t("landing.preview.title")}
-                    </Typography>
-                    <Box
-                      sx={{
-                        px: 1.15,
-                        py: 0.4,
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: "primary.main",
-                        backgroundColor: "rgba(16,185,129,0.12)"
-                      }}
-                    >
-                      {t("landing.preview.badge")}
-                    </Box>
-                  </Stack>
-
-                  <Card
-                    sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      background: isDark
-                        ? "linear-gradient(180deg, rgba(20,30,46,0.98), rgba(15,24,36,0.98))"
-                        : "linear-gradient(180deg, rgba(245,249,250,1), rgba(255,255,255,1))"
-                    }}
-                  >
-                    <Stack spacing={2}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography fontWeight={900}>{t("landing.preview.mealPlanTitle")}</Typography>
-                        <Typography color="text.secondary">{t("landing.preview.today")}</Typography>
-                      </Stack>
-
-                      <Stack direction="row" spacing={1.25}>
-                        <Box
-                          sx={{
-                            width: 110,
-                            minWidth: 110,
-                            borderRadius: 3,
-                            px: 1.5,
-                            py: 1.75,
-                            background: "linear-gradient(180deg, rgba(16,185,129,0.16), rgba(16,185,129,0.06))"
-                          }}
-                        >
-                          <Typography color="text.secondary" sx={{ fontSize: 12 }}>{t("landing.preview.total")}</Typography>
-                          <Typography sx={{ mt: 0.4, fontWeight: 900, fontSize: "1.55rem" }}>1680</Typography>
-                          <Typography color="text.secondary" sx={{ fontSize: 12 }}>{t("landing.preview.kcal")}</Typography>
-                        </Box> 
-
-                        <Stack flex={1} spacing={1}>
-                          {[
-                            t("landing.preview.breakfast"),
-                            t("landing.preview.lunch"),
-                            t("landing.preview.selfCare")
-                          ].map((label, index) => (
-                            <Box
-                              key={label}
-                              sx={{
-                                px: 1.4,
-                                py: 1.15,
-                                borderRadius: 2.5,
-                                border: "1px solid",
-                                borderColor: "divider",
-                                backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.86)"
-                              }}
-                            >
-                              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                <Typography fontWeight={800}>{label}</Typography>
-                                <Typography color="text.secondary" sx={{ fontSize: 13 }}>
-                                  {index === 0 ? "420 kcal" : index === 1 ? "610 kcal" : t("landing.preview.aiReady")}
-                                </Typography>
-                              </Stack>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Stack>
-                    </Stack>
-                  </Card>
-
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-                    {featureKeys.slice(3).map((key, index) => {
-                      const Icon = featureIcons[index + 3];
-                      return (
-                        <Card
-                          key={key}
-                          sx={{
-                            flex: 1,
-                            p: 1.6,
-                            borderRadius: 3,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.92)"
-                          }}
-                        >
-                          <Stack spacing={1}>
-                            <Box
-                              sx={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: "50%",
-                                display: "grid",
-                                placeItems: "center",
-                                backgroundColor: "rgba(16,185,129,0.12)",
-                                color: "primary.main"
-                              }}
-                            >
-                              <Icon fontSize="small" />
-                            </Box>
-                            <Typography sx={{ fontWeight: 800, lineHeight: 1.45 }}>{t(key)}</Typography>
-                          </Stack>
-                        </Card>
-                      );
-                    })}
-                  </Stack>
-                </Stack>
+                <Box
+                  component="img"
+                  src="/assets/wellin-mobile-preview.jpg"
+                  alt="Wellin mobile preview"
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    borderRadius: 4
+                  }}
+                />
               </Paper>
             </Box>
           </Stack>
@@ -419,7 +326,7 @@ export function LandingPage() {
               </Box>
               <Button
                 component={RouterLink}
-                to={isAuthenticated ? "/meal-plan" : "/login"}
+                to={isAuthenticated ? "/meal-plan" : "/register"}
                 variant="contained"
                 endIcon={<ArrowOutwardRoundedIcon />}
                 sx={{ minHeight: 52, px: 3, borderRadius: 999, fontWeight: 900, whiteSpace: "nowrap" }}

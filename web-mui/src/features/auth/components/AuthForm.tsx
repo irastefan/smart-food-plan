@@ -103,7 +103,7 @@ export function AuthForm({
                 : "radial-gradient(circle at 30% 30%, rgba(31,181,122,0.16), rgba(31,181,122,0.07))"
             }}
           >
-            <BrandMark />
+            <BrandMark showText={false} />
           </Stack>
 
           <Stack spacing={1}>

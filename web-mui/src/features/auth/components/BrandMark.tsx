@@ -1,42 +1,53 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
-export function BrandMark() {
+type BrandMarkProps = {
+  showText?: boolean;
+};
+
+export function BrandMark({ showText = true }: BrandMarkProps) {
   return (
     <Box
-      aria-label="SmartFood"
+      aria-label="Wellin"
       sx={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 0.5
+        justifyContent: "center",
+        gap: 1
       }}
     >
       <Box
         sx={{
           width: 26,
-          height: 18,
-          position: "relative"
+          height: 26,
+          borderRadius: "50%",
+          position: "relative",
+          background: "conic-gradient(from 215deg, #04624f 0deg, #0c8e74 120deg, #26b96d 220deg, #8fe24d 290deg, #04624f 360deg)",
+          boxShadow: "inset 0 1px 8px rgba(255,255,255,0.08)"
         }}
       >
         <Box
           sx={{
             position: "absolute",
-            inset: 0,
-            borderRadius: "10px 10px 4px 4px",
-            background: "linear-gradient(135deg, #26c281 0%, #169261 100%)",
-            clipPath: "polygon(0% 100%, 18% 40%, 32% 72%, 50% 18%, 68% 72%, 82% 40%, 100% 100%, 82% 100%, 68% 66%, 50% 100%, 32% 66%, 18% 100%)"
+            inset: "18%",
+            borderRadius: "50%",
+            backgroundColor: "#0f172a"
           }}
         />
       </Box>
-      <Box
-        sx={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          backgroundColor: "#26c281",
-          alignSelf: "flex-end",
-          mb: 0.2
-        }}
-      />
+
+      {showText ? (
+        <Typography
+          sx={{
+            fontWeight: 900,
+            letterSpacing: "-0.04em",
+            lineHeight: 1,
+            fontSize: 20,
+            color: "inherit"
+          }}
+        >
+          Wellin
+        </Typography>
+      ) : null}
     </Box>
   );
 }
