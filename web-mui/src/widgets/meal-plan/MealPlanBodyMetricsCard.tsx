@@ -1,7 +1,7 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
 import StraightenRoundedIcon from "@mui/icons-material/StraightenRounded";
-import { Box, Button, Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useMemo, useState } from "react";
 import type { BodyMetricsEntry } from "../../features/body-metrics/api/bodyMetricsApi";
@@ -112,7 +112,9 @@ function MiniMetricChart({
   lineColor: string;
   emptyLabel: string;
 }) {
-  const height = 184;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const height = isMobile ? 160 : 184;
 
   if (points.length === 0) {
     return (
@@ -133,10 +135,15 @@ function MiniMetricChart({
     <Box sx={{ width: "100%", height, overflow: "hidden" }}>
       <LineChart
         height={height}
-        margin={{ top: 12, right: 14, bottom: 28, left: 40 }}
+        margin={{
+          top: 10,
+          right: isMobile ? 8 : 14,
+          bottom: isMobile ? 24 : 28,
+          left: isMobile ? 24 : 40
+        }}
         slotProps={{
           tooltip: {
-            trigger: "item"
+            trigger: isMobile ? "axis" : "item"
           }
         }}
         xAxis={[
@@ -145,7 +152,7 @@ function MiniMetricChart({
             scaleType: "point",
             data: xData,
             tickLabelStyle: {
-              fontSize: 11,
+              fontSize: isMobile ? 10 : 11,
               fill: "rgba(148,163,184,0.82)"
             },
             valueFormatter: (value) => formatTickDate(String(value))
@@ -158,7 +165,7 @@ function MiniMetricChart({
             max: yAxisBounds.max,
             tickNumber: 4,
             tickLabelStyle: {
-              fontSize: 11,
+              fontSize: isMobile ? 9 : 11,
               fill: "rgba(148,163,184,0.82)"
             },
             valueFormatter: (value: number) => Number(value).toFixed(precision)
@@ -181,16 +188,20 @@ function MiniMetricChart({
           }
         ]}
         grid={{ horizontal: true }}
-        axisHighlight={{ x: "none", y: "none" }}
+        axisHighlight={{ x: isMobile ? "line" : "none", y: "none" }}
         hideLegend
         sx={{
           "& .MuiLineElement-root": {
-            strokeWidth: 2.5
+            strokeWidth: isMobile ? 2.25 : 2.5
           },
           "& .MuiMarkElement-root": {
             stroke: lineColor,
             fill: lineColor,
-            strokeWidth: 1.5
+            strokeWidth: isMobile ? 1 : 1.5,
+            r: isMobile ? 3 : 4
+          },
+          "& .MuiChartsAxisHighlight-root": {
+            stroke: "rgba(16,185,129,0.35)"
           },
           "& .MuiChartsAxis-line": {
             stroke: "rgba(148,163,184,0.18)"
