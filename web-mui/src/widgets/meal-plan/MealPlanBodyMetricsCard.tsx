@@ -328,7 +328,7 @@ export function MealPlanBodyMetricsCard({
               : "linear-gradient(180deg, #ffffff, #f5f7fb)"
         }}
       >
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
           <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
               <Stack spacing={0.35}>
@@ -365,7 +365,7 @@ export function MealPlanBodyMetricsCard({
               onChange={(value) => setSelectedMetric(value as MetricKey)}
             />
 
-            <Box sx={{ width: "100%", maxWidth: "100%" }}>
+            <Box sx={{ width: "100%", maxWidth: "100%", px: { xs: 0.25, sm: 0 } }}>
               <MiniMetricChart
                 points={chartPoints}
                 lineColor="#10b981"
