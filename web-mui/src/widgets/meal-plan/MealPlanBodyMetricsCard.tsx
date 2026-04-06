@@ -188,7 +188,7 @@ function MiniMetricChart({
           top: 10,
           right: isMobile ? 6 : 14,
           bottom: isMobile ? 22 : 28,
-          left: isMobile ? 30 : 40
+          left: isMobile ? 2 : 20
         }}
         slotProps={{
           tooltip: {
@@ -211,12 +211,12 @@ function MiniMetricChart({
         yAxis={[
           {
             id: "values",
-            width: isMobile ? 28 : 40,
+            width: isMobile ? 10 : 20,
             min: yAxisBounds.min,
             max: yAxisBounds.max,
             tickNumber: 4,
             tickLabelStyle: {
-              fontSize: isMobile ? 9 : 11,
+              fontSize: isMobile ? 8 : 10,
               fill: "rgba(148,163,184,0.82)"
             },
             valueFormatter: (value: number) => formatMetricValue(value, metricKey)
