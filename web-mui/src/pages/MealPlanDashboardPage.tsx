@@ -1,5 +1,5 @@
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -109,6 +109,8 @@ function toOptionalNumber(value: string): number | undefined {
 export function MealPlanDashboardPage() {
   const { t } = useLanguage();
   const { openSidebar, registerPageAgentAction, clearPageAgentAction, registerPageAgentOpen, clearPageAgentOpen, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
+  const theme = useTheme();
+  const isMobileLayout = useMediaQuery(theme.breakpoints.down("lg"));
   const { selectedDate, setSelectedDate, day, setDay, isLoading, errorMessage, refresh } = useMealPlanDashboard();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -678,6 +680,21 @@ export function MealPlanDashboardPage() {
             overLabel={t("mealPlan.macro.over")}
           />
         </Grid>
+        {!isMobileLayout && appPreferences.visibleBodyMetricFields.length > 0 ? (
+          <Grid size={{ xs: 12, xl: 4 }}>
+            <MealPlanBodyMetricsCard
+              date={selectedDate}
+              draft={bodyMetricsDraft}
+              history={bodyMetricsHistory}
+              historyDays={appPreferences.bodyMetricsHistoryDays}
+              visibleFields={appPreferences.visibleBodyMetricFields}
+              isSaving={isBodyMetricsSaving}
+              onChange={setBodyMetricsDraft}
+              onSave={() => void handleSaveBodyMetrics()}
+              onPreferencesChange={handleUpdateBodyMetricPreferences}
+            />
+          </Grid>
+        ) : null}
         <Grid size={{ xs: 12 }}>
           <MealPlanSectionsCard
             day={day}
@@ -706,7 +723,7 @@ export function MealPlanDashboardPage() {
             }}
           />
         </Grid>
-        {appPreferences.visibleBodyMetricFields.length > 0 ? (
+        {isMobileLayout && appPreferences.visibleBodyMetricFields.length > 0 ? (
           <Grid size={{ xs: 12, xl: 4 }} sx={{ pb: { xs: 1.5, md: 0 } }}>
             <MealPlanBodyMetricsCard
               date={selectedDate}
