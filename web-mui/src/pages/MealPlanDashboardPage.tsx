@@ -27,7 +27,7 @@ import {
   updateMealPlanItem
 } from "../features/meal-plan/api/mealPlanApi";
 import { useMealPlanDashboard } from "../features/meal-plan/hooks/useMealPlanDashboard";
-import { getAppPreferences } from "../shared/config/appPreferences";
+import { getAppPreferences, setAppPreferences, type AppPreferences } from "../shared/config/appPreferences";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
 import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { PageActionButton } from "../shared/ui/PageActionButton";
@@ -132,6 +132,7 @@ export function MealPlanDashboardPage() {
   const [bodyMetricsDraft, setBodyMetricsDraft] = useState<BodyMetricsDraft>(emptyBodyMetricsDraft());
   const [bodyMetricsHistory, setBodyMetricsHistory] = useState<BodyMetricsEntry[]>([]);
   const [isBodyMetricsSaving, setIsBodyMetricsSaving] = useState(false);
+  const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
   const [analysisTarget, setAnalysisTarget] = useState<
     | { scope: "day"; label: string }
     | { scope: "section"; label: string; section: MealPlanSection }
@@ -242,10 +243,9 @@ export function MealPlanDashboardPage() {
 
     async function loadBodyMetrics() {
       try {
-        const preferences = getAppPreferences();
         const [daily, history] = await Promise.all([
           getBodyMetricsDay(selectedDate),
-          getBodyMetricsHistory({ toDate: selectedDate, limitDays: preferences.bodyMetricsHistoryDays })
+          getBodyMetricsHistory({ toDate: selectedDate, limitDays: appPreferences.bodyMetricsHistoryDays })
         ]);
 
         if (!cancelled) {
@@ -262,7 +262,7 @@ export function MealPlanDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedDate]);
+  }, [appPreferences.bodyMetricsHistoryDays, selectedDate]);
 
   if (isLoading) {
     return (
@@ -299,7 +299,6 @@ export function MealPlanDashboardPage() {
   const usedCalories = day?.totals.caloriesKcal ?? 0;
   const remainingCalories = targetCalories - usedCalories;
   const hasAnyMealItems = Boolean(day?.sections.some((section) => section.items.length > 0));
-  const appPreferences = getAppPreferences();
   const mealPlanSummaryMetric = appPreferences.mealPlanSummaryMetric;
   const summaryCenterValue = mealPlanSummaryMetric === "food" ? usedCalories : remainingCalories;
   const summaryCenterLabel = mealPlanSummaryMetric === "food" ? t("mealPlan.cards.used") : t("mealPlan.cards.remaining");
@@ -594,8 +593,7 @@ export function MealPlanDashboardPage() {
       });
 
       setBodyMetricsDraft(toDraft(saved));
-      const preferences = getAppPreferences();
-      const history = await getBodyMetricsHistory({ toDate: selectedDate, limitDays: preferences.bodyMetricsHistoryDays });
+      const history = await getBodyMetricsHistory({ toDate: selectedDate, limitDays: appPreferences.bodyMetricsHistoryDays });
       setBodyMetricsHistory(history);
       setFeedback({ type: "success", message: t("bodyMetrics.saved") });
     } catch (error) {
@@ -604,6 +602,15 @@ export function MealPlanDashboardPage() {
     } finally {
       setIsBodyMetricsSaving(false);
     }
+  }
+
+  function handleUpdateBodyMetricPreferences(nextPreferences: Pick<AppPreferences, "bodyMetricsHistoryDays" | "visibleBodyMetricFields">) {
+    const merged = {
+      ...appPreferences,
+      ...nextPreferences
+    };
+    setAppPreferences(merged);
+    setAppPreferencesState(merged);
   }
 
   return (
@@ -671,18 +678,21 @@ export function MealPlanDashboardPage() {
             overLabel={t("mealPlan.macro.over")}
           />
         </Grid>
-        <Grid size={{ xs: 12, xl: 4 }}>
-          <MealPlanBodyMetricsCard
-            date={selectedDate}
-            draft={bodyMetricsDraft}
-            history={bodyMetricsHistory}
-            historyDays={appPreferences.bodyMetricsHistoryDays}
-            visibleFields={appPreferences.visibleBodyMetricFields}
-            isSaving={isBodyMetricsSaving}
-            onChange={setBodyMetricsDraft}
-            onSave={() => void handleSaveBodyMetrics()}
-          />
-        </Grid>
+        {appPreferences.visibleBodyMetricFields.length > 0 ? (
+          <Grid size={{ xs: 12, xl: 4 }}>
+            <MealPlanBodyMetricsCard
+              date={selectedDate}
+              draft={bodyMetricsDraft}
+              history={bodyMetricsHistory}
+              historyDays={appPreferences.bodyMetricsHistoryDays}
+              visibleFields={appPreferences.visibleBodyMetricFields}
+              isSaving={isBodyMetricsSaving}
+              onChange={setBodyMetricsDraft}
+              onSave={() => void handleSaveBodyMetrics()}
+              onPreferencesChange={handleUpdateBodyMetricPreferences}
+            />
+          </Grid>
+        ) : null}
         <Grid size={{ xs: 12 }}>
           <MealPlanSectionsCard
             day={day}

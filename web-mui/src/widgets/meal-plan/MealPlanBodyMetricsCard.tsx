@@ -1,11 +1,36 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import StraightenRoundedIcon from "@mui/icons-material/StraightenRounded";
-import { Box, Button, Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Radio,
+  RadioGroup,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { useEffect, useMemo, useState } from "react";
-import type { BodyMetricsEntry } from "../../features/body-metrics/api/bodyMetricsApi";
+import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import type { BodyMetricsEntry } from "../../features/body-metrics/api/bodyMetricsApi";
 import type { AppPreferences } from "../../shared/config/appPreferences";
 import { FilterChipRow } from "../../shared/ui/FilterChipRow";
 
@@ -33,7 +58,22 @@ type MealPlanBodyMetricsCardProps = {
   isSaving?: boolean;
   onChange: (value: BodyMetricsDraft) => void;
   onSave: () => void;
+  onPreferencesChange: (value: Pick<AppPreferences, "bodyMetricsHistoryDays" | "visibleBodyMetricFields">) => void;
 };
+
+const HISTORY_DAY_OPTIONS: Array<AppPreferences["bodyMetricsHistoryDays"]> = [30, 60, 90, 180];
+const BODY_METRIC_FIELD_OPTIONS: AppPreferences["visibleBodyMetricFields"] = [
+  "weightKg",
+  "neckCm",
+  "bustCm",
+  "underbustCm",
+  "waistCm",
+  "hipsCm",
+  "bicepsCm",
+  "forearmCm",
+  "thighCm",
+  "calfCm"
+];
 
 function fieldConfig(t: (key: string) => string) {
   return [
@@ -57,28 +97,35 @@ function getMetricValue(entry: BodyMetricsEntry, key: MetricKey): number | null 
   return entry.measurements?.[key] ?? null;
 }
 
+function getDisplayPrecision(key: MetricKey): number {
+  return key === "weightKg" ? 0 : 0;
+}
+
+function getTooltipPrecision(key: MetricKey): number {
+  return key === "weightKg" ? 1 : 1;
+}
+
+function formatMetricValue(value: number, key: MetricKey, mode: "compact" | "exact" = "compact"): string {
+  const precision = mode === "exact" ? getTooltipPrecision(key) : getDisplayPrecision(key);
+  return Number(value).toFixed(precision);
+}
+
 function formatTickDate(date: string): string {
   const [, month, day] = date.split("-");
   return `${month}/${day}`;
 }
 
-function getValuePrecision(points: Array<{ date: string; value: number }>): number {
-  if (points.length <= 1) {
-    return 1;
+function formatEntryDate(language: string, date: string): string {
+  try {
+    return new Intl.DateTimeFormat(language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }).format(new Date(`${date}T00:00:00`));
+  } catch {
+    return date;
   }
-
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.abs(max - min);
-
-  if (range >= 8) {
-    return 0;
-  }
-  if (range >= 2) {
-    return 1;
-  }
-  return 2;
 }
 
 function getYAxisBounds(points: Array<{ date: string; value: number }>): { min: number; max: number } {
@@ -106,15 +153,17 @@ function getYAxisBounds(points: Array<{ date: string; value: number }>): { min: 
 function MiniMetricChart({
   points,
   lineColor,
-  emptyLabel
+  emptyLabel,
+  metricKey
 }: {
   points: Array<{ date: string; value: number }>;
   lineColor: string;
   emptyLabel: string;
+  metricKey: MetricKey;
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const height = isMobile ? 160 : 184;
+  const height = isMobile ? 164 : 188;
 
   if (points.length === 0) {
     return (
@@ -126,10 +175,10 @@ function MiniMetricChart({
     );
   }
 
-  const precision = getValuePrecision(points);
   const xData = points.map((point) => point.date);
   const yData = points.map((point) => point.value);
   const yAxisBounds = getYAxisBounds(points);
+  const visibleTickStep = isMobile ? Math.max(1, Math.ceil(xData.length / 4)) : Math.max(1, Math.ceil(xData.length / 6));
 
   return (
     <Box sx={{ width: "100%", height, overflow: "hidden" }}>
@@ -137,9 +186,9 @@ function MiniMetricChart({
         height={height}
         margin={{
           top: 10,
-          right: isMobile ? 8 : 14,
-          bottom: isMobile ? 24 : 28,
-          left: isMobile ? 24 : 40
+          right: isMobile ? 6 : 14,
+          bottom: isMobile ? 22 : 28,
+          left: isMobile ? 30 : 40
         }}
         slotProps={{
           tooltip: {
@@ -151,8 +200,9 @@ function MiniMetricChart({
             id: "dates",
             scaleType: "point",
             data: xData,
+            tickInterval: (_value: string, index: number) => index === 0 || index === xData.length - 1 || index % visibleTickStep === 0,
             tickLabelStyle: {
-              fontSize: isMobile ? 10 : 11,
+              fontSize: isMobile ? 9 : 11,
               fill: "rgba(148,163,184,0.82)"
             },
             valueFormatter: (value) => formatTickDate(String(value))
@@ -161,6 +211,7 @@ function MiniMetricChart({
         yAxis={[
           {
             id: "values",
+            width: isMobile ? 28 : 40,
             min: yAxisBounds.min,
             max: yAxisBounds.max,
             tickNumber: 4,
@@ -168,7 +219,7 @@ function MiniMetricChart({
               fontSize: isMobile ? 9 : 11,
               fill: "rgba(148,163,184,0.82)"
             },
-            valueFormatter: (value: number) => Number(value).toFixed(precision)
+            valueFormatter: (value: number) => formatMetricValue(value, metricKey)
           }
         ]}
         series={[
@@ -183,7 +234,7 @@ function MiniMetricChart({
             area: false,
             valueFormatter: (value, context) => {
               const date = xData[context.dataIndex] ?? "";
-              return `${Number(value).toFixed(precision)} · ${date}`;
+              return `${formatMetricValue(Number(value), metricKey, "exact")} · ${date}`;
             }
           }
         ]}
@@ -192,13 +243,13 @@ function MiniMetricChart({
         hideLegend
         sx={{
           "& .MuiLineElement-root": {
-            strokeWidth: isMobile ? 2.25 : 2.5
+            strokeWidth: isMobile ? 2.15 : 2.5
           },
           "& .MuiMarkElement-root": {
             stroke: lineColor,
             fill: lineColor,
             strokeWidth: isMobile ? 1 : 1.5,
-            r: isMobile ? 3 : 4
+            r: isMobile ? 2.5 : 4
           },
           "& .MuiChartsAxisHighlight-root": {
             stroke: "rgba(16,185,129,0.35)"
@@ -218,12 +269,32 @@ function MiniMetricChart({
   );
 }
 
-export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, visibleFields, isSaving = false, onChange, onSave }: MealPlanBodyMetricsCardProps) {
-  const { t } = useLanguage();
+export function MealPlanBodyMetricsCard({
+  date,
+  draft,
+  history,
+  historyDays,
+  visibleFields,
+  isSaving = false,
+  onChange,
+  onSave,
+  onPreferencesChange
+}: MealPlanBodyMetricsCardProps) {
+  const { t, language } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEntriesOpen, setIsEntriesOpen] = useState(false);
+
   const allFields = fieldConfig((key) => t(key as never));
   const fields = allFields.filter((field) => visibleFields.includes(field.key));
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>(visibleFields[0] ?? "weightKg");
+  const [settingsDraft, setSettingsDraft] = useState<{
+    historyDays: AppPreferences["bodyMetricsHistoryDays"];
+    visibleFields: AppPreferences["visibleBodyMetricFields"];
+  }>({
+    historyDays,
+    visibleFields
+  });
 
   useEffect(() => {
     if (!visibleFields.includes(selectedMetric)) {
@@ -231,54 +302,64 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
     }
   }, [selectedMetric, visibleFields]);
 
+  useEffect(() => {
+    setSettingsDraft({ historyDays, visibleFields });
+  }, [historyDays, visibleFields]);
+
+  if (visibleFields.length === 0) {
+    return null;
+  }
+
   const selectedField = fields.find((field) => field.key === selectedMetric) ?? fields[0] ?? allFields[0];
-  const chartPoints = useMemo(
-    () =>
-      history
-        .map((entry) => ({ date: entry.date, value: getMetricValue(entry, selectedMetric) }))
-        .filter((entry): entry is { date: string; value: number } => entry.value !== null)
-        .sort((left, right) => left.date.localeCompare(right.date)),
-    [history, selectedMetric]
-  );
+  const chartPoints = history
+    .map((entry) => ({ date: entry.date, value: getMetricValue(entry, selectedMetric) }))
+    .filter((entry): entry is { date: string; value: number } => entry.value !== null)
+    .sort((left, right) => left.date.localeCompare(right.date));
+  const entries = chartPoints.slice().reverse();
   const latestValue = chartPoints.length > 0 ? chartPoints[chartPoints.length - 1].value : null;
+  const valueUnit = selectedMetric === "weightKg" ? t("units.short.kg" as never) : t("units.short.cm" as never);
 
   return (
     <>
       <Card
         sx={{
-          background: (theme) =>
-            theme.palette.mode === "dark"
+          background: (currentTheme) =>
+            currentTheme.palette.mode === "dark"
               ? "linear-gradient(180deg, rgba(31,36,54,0.98), rgba(24,29,44,0.98))"
               : "linear-gradient(180deg, #ffffff, #f5f7fb)"
         }}
       >
-        <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-              <Stack spacing={0.3}>
-                <Typography variant="h5" sx={{ fontSize: { xs: "1.25rem", sm: "1.45rem" } }}>
+              <Stack spacing={0.35}>
+                <Typography variant="h5" sx={{ fontSize: { xs: "1.2rem", sm: "1.45rem" } }}>
                   {selectedField?.short ?? t("bodyMetrics.title")}
                 </Typography>
-                <Typography color="text.secondary" sx={{ fontSize: { xs: "0.82rem", sm: "0.9rem" } }}>
+                <Typography color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.9rem" } }}>
                   {t("bodyMetrics.lastDays", { value: historyDays })}
                 </Typography>
                 {latestValue !== null ? (
                   <Typography color="text.secondary" sx={{ fontSize: 13 }}>
-                    {`${Math.round(latestValue)} ${selectedMetric === "weightKg" ? t("units.short.kg" as never) : t("units.short.cm" as never)} · ${date}`}
+                    {`${formatMetricValue(latestValue, selectedMetric)} ${valueUnit} · ${date}`}
                   </Typography>
                 ) : null}
               </Stack>
 
-              <IconButton
-                onClick={() => setIsDialogOpen(true)}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  color: "text.primary"
-                }}
-              >
-                <AddRoundedIcon />
-              </IconButton>
+              <Stack direction="row" spacing={0.5}>
+                <IconButton
+                  onClick={() => setIsSettingsOpen(true)}
+                  sx={{ width: 36, height: 36, color: "text.secondary" }}
+                >
+                  <SettingsRoundedIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  onClick={() => setIsDialogOpen(true)}
+                  sx={{ width: 36, height: 36, color: "text.primary" }}
+                >
+                  <AddRoundedIcon />
+                </IconButton>
+              </Stack>
             </Stack>
 
             <FilterChipRow
@@ -290,9 +371,57 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
               onChange={(value) => setSelectedMetric(value as MetricKey)}
             />
 
-            <Box sx={{ width: "100%", maxWidth: 760, marginInlineEnd: "auto" }}>
-              <MiniMetricChart points={chartPoints} lineColor="#10b981" emptyLabel={t("bodyMetrics.emptyChart")} />
+            <Box sx={{ width: "100%", maxWidth: "100%" }}>
+              <MiniMetricChart
+                points={chartPoints}
+                lineColor="#10b981"
+                emptyLabel={t("bodyMetrics.emptyChart")}
+                metricKey={selectedMetric}
+              />
             </Box>
+
+            <Divider />
+
+            <Stack spacing={1}>
+              <Button
+                onClick={() => setIsEntriesOpen((current) => !current)}
+                endIcon={isEntriesOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
+                sx={{
+                  justifyContent: "space-between",
+                  px: 1,
+                  color: "text.primary",
+                  textTransform: "none",
+                  fontSize: 18,
+                  fontWeight: 700
+                }}
+              >
+                {t("bodyMetrics.entries" as never)}
+              </Button>
+
+              <Collapse in={isEntriesOpen}>
+                <Stack spacing={0} sx={{ px: 1 }}>
+                  {entries.length === 0 ? (
+                    <Typography color="text.secondary" sx={{ py: 1 }}>
+                      {t("bodyMetrics.emptyHistory")}
+                    </Typography>
+                  ) : (
+                    entries.map((entry, index) => (
+                      <Box key={`${entry.date}-${index}`}>
+                        <Stack spacing={0.35} sx={{ py: 1.4 }}>
+                          <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 16 } }}>
+                            {formatEntryDate(language, entry.date)}
+                          </Typography>
+                          <Typography color="text.secondary">
+                            {`${formatMetricValue(entry.value, selectedMetric, "exact")} ${valueUnit}`}
+                          </Typography>
+                        </Stack>
+                        {index < entries.length - 1 ? <Divider /> : null}
+                      </Box>
+                    ))
+                  )}
+                </Stack>
+              </Collapse>
+            </Stack>
           </Stack>
         </CardContent>
       </Card>
@@ -334,6 +463,76 @@ export function MealPlanBodyMetricsCard({ date, draft, history, historyDays, vis
             </Stack>
           </Stack>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{t("bodyMetrics.settings" as never)}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 1 }}>
+            <Stack spacing={1}>
+              <Typography fontWeight={700}>{t("settings.preferences.bodyMetricsHistoryDays")}</Typography>
+              <RadioGroup
+                value={String(settingsDraft.historyDays)}
+                onChange={(event) =>
+                  setSettingsDraft((current) => ({
+                    ...current,
+                    historyDays: Number(event.target.value) as AppPreferences["bodyMetricsHistoryDays"]
+                  }))
+                }
+              >
+                {HISTORY_DAY_OPTIONS.map((value) => (
+                  <FormControlLabel
+                    key={value}
+                    value={String(value)}
+                    control={<Radio />}
+                    label={t("settings.preferences.bodyMetricsHistoryDays.option" as never, { value })}
+                  />
+                ))}
+              </RadioGroup>
+            </Stack>
+
+            <Stack spacing={1}>
+              <Typography fontWeight={700}>{t("settings.preferences.visibleBodyMetricFields")}</Typography>
+              <Stack direction="row" flexWrap="wrap" columnGap={3} rowGap={0.25}>
+                {BODY_METRIC_FIELD_OPTIONS.map((field) => (
+                  <FormControlLabel
+                    key={field}
+                    sx={{ width: { xs: "100%", sm: "calc(50% - 12px)" }, mr: 0 }}
+                    control={
+                      <Checkbox
+                        checked={settingsDraft.visibleFields.includes(field)}
+                        onChange={() =>
+                          setSettingsDraft((current) => ({
+                            ...current,
+                            visibleFields: current.visibleFields.includes(field)
+                              ? current.visibleFields.filter((value) => value !== field) as AppPreferences["visibleBodyMetricFields"]
+                              : [...current.visibleFields, field] as AppPreferences["visibleBodyMetricFields"]
+                          }))
+                        }
+                      />
+                    }
+                    label={t(`settings.preferences.visibleBodyMetricFields.${field}` as never)}
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setIsSettingsOpen(false)}>{t("common.cancel")}</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              onPreferencesChange({
+                bodyMetricsHistoryDays: settingsDraft.historyDays,
+                visibleBodyMetricFields: settingsDraft.visibleFields
+              });
+              setIsSettingsOpen(false);
+            }}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
