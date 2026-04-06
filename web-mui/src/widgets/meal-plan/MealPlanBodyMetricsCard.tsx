@@ -316,7 +316,6 @@ export function MealPlanBodyMetricsCard({
     .filter((entry): entry is { date: string; value: number } => entry.value !== null)
     .sort((left, right) => left.date.localeCompare(right.date));
   const entries = chartPoints.slice().reverse();
-  const latestValue = chartPoints.length > 0 ? chartPoints[chartPoints.length - 1].value : null;
   const valueUnit = selectedMetric === "weightKg" ? t("units.short.kg" as never) : t("units.short.cm" as never);
 
   return (
@@ -339,11 +338,6 @@ export function MealPlanBodyMetricsCard({
                 <Typography color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.9rem" } }}>
                   {t("bodyMetrics.lastDays", { value: historyDays })}
                 </Typography>
-                {latestValue !== null ? (
-                  <Typography color="text.secondary" sx={{ fontSize: 13 }}>
-                    {`${formatMetricValue(latestValue, selectedMetric)} ${valueUnit} · ${date}`}
-                  </Typography>
-                ) : null}
               </Stack>
 
               <Stack direction="row" spacing={0.5}>

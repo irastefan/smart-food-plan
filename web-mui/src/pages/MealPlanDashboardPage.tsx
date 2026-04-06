@@ -678,21 +678,6 @@ export function MealPlanDashboardPage() {
             overLabel={t("mealPlan.macro.over")}
           />
         </Grid>
-        {appPreferences.visibleBodyMetricFields.length > 0 ? (
-          <Grid size={{ xs: 12, xl: 4 }}>
-            <MealPlanBodyMetricsCard
-              date={selectedDate}
-              draft={bodyMetricsDraft}
-              history={bodyMetricsHistory}
-              historyDays={appPreferences.bodyMetricsHistoryDays}
-              visibleFields={appPreferences.visibleBodyMetricFields}
-              isSaving={isBodyMetricsSaving}
-              onChange={setBodyMetricsDraft}
-              onSave={() => void handleSaveBodyMetrics()}
-              onPreferencesChange={handleUpdateBodyMetricPreferences}
-            />
-          </Grid>
-        ) : null}
         <Grid size={{ xs: 12 }}>
           <MealPlanSectionsCard
             day={day}
@@ -721,6 +706,21 @@ export function MealPlanDashboardPage() {
             }}
           />
         </Grid>
+        {appPreferences.visibleBodyMetricFields.length > 0 ? (
+          <Grid size={{ xs: 12, xl: 4 }} sx={{ pb: { xs: 1.5, md: 0 } }}>
+            <MealPlanBodyMetricsCard
+              date={selectedDate}
+              draft={bodyMetricsDraft}
+              history={bodyMetricsHistory}
+              historyDays={appPreferences.bodyMetricsHistoryDays}
+              visibleFields={appPreferences.visibleBodyMetricFields}
+              isSaving={isBodyMetricsSaving}
+              onChange={setBodyMetricsDraft}
+              onSave={() => void handleSaveBodyMetrics()}
+              onPreferencesChange={handleUpdateBodyMetricPreferences}
+            />
+          </Grid>
+        ) : null}
       </Grid>
 
       <MealPlanItemDialog
