@@ -93,9 +93,18 @@ export function RecipeNutritionCard({ recipe, showTitle = true, compact = false 
             <Box sx={{ minWidth: compact ? 0 : { xs: 0, sm: 8 } }} />
           </Stack>
 
-          <Stack direction="row" spacing={compact ? { xs: 0.8, sm: 1 } : { xs: 1.25, sm: 1.75, md: 2.75 }} useFlexGap sx={{ flex: 1, minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={compact ? { xs: 1.4, sm: 1.8 } : { xs: 1.25, sm: 1.75, md: 2.75 }}
+            useFlexGap
+            sx={{ flex: 1, minWidth: 0, justifyContent: compact ? "flex-start" : "flex-start" }}
+          >
             {macroItems.map((item) => (
-              <Stack key={item.key} spacing={compact ? 0.2 : { xs: 0.35, sm: 0.6, md: 0.75 }} sx={{ minWidth: 0, flex: 1 }}>
+              <Stack
+                key={item.key}
+                spacing={compact ? 0.2 : { xs: 0.35, sm: 0.6, md: 0.75 }}
+                sx={{ minWidth: 0, flex: compact ? "0 0 auto" : 1 }}
+              >
                 <Stack direction="row" spacing={0.85} alignItems="center" color={item.color}>
                   <Typography sx={{ color: item.color, fontWeight: 800, fontSize: compact ? { xs: 9, sm: 10 } : { xs: 10, sm: 12, md: 13 } }}>
                     {Math.round((item.value / totalMacros) * 100)}%
