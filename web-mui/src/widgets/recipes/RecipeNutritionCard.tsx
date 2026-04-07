@@ -50,7 +50,7 @@ export function RecipeNutritionCard({ recipe }: RecipeNutritionCardProps) {
     >
       <Stack spacing={2.5} sx={{ minHeight: "100%", justifyContent: "space-between" }}>
         <Stack direction="row" justifyContent="space-between" spacing={2} alignItems="center">
-          <Typography variant="h5" fontWeight={800}>
+          <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 22, md: 30 } }}>
             {t("recipe.nutrition")}
           </Typography>
           <Stack
@@ -68,7 +68,7 @@ export function RecipeNutritionCard({ recipe }: RecipeNutritionCardProps) {
             }}
           >
             <Typography sx={{ fontWeight: 800, fontSize: { xs: 14, md: 15 } }}>{recipe.servings}</Typography>
-            <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: { xs: 12, md: 13 } }}>
+            <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: { xs: 11, md: 13 } }}>
               {t("recipe.servingsLabel")}
             </Typography>
           </Stack>
@@ -90,14 +90,14 @@ export function RecipeNutritionCard({ recipe }: RecipeNutritionCardProps) {
             {macroItems.map((item) => (
               <Stack key={item.key} spacing={{ xs: 0.35, sm: 0.6, md: 0.75 }} sx={{ minWidth: 0, flex: 1 }}>
                 <Stack direction="row" spacing={0.85} alignItems="center" color={item.color}>
-                  <Typography sx={{ color: item.color, fontWeight: 800, fontSize: { xs: 11, sm: 12, md: 13 } }}>
+                  <Typography sx={{ color: item.color, fontWeight: 800, fontSize: { xs: 10, sm: 12, md: 13 } }}>
                     {Math.round((item.value / totalMacros) * 100)}%
                   </Typography>
                 </Stack>
-                <Typography sx={{ fontSize: { xs: 16, sm: 18, md: 22 }, lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
+                <Typography sx={{ fontSize: { xs: 14, sm: 18, md: 22 }, lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
                   {item.value.toFixed(1)} g
                 </Typography>
-                <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: { xs: 11, sm: 12, md: 14 } }}>
+                <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: { xs: 10, sm: 12, md: 14 } }}>
                   {item.label}
                 </Typography>
               </Stack>
