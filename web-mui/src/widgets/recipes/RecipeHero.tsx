@@ -19,16 +19,19 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
   return (
     <Box
       sx={{
-        minHeight: recipe.photoUrl ? { xs: 360, md: 460 } : { xs: 260, md: 320 },
+        minHeight: recipe.photoUrl ? { xs: 360, md: 460 } : { xs: 180, sm: 220, md: 280 },
         borderRadius: 1.25,
         overflow: "hidden",
         position: "relative",
+        border: "1px solid",
+        borderColor: "divider",
+        boxShadow: 1,
         background: (theme) =>
           recipe.photoUrl
             ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
             : theme.palette.mode === "dark"
-              ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
-              : "linear-gradient(180deg, rgba(241,245,249,0.98), rgba(232,240,248,0.96) 46%, rgba(221,232,243,0.94) 100%)",
+              ? "linear-gradient(180deg, rgba(28,33,52,0.98), rgba(24,29,46,1) 100%)"
+              : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,252,0.96) 100%)",
         backgroundSize: recipe.photoUrl ? "cover" : undefined,
         backgroundPosition: recipe.photoUrl ? "center" : undefined
       }}

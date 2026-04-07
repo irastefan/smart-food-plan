@@ -180,7 +180,7 @@ export function RecipeDetailsPage() {
           {t("recipe.back")}
         </Button>
       </Stack>
-      <Stack direction={{ xs: "column", lg: "row" }} spacing={3} alignItems="stretch">
+      <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
         <Box sx={{ flex: 1.35, minWidth: 0 }}>
           <RecipeHero
             recipe={recipe}
@@ -188,7 +188,7 @@ export function RecipeDetailsPage() {
             onDelete={recipe.isPublic ? undefined : () => setDeleteOpen(true)}
           />
         </Box>
-        <Box sx={{ flex: 1, minWidth: { lg: 420 }, display: "flex", width: "100%" }}>
+        <Box sx={{ flex: 1, minWidth: { xl: 420 }, display: "flex", width: "100%" }}>
           <RecipeNutritionCard recipe={recipe} />
         </Box>
       </Stack>
