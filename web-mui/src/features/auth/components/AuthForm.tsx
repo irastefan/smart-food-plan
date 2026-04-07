@@ -51,6 +51,12 @@ export function AuthForm({
     targetCarbsG: null
   });
   const [deltaInput, setDeltaInput] = useState("");
+  const isMaintainGoal = profile.goal === "MAINTAIN";
+  const calorieDeltaHintKey = isMaintainGoal
+    ? "settings.profile.calorieDeltaHint.maintain"
+    : profile.goal === "GAIN"
+      ? "settings.profile.calorieDeltaHint.gain"
+      : "settings.profile.calorieDeltaHint.lose";
 
   const isLogin = mode === "login";
   const title = isLogin ? t("auth.login.title") : t("auth.register.title");
@@ -221,8 +227,9 @@ export function AuthForm({
                 value={deltaInput}
                 onChange={(event) => handleDeltaChange(event.target.value)}
                 placeholder={t("settings.profile.calorieDeltaPlaceholder")}
-                helperText={t("settings.profile.calorieDeltaHint")}
+                helperText={t(calorieDeltaHintKey)}
                 inputProps={{ inputMode: "decimal" }}
+                disabled={isMaintainGoal}
                 fullWidth
               />
             </Stack>

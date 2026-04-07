@@ -191,20 +191,17 @@ export function SettingsPage() {
         <Stack spacing={3}>
           {activeSection === "profile" ? (
             <SettingsSectionCard title={t("settings.sections.profile.title")} subtitle={t("settings.sections.profile.subtitle")}>
-              <UserProfileForm
-                value={profile}
-                isSubmitting={isSubmitting}
-                status={null}
-                onChange={setProfile}
-                onSave={handleSave}
-                onRecalculate={handleRecalculate}
-              />
-            </SettingsSectionCard>
-          ) : null}
-
-          {activeSection === "targets" ? (
-            <SettingsSectionCard title={t("settings.sections.targets.title")} subtitle={t("settings.sections.targets.subtitle")}>
-              <ProfilePreviewCard profile={profile} />
+              <Stack spacing={3.5}>
+                <UserProfileForm
+                  value={profile}
+                  isSubmitting={isSubmitting}
+                  status={null}
+                  onChange={setProfile}
+                  onSave={handleSave}
+                  onRecalculate={handleRecalculate}
+                />
+                <ProfilePreviewCard profile={profile} />
+              </Stack>
             </SettingsSectionCard>
           ) : null}
 

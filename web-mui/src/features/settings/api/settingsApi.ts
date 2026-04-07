@@ -113,7 +113,10 @@ function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
     goal: input?.goal ?? "",
     targetFormula: input?.targetFormula ?? fallbackTargetFormula,
     availableTargetFormulas,
-    calorieDelta: toNumber(input?.calorieDelta),
+    calorieDelta: (() => {
+      const parsed = toNumber(input?.calorieDelta);
+      return parsed == null ? null : Math.abs(parsed);
+    })(),
     targetCalories: toNumber(input?.targetCalories),
     targetProteinG: toNumber(input?.targetProteinG),
     targetFatG: toNumber(input?.targetFatG),
@@ -141,7 +144,12 @@ function toProfilePayload(profile: UserProfile) {
     activityLevel: profile.activityLevel || undefined,
     goal: profile.goal || undefined,
     targetFormula: profile.targetFormula || undefined,
-    calorieDelta: profile.calorieDelta ?? undefined
+    calorieDelta:
+      profile.goal === "MAINTAIN"
+        ? undefined
+        : profile.calorieDelta == null
+          ? undefined
+          : Math.abs(profile.calorieDelta)
   };
 }
 
