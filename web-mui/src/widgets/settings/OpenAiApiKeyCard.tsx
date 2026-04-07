@@ -63,9 +63,17 @@ export function OpenAiApiKeyCard({ value, isSubmitting, onSave }: OpenAiApiKeyCa
         </Link>
       </Stack>
 
-      <Button onClick={() => onSave(draft)} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
-        {t("settings.openai.save")}
-      </Button>
+      <Stack sx={{ alignSelf: { md: "flex-end" }, width: { xs: "100%", md: "auto" } }}>
+        <Button
+          onClick={() => onSave(draft)}
+          variant="contained"
+          startIcon={<SaveRoundedIcon />}
+          disabled={isSubmitting}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
+          {t("settings.openai.save")}
+        </Button>
+      </Stack>
     </Stack>
   );
 }

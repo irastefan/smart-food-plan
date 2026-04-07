@@ -167,9 +167,17 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         </RadioGroup>
       </Stack>
 
-      <Button onClick={() => onSave(draft)} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
-        {t("settings.preferences.save")}
-      </Button>
+      <Stack sx={{ alignSelf: { md: "flex-end" }, width: { xs: "100%", md: "auto" } }}>
+        <Button
+          onClick={() => onSave(draft)}
+          variant="contained"
+          startIcon={<SaveRoundedIcon />}
+          disabled={isSubmitting}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
+          {t("settings.preferences.save")}
+        </Button>
+      </Stack>
     </Stack>
   );
 }

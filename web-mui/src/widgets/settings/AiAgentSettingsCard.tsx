@@ -90,9 +90,17 @@ export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSett
         label={t("settings.agent.showToolOutput")}
       />
 
-      <Button onClick={() => onSave(draft)} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
-        {t("settings.agent.save")}
-      </Button>
+      <Stack sx={{ alignSelf: { md: "flex-end" }, width: { xs: "100%", md: "auto" } }}>
+        <Button
+          onClick={() => onSave(draft)}
+          variant="contained"
+          startIcon={<SaveRoundedIcon />}
+          disabled={isSubmitting}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
+          {t("settings.agent.save")}
+        </Button>
+      </Stack>
     </Stack>
   );
 }

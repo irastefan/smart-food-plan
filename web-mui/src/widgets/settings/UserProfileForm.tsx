@@ -111,11 +111,29 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
         />
       </Stack>
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="flex-end">
-        <Button onClick={onRecalculate} variant="outlined" startIcon={<RestartAltRoundedIcon />} disabled={isSubmitting}>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        justifyContent="flex-end"
+        alignItems={{ xs: "stretch", md: "center" }}
+        sx={{ alignSelf: { md: "flex-end" } }}
+      >
+        <Button
+          onClick={onRecalculate}
+          variant="outlined"
+          startIcon={<RestartAltRoundedIcon />}
+          disabled={isSubmitting}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
           {t("settings.recalculate")}
         </Button>
-        <Button onClick={onSave} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
+        <Button
+          onClick={onSave}
+          variant="contained"
+          startIcon={<SaveRoundedIcon />}
+          disabled={isSubmitting}
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
           {t("settings.save")}
         </Button>
       </Stack>
