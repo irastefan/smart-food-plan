@@ -13,6 +13,7 @@ import { addShoppingCategory, addShoppingItem, getShoppingList } from "../featur
 import { isRtlLanguage } from "../shared/i18n/languages";
 import { getLocalizedUnitLabel } from "../shared/lib/units";
 import { ConfirmActionDialog } from "../shared/ui/ConfirmActionDialog";
+import { NutritionInlineSummary } from "../shared/ui/NutritionInlineSummary";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { RecipeAssistantDialog } from "../widgets/recipes/RecipeAssistantDialog";
 import { RecipeHero } from "../widgets/recipes/RecipeHero";
@@ -168,7 +169,15 @@ export function RecipeDetailsPage() {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack
+      spacing={3}
+      sx={{
+        pb: {
+          xs: "calc(var(--dashboard-mobile-dock-height, 0px) + 16px)",
+          md: 0
+        }
+      }}
+    >
       <DashboardTopbar
         onOpenSidebar={openSidebar}
         title={recipe.title}
@@ -208,9 +217,17 @@ export function RecipeDetailsPage() {
                     <ListItem disableGutters sx={{ py: 1.75 }}>
                       <ListItemText
                         primary={ingredient.title}
-                        secondary={`${ingredient.quantity} ${getLocalizedUnitLabel((key) => t(key as never), ingredient.unit)}`}
+                        secondary={
+                          <NutritionInlineSummary
+                            prefix={`${ingredient.quantity} ${getLocalizedUnitLabel((key) => t(key as never), ingredient.unit)}`}
+                            proteinG={ingredient.totals.proteinG}
+                            fatG={ingredient.totals.fatG}
+                            carbsG={ingredient.totals.carbsG}
+                            fontSize={{ xs: "0.76rem", sm: "0.84rem" }}
+                          />
+                        }
                         primaryTypographyProps={{ fontWeight: 700 }}
-                        secondaryTypographyProps={{ color: "text.secondary" }}
+                        secondaryTypographyProps={{ component: "div", color: "text.secondary" }}
                       />
                       <Stack direction="row" spacing={1.25} alignItems="center">
                         <Typography color="text.secondary">{Math.round(ingredient.totals.caloriesKcal)} kcal</Typography>
@@ -240,7 +257,7 @@ export function RecipeDetailsPage() {
               <Stack spacing={1.75}>
                 {recipe.steps.map((step, index) => (
                   <Stack key={`step-${index}`} direction="row" spacing={1.5} alignItems="flex-start">
-                    <Box sx={{ width: 34, height: 34, borderRadius: "50%", display: "grid", placeItems: "center", background: "linear-gradient(135deg, rgba(96,213,176,0.18), rgba(14,165,233,0.12))", color: "primary.main", fontWeight: 800, flexShrink: 0 }}>
+                    <Box sx={{ minWidth: 24, color: "primary.main", fontWeight: 800, flexShrink: 0, pt: 0.2 }}>
                       {index + 1}
                     </Box>
                     <Typography sx={{ pt: 0.5 }}>{step}</Typography>

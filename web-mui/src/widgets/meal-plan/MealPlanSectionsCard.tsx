@@ -10,6 +10,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { MealPlanDay, MealPlanItem, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
+import { NutritionInlineSummary } from "../../shared/ui/NutritionInlineSummary";
 import { ShoppingCategoryPickerButton } from "../shopping/ShoppingCategoryPickerButton";
 
 type MealPlanSectionsCardProps = {
@@ -169,17 +170,16 @@ export function MealPlanSectionsCard({
                     </Stack>
 
                     <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ fontSize: { xs: "0.72rem", sm: "0.82rem" }, minWidth: 0 }}
-                      >
-                        {`${
+                      <NutritionInlineSummary
+                        prefix={
                           item.type === "recipe"
                             ? `${formatPortion(item.servings ?? 1)} ${servingsLabel}`
                             : `${formatNumber(item.amount ?? 0)} ${getLocalizedUnitLabel((key) => t(key as never), item.unit ?? "g")}`
-                        } · ${t("mealPlan.macro.protein")} ${formatNumber(item.nutritionTotal.proteinG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.fat")} ${formatNumber(item.nutritionTotal.fatG)}${t("units.short.g" as never)} · ${t("mealPlan.macro.carbs")} ${formatNumber(item.nutritionTotal.carbsG)}${t("units.short.g" as never)}`}
-                      </Typography>
+                        }
+                        proteinG={item.nutritionTotal.proteinG}
+                        fatG={item.nutritionTotal.fatG}
+                        carbsG={item.nutritionTotal.carbsG}
+                      />
                       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
                         {item.type === "product" ? (
                           <ShoppingCategoryPickerButton
