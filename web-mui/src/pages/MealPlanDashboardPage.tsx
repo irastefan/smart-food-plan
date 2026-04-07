@@ -141,24 +141,35 @@ export function MealPlanDashboardPage() {
     | null
   >(null);
   const [pageAssistantOpen, setPageAssistantOpen] = useState(false);
+  const isPrimaryOverlayOpen = pageAssistantOpen || Boolean(dialogState);
 
   function handleClosePageAssistant() {
     setPageAssistantOpen(false);
   }
 
   useEffect(() => {
+    if (dialogState) {
+      registerPageAgentAction(() => {
+        setDialogState(null);
+        setMutationError(null);
+      });
+      return () => {
+        clearPageAgentAction();
+      };
+    }
+
     registerPageAgentAction(() => setPageAssistantOpen((current) => !current));
     return () => {
       clearPageAgentAction();
     };
-  }, [clearPageAgentAction, registerPageAgentAction]);
+  }, [clearPageAgentAction, dialogState, registerPageAgentAction]);
 
   useEffect(() => {
-    registerPageAgentOpen(pageAssistantOpen);
+    registerPageAgentOpen(isPrimaryOverlayOpen);
     return () => {
       clearPageAgentOpen();
     };
-  }, [clearPageAgentOpen, pageAssistantOpen, registerPageAgentOpen]);
+  }, [clearPageAgentOpen, isPrimaryOverlayOpen, registerPageAgentOpen]);
 
   useEffect(() => {
     registerPageLoading(isLoading);

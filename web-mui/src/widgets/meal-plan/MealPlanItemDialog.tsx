@@ -192,6 +192,7 @@ export function MealPlanItemDialog({
   onSubmitHistoryItem,
   onSubmit
 }: MealPlanItemDialogProps) {
+  const mobileDockOffset = "var(--dashboard-mobile-dock-height, calc(68px + env(safe-area-inset-bottom, 0px)))";
   const { t, language } = useLanguage();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -392,19 +393,49 @@ export function MealPlanItemDialog({
     <Dialog
       open={open}
       onClose={onClose}
+      dir={isRtl ? "rtl" : "ltr"}
       fullScreen={isMobile}
       fullWidth
       maxWidth={false}
+      BackdropProps={
+        isMobile
+          ? {
+              sx: {
+                bottom: mobileDockOffset
+              }
+            }
+          : undefined
+      }
+      sx={
+        isMobile
+          ? {
+              "& .MuiDialog-container": {
+                alignItems: "flex-start"
+              }
+            }
+          : undefined
+      }
       PaperProps={{
+        dir: isRtl ? "rtl" : "ltr",
         sx: isMobile
-          ? undefined
+          ? {
+              direction: isRtl ? "rtl" : "ltr",
+              width: "100%",
+              maxWidth: "100%",
+              height: `calc(100dvh - ${mobileDockOffset})`,
+              maxHeight: `calc(100dvh - ${mobileDockOffset})`,
+              margin: 0,
+              borderRadius: 0,
+              overflow: "hidden"
+            }
           : {
               width: "76vw",
               maxWidth: 1180,
               height: "84vh",
               maxHeight: "84vh",
               borderRadius: 1.5,
-              overflow: "hidden"
+              overflow: "hidden",
+              direction: isRtl ? "rtl" : "ltr"
             }
       }}
     >
