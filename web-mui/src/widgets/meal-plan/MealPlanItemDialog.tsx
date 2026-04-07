@@ -409,13 +409,13 @@ export function MealPlanItemDialog({
             onChange={(_event, nextValue: DialogTab) => setActiveTab(nextValue)}
             variant="scrollable"
             allowScrollButtonsMobile
-            sx={{ px: { xs: 1, md: 0 }, borderBottom: "1px solid", borderColor: "divider" }}
+            sx={{ px: { xs: 1, md: 0 }, borderBottom: "1px solid", borderColor: "divider", minHeight: 52 }}
           >
             <Tab value="ai" label={t("mealPlan.dialog.ai")} icon={<AutoAwesomeRoundedIcon fontSize="small" />} iconPosition="start" />
             {mode === "add" ? <Tab value="history" label={t("mealPlan.dialog.history")} /> : null}
-            <Tab value="product" label={t("mealPlan.dialog.product")} />
-            <Tab value="recipe" label={t("mealPlan.dialog.recipe")} />
             <Tab value="manual" label={t("mealPlan.dialog.manual")} />
+            <Tab value="recipe" label={t("mealPlan.dialog.recipe")} />
+            <Tab value="product" label={t("mealPlan.dialog.product")} />
           </Tabs>
 
           <Box
@@ -510,7 +510,7 @@ export function MealPlanItemDialog({
                   header={
                     <Stack spacing={0.5} sx={{ width: "100%", textAlign: "start", alignItems: "stretch" }}>
                       <Typography variant="h6" fontWeight={800} sx={{ textAlign: "start" }}>{t("mealPlan.ai.title")}</Typography>
-                      <Typography color="text.secondary" sx={{ textAlign: "start" }}>{t("mealPlan.ai.subtitle")}</Typography>
+                      <Typography color="text.secondary" sx={{ textAlign: "start", fontSize: { xs: 13, md: 14 }, lineHeight: 1.45 }}>{t("mealPlan.ai.subtitle")}</Typography>
                     </Stack>
                   }
                   renderTemplate={() => (
@@ -556,8 +556,8 @@ export function MealPlanItemDialog({
                                   }}
                                   disabled={isSubmitting}
                                   sx={{
-                                    width: 34,
-                                    height: 34,
+                                    width: 40,
+                                    height: 40,
                                     marginInlineStart: 0.75,
                                     bgcolor: "primary.main",
                                     color: "primary.contrastText",
@@ -627,8 +627,8 @@ export function MealPlanItemDialog({
                                       }}
                                       disabled={isSubmitting}
                                       sx={{
-                                        width: 32,
-                                        height: 32,
+                                        width: 40,
+                                        height: 40,
                                         marginInlineStart: 0.75,
                                         bgcolor: "primary.main",
                                         color: "primary.contrastText",
@@ -645,7 +645,7 @@ export function MealPlanItemDialog({
                                     >
                                       {pendingActionKey === getProposalActionKey(entry, index)
                                         ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
-                                        : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                                        : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                                     </IconButton>
                                   </Stack>
                                 </Box>
@@ -681,7 +681,7 @@ export function MealPlanItemDialog({
               <Stack spacing={2} sx={{ maxWidth: 860, mx: "auto" }}>
                 <Stack spacing={0.5}>
                   <Typography variant="h6" fontWeight={800}>{t("mealPlan.history.title")}</Typography>
-                  <Typography color="text.secondary">{t("mealPlan.history.subtitle")}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: { xs: 13, md: 14 }, lineHeight: 1.45 }}>{t("mealPlan.history.subtitle")}</Typography>
                 </Stack>
 
                 <TextField
@@ -689,6 +689,11 @@ export function MealPlanItemDialog({
                   onChange={(event) => setHistoryQuery(event.target.value)}
                   placeholder={t("common.search")}
                   fullWidth
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5
+                    }
+                  }}
                 />
 
                 {historyError ? <Alert severity="error">{historyError}</Alert> : null}
@@ -745,9 +750,6 @@ export function MealPlanItemDialog({
                               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: 12.5 }}>
                                 {`${Math.round(entry.nutritionTotal.caloriesKcal)} kcal · ${t("mealPlan.macro.protein")} ${Math.round(entry.nutritionTotal.proteinG)}g · ${t("mealPlan.macro.fat")} ${Math.round(entry.nutritionTotal.fatG)}g · ${t("mealPlan.macro.carbs")} ${Math.round(entry.nutritionTotal.carbsG)}g`}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.4 }}>
-                                {`${entry.title} · ${entry.date}`}
-                              </Typography>
                             </Box>
                             <IconButton
                               color="primary"
@@ -762,8 +764,8 @@ export function MealPlanItemDialog({
                               }}
                               disabled={isSubmitting}
                               sx={{
-                                width: 32,
-                                height: 32,
+                                width: 40,
+                                height: 40,
                                 marginInlineStart: 0.75,
                                 bgcolor: "primary.main",
                                 color: "primary.contrastText",
@@ -780,7 +782,7 @@ export function MealPlanItemDialog({
                             >
                               {pendingActionKey === `history-${entry.id}`
                                 ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
-                                : <AddRoundedIcon sx={{ fontSize: 17 }} />}
+                                : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                             </IconButton>
                           </Stack>
                         </Box>
@@ -824,6 +826,11 @@ export function MealPlanItemDialog({
                   onChange={(event) => setRecipeQuery(event.target.value)}
                   placeholder={t("recipes.searchPlaceholder")}
                   fullWidth
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5
+                    }
+                  }}
                 />
                 {filteredRecipes.length === 0 ? (
                   <Stack spacing={0.4}>
@@ -902,7 +909,12 @@ export function MealPlanItemDialog({
                                   setRecipeServingsById((current) => ({ ...current, [recipe.id]: nextValue }));
                                 }}
                                 size="small"
-                                sx={{ width: { xs: 96, sm: 112 } }}
+                                sx={{
+                                  width: { xs: 72, sm: 82 },
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: 1.25
+                                  }
+                                }}
                               />
                               <IconButton
                                 color="primary"
@@ -914,8 +926,8 @@ export function MealPlanItemDialog({
                                 }}
                                 disabled={isSubmitting}
                                 sx={{
-                                  width: 32,
-                                  height: 32,
+                                  width: 40,
+                                  height: 40,
                                   bgcolor: "primary.main",
                                   color: "primary.contrastText",
                                   boxShadow: "none",
@@ -929,7 +941,7 @@ export function MealPlanItemDialog({
                                   }
                                 }}
                               >
-                                <AddRoundedIcon sx={{ fontSize: 17 }} />
+                                <AddRoundedIcon sx={{ fontSize: 18 }} />
                               </IconButton>
                             </Stack>
                           </Stack>
