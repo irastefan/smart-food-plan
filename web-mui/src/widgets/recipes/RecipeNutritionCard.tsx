@@ -15,10 +15,10 @@ export function RecipeNutritionCard({ recipe }: RecipeNutritionCardProps) {
   const totalMacros = Math.max(1, totals.proteinG + totals.fatG + totals.carbsG);
   const macroItems = [
     {
-      key: "carbs",
-      label: t("recipe.macros.carbs"),
-      value: totals.carbsG,
-      color: getMacroColor("carbs")
+      key: "protein",
+      label: t("recipe.macros.protein"),
+      value: totals.proteinG,
+      color: getMacroColor("protein")
     },
     {
       key: "fat",
@@ -27,10 +27,10 @@ export function RecipeNutritionCard({ recipe }: RecipeNutritionCardProps) {
       color: getMacroColor("fat")
     },
     {
-      key: "protein",
-      label: t("recipe.macros.protein"),
-      value: totals.proteinG,
-      color: getMacroColor("protein")
+      key: "carbs",
+      label: t("recipe.macros.carbs"),
+      value: totals.carbsG,
+      color: getMacroColor("carbs")
     }
   ];
   return (
