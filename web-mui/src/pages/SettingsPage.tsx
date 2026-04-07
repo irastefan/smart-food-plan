@@ -1,4 +1,4 @@
-import { Alert, CircularProgress, Paper, Stack } from "@mui/material";
+import { CircularProgress, Paper, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
@@ -11,6 +11,7 @@ import {
 import { getAiAgentSettings, setAiAgentSettings, type AiAgentSettings } from "../shared/config/aiAgent";
 import { getAppPreferences, setAppPreferences, type AppPreferences } from "../shared/config/appPreferences";
 import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
+import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAgentSettingsCard } from "../widgets/settings/AiAgentSettingsCard";
@@ -37,7 +38,7 @@ export function SettingsPage() {
   const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<{ type: "error" | "success" | "info"; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "error" | "success" | "info"; message: string } | null>(null);
   const [searchParams] = useSearchParams();
 
   const activeSection = useMemo(() => {
@@ -63,7 +64,7 @@ export function SettingsPage() {
     async function load() {
       try {
         setIsLoading(true);
-        setStatus(null);
+        setFeedback(null);
         const current = await getCurrentUserSettings();
         if (!cancelled) {
           setProfile(mergeProfileFormulas(current.profile, null));
@@ -74,7 +75,7 @@ export function SettingsPage() {
       } catch (error) {
         console.error("Failed to load settings", error);
         if (!cancelled) {
-          setStatus({ type: "error", message: t("settings.status.loadError") });
+          setFeedback({ type: "error", message: t("settings.status.loadError") });
         }
       } finally {
         if (!cancelled) {
@@ -105,10 +106,10 @@ export function SettingsPage() {
       setIsSubmitting(true);
       const saved = await saveUserProfile(profile);
       setProfile((current) => mergeProfileFormulas(saved, current));
-      setStatus({ type: "success", message: t("settings.status.saved") });
+      setFeedback({ type: "success", message: t("settings.status.saved") });
     } catch (error) {
       console.error("Failed to save profile", error);
-      setStatus({ type: "error", message: t("settings.status.saveError") });
+      setFeedback({ type: "error", message: t("settings.status.saveError") });
     } finally {
       setIsSubmitting(false);
     }
@@ -119,31 +120,58 @@ export function SettingsPage() {
       setIsSubmitting(true);
       const recalculated = await recalculateUserProfile();
       setProfile((current) => mergeProfileFormulas(recalculated, current));
-      setStatus({ type: "success", message: t("settings.status.recalculated") });
+      setFeedback({ type: "success", message: t("settings.status.recalculated") });
     } catch (error) {
       console.error("Failed to recalculate profile", error);
-      setStatus({ type: "error", message: t("settings.status.recalculateError") });
+      setFeedback({ type: "error", message: t("settings.status.recalculateError") });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function handleSaveOpenAiApiKey(value: string) {
-    setOpenAiApiKey(value);
-    setOpenAiApiKeyState(value.trim());
-    setStatus({ type: "success", message: t("settings.openai.saved") });
+  async function handleSaveOpenAiApiKey(value: string) {
+    try {
+      setIsSubmitting(true);
+      setOpenAiApiKey(value);
+      await new Promise((resolve) => window.setTimeout(resolve, 280));
+      setOpenAiApiKeyState(value.trim());
+      setFeedback({ type: "success", message: t("settings.openai.saved") });
+    } catch (error) {
+      console.error("Failed to save OpenAI API key", error);
+      setFeedback({ type: "error", message: t("settings.status.saveError") });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleSaveAgentSettings(value: AiAgentSettings) {
-    setAiAgentSettings(value);
-    setAgentSettingsState(value);
-    setStatus({ type: "success", message: t("settings.agent.saved") });
+  async function handleSaveAgentSettings(value: AiAgentSettings) {
+    try {
+      setIsSubmitting(true);
+      setAiAgentSettings(value);
+      await new Promise((resolve) => window.setTimeout(resolve, 280));
+      setAgentSettingsState(value);
+      setFeedback({ type: "success", message: t("settings.agent.saved") });
+    } catch (error) {
+      console.error("Failed to save AI agent settings", error);
+      setFeedback({ type: "error", message: t("settings.status.saveError") });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleSavePreferences(value: AppPreferences) {
-    setAppPreferences(value);
-    setAppPreferencesState(value);
-    setStatus({ type: "success", message: t("settings.preferences.saved") });
+  async function handleSavePreferences(value: AppPreferences) {
+    try {
+      setIsSubmitting(true);
+      setAppPreferences(value);
+      await new Promise((resolve) => window.setTimeout(resolve, 280));
+      setAppPreferencesState(value);
+      setFeedback({ type: "success", message: t("settings.preferences.saved") });
+    } catch (error) {
+      console.error("Failed to save app preferences", error);
+      setFeedback({ type: "error", message: t("settings.status.saveError") });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isLoading) {
@@ -158,8 +186,6 @@ export function SettingsPage() {
     <Stack spacing={3}>
       <DashboardTopbar onOpenSidebar={openSidebar} title={t("settings.title")} subtitle={t("settings.subtitle")} />
       <PageTitle title={t("settings.title")} />
-
-      {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
 
       {profile ? (
         <Stack spacing={3}>
@@ -198,6 +224,8 @@ export function SettingsPage() {
           ) : null}
         </Stack>
       ) : null}
+
+      <AppFeedbackToast feedback={feedback} onClose={() => setFeedback(null)} />
     </Stack>
   );
 }

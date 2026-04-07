@@ -1,6 +1,6 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import { Button, Checkbox, FormControlLabel, Radio, RadioGroup, Stack, Typography } from "@mui/material";
+import { Button, Checkbox, CircularProgress, FormControlLabel, Radio, RadioGroup, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { AppPreferences } from "../../shared/config/appPreferences";
@@ -171,7 +171,7 @@ export function AppPreferencesCard({ value, isSubmitting, onSave }: AppPreferenc
         <Button
           onClick={() => onSave(draft)}
           variant="contained"
-          startIcon={<SaveRoundedIcon />}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
           disabled={isSubmitting}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >

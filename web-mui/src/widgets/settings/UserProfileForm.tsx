@@ -1,6 +1,6 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import { Alert, Button, MenuItem, Stack, TextField } from "@mui/material";
+import { Alert, Button, CircularProgress, MenuItem, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../features/settings/api/settingsApi";
 import { formatCalorieDelta, getDefaultCalorieDelta, parseCalorieDelta } from "../../features/settings/model/profileDefaults";
@@ -121,7 +121,7 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
         <Button
           onClick={onRecalculate}
           variant="outlined"
-          startIcon={<RestartAltRoundedIcon />}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <RestartAltRoundedIcon />}
           disabled={isSubmitting}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >
@@ -130,7 +130,7 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
         <Button
           onClick={onSave}
           variant="contained"
-          startIcon={<SaveRoundedIcon />}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
           disabled={isSubmitting}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >

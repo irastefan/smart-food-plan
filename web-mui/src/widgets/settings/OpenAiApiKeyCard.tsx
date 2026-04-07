@@ -1,7 +1,7 @@
 import KeyRoundedIcon from "@mui/icons-material/KeyRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
-import { Button, Link, Stack, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, Link, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -67,7 +67,7 @@ export function OpenAiApiKeyCard({ value, isSubmitting, onSave }: OpenAiApiKeyCa
         <Button
           onClick={() => onSave(draft)}
           variant="contained"
-          startIcon={<SaveRoundedIcon />}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
           disabled={isSubmitting}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >
