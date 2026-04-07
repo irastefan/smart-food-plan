@@ -128,6 +128,20 @@ function parseDecimalInput(value: string, fallback: number, min = 0.1): number {
   return Math.max(min, parsed);
 }
 
+function sanitizeDecimalText(value: string): string {
+  const normalized = value.replace(",", ".");
+  return normalized.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+}
+
+function parseOptionalDecimal(value: string): number {
+  if (!value.trim()) {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function inferManualNutritionPer100(item?: MealPlanItem | null) {
   if (!item?.isManual || item.type !== "product") {
     return { kcal100: 0, protein100: 0, fat100: 0, carbs100: 0 };
@@ -215,7 +229,9 @@ export function MealPlanItemDialog({
   const [selectedProductId, setSelectedProductId] = useState(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
   const [selectedRecipeId, setSelectedRecipeId] = useState(item?.type === "recipe" ? item.recipeId ?? "" : "");
   const [recipeServingsById, setRecipeServingsById] = useState<Record<string, number>>({});
+  const [recipeServingsInputById, setRecipeServingsInputById] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(item?.type === "product" ? item.amount ?? 100 : 100);
+  const [quantityInput, setQuantityInput] = useState(String(item?.type === "product" ? item.amount ?? 100 : 100));
   const [servings, setServings] = useState(item?.type === "recipe" ? item.servings ?? 1 : 1);
   const initialManualNutrition = inferManualNutritionPer100(item);
   const [manualName, setManualName] = useState(item?.isManual ? item.title : "");
@@ -224,6 +240,10 @@ export function MealPlanItemDialog({
   const [manualProtein100, setManualProtein100] = useState(item?.isManual ? initialManualNutrition.protein100 : 0);
   const [manualFat100, setManualFat100] = useState(item?.isManual ? initialManualNutrition.fat100 : 0);
   const [manualCarbs100, setManualCarbs100] = useState(item?.isManual ? initialManualNutrition.carbs100 : 0);
+  const [manualKcal100Input, setManualKcal100Input] = useState(item?.isManual ? String(initialManualNutrition.kcal100) : "");
+  const [manualProtein100Input, setManualProtein100Input] = useState(item?.isManual ? String(initialManualNutrition.protein100) : "");
+  const [manualFat100Input, setManualFat100Input] = useState(item?.isManual ? String(initialManualNutrition.fat100) : "");
+  const [manualCarbs100Input, setManualCarbs100Input] = useState(item?.isManual ? String(initialManualNutrition.carbs100) : "");
 
   useEffect(() => {
     if (!open) {
@@ -242,7 +262,9 @@ export function MealPlanItemDialog({
     setSelectedProductId(item?.type === "product" && !item?.isManual ? item.productId ?? "" : "");
     setSelectedRecipeId(item?.type === "recipe" ? item.recipeId ?? "" : "");
     setRecipeServingsById(item?.type === "recipe" && item.recipeId ? { [item.recipeId]: item.servings ?? 1 } : {});
+    setRecipeServingsInputById(item?.type === "recipe" && item.recipeId ? { [item.recipeId]: String(item.servings ?? 1) } : {});
     setQuantity(item?.type === "product" ? item.amount ?? 100 : 100);
+    setQuantityInput(String(item?.type === "product" ? item.amount ?? 100 : 100));
     setServings(item?.type === "recipe" ? item.servings ?? 1 : 1);
     setManualName(item?.isManual ? item.title : "");
     setManualUnit(item?.isManual ? normalizeUnitValue(item.unit) ?? "g" : "g");
@@ -251,6 +273,10 @@ export function MealPlanItemDialog({
     setManualProtein100(item?.isManual ? nextManualNutrition.protein100 : 0);
     setManualFat100(item?.isManual ? nextManualNutrition.fat100 : 0);
     setManualCarbs100(item?.isManual ? nextManualNutrition.carbs100 : 0);
+    setManualKcal100Input(item?.isManual ? String(nextManualNutrition.kcal100) : "");
+    setManualProtein100Input(item?.isManual ? String(nextManualNutrition.protein100) : "");
+    setManualFat100Input(item?.isManual ? String(nextManualNutrition.fat100) : "");
+    setManualCarbs100Input(item?.isManual ? String(nextManualNutrition.carbs100) : "");
   }, [initialItemType, item, mode, open]);
 
   useEffect(() => {
@@ -817,13 +843,19 @@ export function MealPlanItemDialog({
                   getOptionLabel={(option) => option.title}
                   renderInput={(params) => <TextField {...params} label={t("mealPlan.dialog.selectProduct")} />}
                 />
-                <TextField
-                  label={t("mealPlan.dialog.quantity")}
-                  type="number"
-                  inputProps={{ min: 0.1, step: 0.1 }}
-                  value={quantity}
-                  onChange={(event) => setQuantity(Math.max(0.1, Number(event.target.value) || 0.1))}
-                />
+                  <TextField
+                    label={t("mealPlan.dialog.quantity")}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={quantityInput}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setQuantityInput(nextValue);
+                      if (nextValue.trim()) {
+                        setQuantity(parseDecimalInput(nextValue, quantity, 0.1));
+                      }
+                    }}
+                  />
                 <Box>
                   <Button onClick={submitProduct} variant="contained" disabled={isSubmitting || !selectedProduct}>
                     {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
@@ -856,6 +888,7 @@ export function MealPlanItemDialog({
                     {filteredRecipes.map((recipe) => {
                       const isSelected = recipe.id === selectedRecipeId;
                       const recipeServings = recipeServingsById[recipe.id] ?? (isSelected ? servings : 1);
+                      const recipeServingsInput = recipeServingsInputById[recipe.id] ?? String(recipeServings);
 
                       return (
                         <Box
@@ -912,15 +945,19 @@ export function MealPlanItemDialog({
                             <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
                               <TextField
                                 label={t("mealPlan.dialog.servings")}
-                                type="number"
-                                inputProps={{ min: 0.1, step: 0.1 }}
-                                value={recipeServings}
+                                type="text"
+                                inputProps={{ inputMode: "decimal" }}
+                                value={recipeServingsInput}
                                 onClick={(event) => event.stopPropagation()}
                                 onChange={(event) => {
-                                  const nextValue = parseDecimalInput(event.target.value, recipeServings, 0.1);
+                                  const nextInput = sanitizeDecimalText(event.target.value);
+                                  setRecipeServingsInputById((current) => ({ ...current, [recipe.id]: nextInput }));
                                   setSelectedRecipeId(recipe.id);
-                                  setServings(nextValue);
-                                  setRecipeServingsById((current) => ({ ...current, [recipe.id]: nextValue }));
+                                  if (nextInput.trim()) {
+                                    const nextValue = parseDecimalInput(nextInput, recipeServings, 0.1);
+                                    setServings(nextValue);
+                                    setRecipeServingsById((current) => ({ ...current, [recipe.id]: nextValue }));
+                                  }
                                 }}
                                 size="small"
                                 sx={{
@@ -962,10 +999,16 @@ export function MealPlanItemDialog({
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <TextField
                     label={t("mealPlan.dialog.quantity")}
-                    type="number"
-                    inputProps={{ min: 0.1, step: 0.1 }}
-                    value={quantity}
-                    onChange={(event) => setQuantity(Math.max(0.1, Number(event.target.value) || 0.1))}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={quantityInput}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setQuantityInput(nextValue);
+                      if (nextValue.trim()) {
+                        setQuantity(parseDecimalInput(nextValue, quantity, 0.1));
+                      }
+                    }}
                     fullWidth
                   />
                     <TextField
@@ -983,12 +1026,56 @@ export function MealPlanItemDialog({
                   </TextField>
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <TextField label={t("recipe.form.caloriesPer100")} type="number" value={manualKcal100} onChange={(event) => setManualKcal100(Number(event.target.value) || 0)} fullWidth />
-                  <TextField label={t("recipe.form.proteinPer100")} type="number" value={manualProtein100} onChange={(event) => setManualProtein100(Number(event.target.value) || 0)} fullWidth />
+                  <TextField
+                    label={t("recipe.form.caloriesPer100")}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={manualKcal100Input}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setManualKcal100Input(nextValue);
+                      setManualKcal100(parseOptionalDecimal(nextValue));
+                    }}
+                    fullWidth
+                  />
+                  <TextField
+                    label={t("recipe.form.proteinPer100")}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={manualProtein100Input}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setManualProtein100Input(nextValue);
+                      setManualProtein100(parseOptionalDecimal(nextValue));
+                    }}
+                    fullWidth
+                  />
                 </Stack>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <TextField label={t("recipe.form.fatPer100")} type="number" value={manualFat100} onChange={(event) => setManualFat100(Number(event.target.value) || 0)} fullWidth />
-                  <TextField label={t("recipe.form.carbsPer100")} type="number" value={manualCarbs100} onChange={(event) => setManualCarbs100(Number(event.target.value) || 0)} fullWidth />
+                  <TextField
+                    label={t("recipe.form.fatPer100")}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={manualFat100Input}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setManualFat100Input(nextValue);
+                      setManualFat100(parseOptionalDecimal(nextValue));
+                    }}
+                    fullWidth
+                  />
+                  <TextField
+                    label={t("recipe.form.carbsPer100")}
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
+                    value={manualCarbs100Input}
+                    onChange={(event) => {
+                      const nextValue = sanitizeDecimalText(event.target.value);
+                      setManualCarbs100Input(nextValue);
+                      setManualCarbs100(parseOptionalDecimal(nextValue));
+                    }}
+                    fullWidth
+                  />
                 </Stack>
                 <Box>
                   <Button onClick={() => submitManual()} variant="contained" disabled={isSubmitting || !manualName.trim()}>

@@ -431,7 +431,8 @@ export function MealPlanBodyMetricsCard({
                   <TextField
                     label={field.label}
                     helperText={field.help}
-                    type="number"
+                    type="text"
+                    inputProps={{ inputMode: "decimal" }}
                     value={draft[field.key]}
                     onChange={(event) => onChange({ ...draft, [field.key]: event.target.value })}
                     fullWidth

@@ -64,8 +64,8 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
         </Stack>
 
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-          <TextField label={t("settings.profile.heightCm")} type="number" value={value.heightCm ?? ""} onChange={(event) => update("heightCm", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
-          <TextField label={t("settings.profile.weightKg")} type="number" value={value.weightKg ?? ""} onChange={(event) => update("weightKg", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
+          <TextField label={t("settings.profile.heightCm")} type="text" inputProps={{ inputMode: "decimal" }} value={value.heightCm ?? ""} onChange={(event) => update("heightCm", event.target.value === "" ? null : Number(event.target.value.replace(",", ".")))} fullWidth />
+          <TextField label={t("settings.profile.weightKg")} type="text" inputProps={{ inputMode: "decimal" }} value={value.weightKg ?? ""} onChange={(event) => update("weightKg", event.target.value === "" ? null : Number(event.target.value.replace(",", ".")))} fullWidth />
         </Stack>
 
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>

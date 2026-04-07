@@ -1,5 +1,6 @@
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import { Alert, Box, Button, Paper, Stack, TextField, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 import type { ProductFormValues } from "../../features/products/api/productsApi";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -14,9 +15,39 @@ type ProductFormProps = {
 
 export function ProductForm({ value, isSubmitting, status, submitLabel, onChange, onSubmit }: ProductFormProps) {
   const { t } = useLanguage();
+  const [inputs, setInputs] = useState({
+    calories: String(value.calories ?? 0),
+    protein: String(value.protein ?? 0),
+    fat: String(value.fat ?? 0),
+    carbs: String(value.carbs ?? 0)
+  });
 
   function update<K extends keyof ProductFormValues>(key: K, nextValue: ProductFormValues[K]) {
     onChange({ ...value, [key]: nextValue });
+  }
+
+  useEffect(() => {
+    setInputs({
+      calories: String(value.calories ?? 0),
+      protein: String(value.protein ?? 0),
+      fat: String(value.fat ?? 0),
+      carbs: String(value.carbs ?? 0)
+    });
+  }, [value.calories, value.protein, value.fat, value.carbs]);
+
+  function sanitizeDecimalText(nextValue: string): string {
+    return nextValue.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+  }
+
+  function handleNumericChange(key: "calories" | "protein" | "fat" | "carbs", rawValue: string) {
+    const nextValue = sanitizeDecimalText(rawValue);
+    setInputs((current) => ({ ...current, [key]: nextValue }));
+    if (nextValue.trim() === "") {
+      update(key, 0);
+      return;
+    }
+    const parsed = Number.parseFloat(nextValue);
+    update(key, Number.isFinite(parsed) ? Math.max(0, parsed) : 0);
   }
 
   return (
@@ -37,12 +68,12 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
         <Stack spacing={2.5}>
           <Typography variant="h5" fontWeight={800}>{t("products.nutrition")}</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <TextField label={t("product.form.calories")} type="number" value={value.calories} onChange={(event) => update("calories", Math.max(0, Number(event.target.value) || 0))} fullWidth />
-            <TextField label={t("product.form.protein")} type="number" value={value.protein} onChange={(event) => update("protein", Math.max(0, Number(event.target.value) || 0))} fullWidth />
+            <TextField label={t("product.form.calories")} type="text" inputProps={{ inputMode: "decimal" }} value={inputs.calories} onChange={(event) => handleNumericChange("calories", event.target.value)} fullWidth />
+            <TextField label={t("product.form.protein")} type="text" inputProps={{ inputMode: "decimal" }} value={inputs.protein} onChange={(event) => handleNumericChange("protein", event.target.value)} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <TextField label={t("product.form.fat")} type="number" value={value.fat} onChange={(event) => update("fat", Math.max(0, Number(event.target.value) || 0))} fullWidth />
-            <TextField label={t("product.form.carbs")} type="number" value={value.carbs} onChange={(event) => update("carbs", Math.max(0, Number(event.target.value) || 0))} fullWidth />
+            <TextField label={t("product.form.fat")} type="text" inputProps={{ inputMode: "decimal" }} value={inputs.fat} onChange={(event) => handleNumericChange("fat", event.target.value)} fullWidth />
+            <TextField label={t("product.form.carbs")} type="text" inputProps={{ inputMode: "decimal" }} value={inputs.carbs} onChange={(event) => handleNumericChange("carbs", event.target.value)} fullWidth />
           </Stack>
         </Stack>
       </Paper>

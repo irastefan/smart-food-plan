@@ -15,7 +15,7 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { recipeCategoryKeys } from "../../features/recipes/model/recipeCategories";
 import type { RecipeFormValues } from "../../features/recipes/model/recipeTypes";
 import type { ProductSummary } from "../../features/products/api/productsApi";
@@ -35,6 +35,14 @@ type RecipeFormProps = {
 export function RecipeForm({ value, products, isSubmitting, status, submitLabel, onChange, onSubmit }: RecipeFormProps) {
   const { t } = useLanguage();
   const unitOptions = useMemo(() => getUnitOptions((key) => t(key as never)), [t]);
+  const [servingsInput, setServingsInput] = useState(String(value.servings));
+  const [ingredientInputs, setIngredientInputs] = useState<Record<string, {
+    amount: string;
+    kcal100: string;
+    protein100: string;
+    fat100: string;
+    carbs100: string;
+  }>>({});
 
   const totalNutrition = useMemo(() => {
     return value.ingredients.reduce(
@@ -70,6 +78,67 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
       ingredientIndex === index ? { ...ingredient, ...patch } : ingredient
     );
     updateField("ingredients", nextIngredients);
+  }
+
+  useEffect(() => {
+    setServingsInput(String(value.servings));
+  }, [value.servings]);
+
+  useEffect(() => {
+    const nextInputs: Record<string, {
+      amount: string;
+      kcal100: string;
+      protein100: string;
+      fat100: string;
+      carbs100: string;
+    }> = {};
+
+    value.ingredients.forEach((ingredient) => {
+      nextInputs[ingredient.id] = {
+        amount: String(ingredient.amount),
+        kcal100: String(ingredient.kcal100),
+        protein100: String(ingredient.protein100),
+        fat100: String(ingredient.fat100),
+        carbs100: String(ingredient.carbs100)
+      };
+    });
+
+    setIngredientInputs(nextInputs);
+  }, [value.ingredients]);
+
+  function sanitizeDecimalText(nextValue: string): string {
+    return nextValue.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+  }
+
+  function updateIngredientNumeric(
+    index: number,
+    ingredientId: string,
+    key: "amount" | "kcal100" | "protein100" | "fat100" | "carbs100",
+    rawValue: string,
+    minimum?: number
+  ) {
+    const nextValue = sanitizeDecimalText(rawValue);
+    setIngredientInputs((current) => ({
+      ...current,
+      [ingredientId]: {
+        ...current[ingredientId],
+        amount: current[ingredientId]?.amount ?? "",
+        kcal100: current[ingredientId]?.kcal100 ?? "",
+        protein100: current[ingredientId]?.protein100 ?? "",
+        fat100: current[ingredientId]?.fat100 ?? "",
+        carbs100: current[ingredientId]?.carbs100 ?? "",
+        [key]: nextValue
+      }
+    }));
+
+    if (nextValue.trim() === "") {
+      updateIngredient(index, { [key]: minimum ?? 0 } as Partial<RecipeFormValues["ingredients"][number]>);
+      return;
+    }
+
+    const parsed = Number.parseFloat(nextValue);
+    const nextNumber = Number.isFinite(parsed) ? (typeof minimum === "number" ? Math.max(minimum, parsed) : parsed) : (minimum ?? 0);
+    updateIngredient(index, { [key]: nextNumber } as Partial<RecipeFormValues["ingredients"][number]>);
   }
 
   function addIngredient() {
@@ -138,7 +207,23 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
           </Stack>
           <TextField label={t("recipe.form.description")} value={value.description} onChange={(event) => updateField("description", event.target.value)} fullWidth multiline minRows={3} />
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <TextField label={t("recipe.form.servings")} type="number" inputProps={{ min: 1 }} value={value.servings} onChange={(event) => updateField("servings", Math.max(1, Number(event.target.value) || 1))} fullWidth />
+            <TextField
+              label={t("recipe.form.servings")}
+              type="text"
+              inputProps={{ inputMode: "decimal" }}
+              value={servingsInput}
+              onChange={(event) => {
+                const nextValue = sanitizeDecimalText(event.target.value);
+                setServingsInput(nextValue);
+                if (nextValue.trim() === "") {
+                  updateField("servings", 1);
+                  return;
+                }
+                const parsed = Number.parseFloat(nextValue);
+                updateField("servings", Number.isFinite(parsed) ? Math.max(1, parsed) : 1);
+              }}
+              fullWidth
+            />
           </Stack>
         </Stack>
       </Paper>
@@ -180,12 +265,12 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
                     <>
                       <TextField label={t("recipe.form.name")} value={ingredient.name} onChange={(event) => updateIngredient(index, { name: event.target.value })} fullWidth />
                       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                        <TextField label={t("recipe.form.caloriesPer100")} type="number" value={ingredient.kcal100} onChange={(event) => updateIngredient(index, { kcal100: Number(event.target.value) || 0 })} fullWidth />
-                        <TextField label={t("recipe.form.proteinPer100")} type="number" value={ingredient.protein100} onChange={(event) => updateIngredient(index, { protein100: Number(event.target.value) || 0 })} fullWidth />
+                        <TextField label={t("recipe.form.caloriesPer100")} type="text" inputProps={{ inputMode: "decimal" }} value={ingredientInputs[ingredient.id]?.kcal100 ?? String(ingredient.kcal100)} onChange={(event) => updateIngredientNumeric(index, ingredient.id, "kcal100", event.target.value)} fullWidth />
+                        <TextField label={t("recipe.form.proteinPer100")} type="text" inputProps={{ inputMode: "decimal" }} value={ingredientInputs[ingredient.id]?.protein100 ?? String(ingredient.protein100)} onChange={(event) => updateIngredientNumeric(index, ingredient.id, "protein100", event.target.value)} fullWidth />
                       </Stack>
                       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                        <TextField label={t("recipe.form.fatPer100")} type="number" value={ingredient.fat100} onChange={(event) => updateIngredient(index, { fat100: Number(event.target.value) || 0 })} fullWidth />
-                        <TextField label={t("recipe.form.carbsPer100")} type="number" value={ingredient.carbs100} onChange={(event) => updateIngredient(index, { carbs100: Number(event.target.value) || 0 })} fullWidth />
+                        <TextField label={t("recipe.form.fatPer100")} type="text" inputProps={{ inputMode: "decimal" }} value={ingredientInputs[ingredient.id]?.fat100 ?? String(ingredient.fat100)} onChange={(event) => updateIngredientNumeric(index, ingredient.id, "fat100", event.target.value)} fullWidth />
+                        <TextField label={t("recipe.form.carbsPer100")} type="text" inputProps={{ inputMode: "decimal" }} value={ingredientInputs[ingredient.id]?.carbs100 ?? String(ingredient.carbs100)} onChange={(event) => updateIngredientNumeric(index, ingredient.id, "carbs100", event.target.value)} fullWidth />
                       </Stack>
                     </>
                   ) : (
@@ -198,7 +283,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
                     />
                   )}
                   <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                    <TextField label={t("recipe.form.amount")} type="number" inputProps={{ min: 0.1, step: 0.1 }} value={ingredient.amount} onChange={(event) => updateIngredient(index, { amount: Math.max(0.1, Number(event.target.value) || 0.1) })} fullWidth />
+                    <TextField label={t("recipe.form.amount")} type="text" inputProps={{ inputMode: "decimal" }} value={ingredientInputs[ingredient.id]?.amount ?? String(ingredient.amount)} onChange={(event) => updateIngredientNumeric(index, ingredient.id, "amount", event.target.value, 0.1)} fullWidth />
                     <TextField
                       select
                       label={t("recipe.form.unit")}

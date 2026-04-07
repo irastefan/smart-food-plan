@@ -196,8 +196,8 @@ export function AuthForm({
               </Stack>
 
               <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                <TextField label={t("settings.profile.heightCm")} type="number" value={profile.heightCm ?? ""} onChange={(event) => updateProfile("heightCm", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
-                <TextField label={t("settings.profile.weightKg")} type="number" value={profile.weightKg ?? ""} onChange={(event) => updateProfile("weightKg", event.target.value === "" ? null : Number(event.target.value))} fullWidth />
+                <TextField label={t("settings.profile.heightCm")} type="text" inputProps={{ inputMode: "decimal" }} value={profile.heightCm ?? ""} onChange={(event) => updateProfile("heightCm", event.target.value === "" ? null : Number(event.target.value.replace(",", ".")))} fullWidth />
+                <TextField label={t("settings.profile.weightKg")} type="text" inputProps={{ inputMode: "decimal" }} value={profile.weightKg ?? ""} onChange={(event) => updateProfile("weightKg", event.target.value === "" ? null : Number(event.target.value.replace(",", ".")))} fullWidth />
               </Stack>
 
               <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
