@@ -2,6 +2,7 @@ import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import {
   Alert,
   Autocomplete,
@@ -990,7 +991,7 @@ export function MealPlanItemDialog({
                                   ...getAddIconButtonSx(isDarkMode)
                                 }}
                               >
-                                <AddRoundedIcon sx={{ fontSize: 18 }} />
+                                {mode === "edit" && isSelected ? <CheckRoundedIcon sx={{ fontSize: 18 }} /> : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                               </IconButton>
                             </Stack>
                           </Stack>
