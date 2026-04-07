@@ -81,7 +81,7 @@ export function RecipeNutritionCard({ recipe, showTitle = true, compact = false 
         ) : null}
 
         <Stack direction="row" spacing={compact ? { xs: 0.75, sm: 1 } : { xs: 1.5, sm: 2, md: 3 }} alignItems="center" sx={{ flex: 1 }}>
-          <Stack direction="row" spacing={compact ? { xs: 0.95, sm: 0.7 } : { xs: 0.5, sm: 1 }} alignItems="center" sx={{ minWidth: compact ? { xs: 108, sm: 104 } : { xs: 88, sm: 124, md: 160 }, flexShrink: 0 }}>
+          <Stack direction="row" spacing={compact ? { xs: 0.8, sm: 0.7 } : { xs: 0.5, sm: 1 }} alignItems="center" sx={{ minWidth: compact ? { xs: 98, sm: 104 } : { xs: 88, sm: 124, md: 160 }, flexShrink: 0 }}>
             <MacroCalorieRing
               calories={Math.round(totals.caloriesKcal)}
               proteinG={totals.proteinG}
@@ -95,7 +95,7 @@ export function RecipeNutritionCard({ recipe, showTitle = true, compact = false 
 
           <Stack
             direction="row"
-            spacing={compact ? { xs: 3, sm: 3 } : { xs: 1.25, sm: 1.75, md: 2.75 }}
+            spacing={compact ? { xs: 2.3, sm: 3 } : { xs: 1.25, sm: 1.75, md: 2.75 }}
             useFlexGap
             sx={{ flex: 1, minWidth: 0, justifyContent: compact ? "flex-start" : "flex-start" }}
           >
@@ -106,14 +106,14 @@ export function RecipeNutritionCard({ recipe, showTitle = true, compact = false 
                 sx={{ minWidth: 0, flex: compact ? "0 0 auto" : 1 }}
               >
                 <Stack direction="row" spacing={0.85} alignItems="center" color={item.color}>
-                  <Typography sx={{ color: item.color, fontWeight: 800, fontSize: compact ? { xs: 12, sm: 12 } : { xs: 10, sm: 12, md: 13 } }}>
+                  <Typography sx={{ color: item.color, fontWeight: 800, fontSize: compact ? { xs: 11, sm: 12 } : { xs: 10, sm: 12, md: 13 } }}>
                     {Math.round((item.value / totalMacros) * 100)}%
                   </Typography>
                 </Stack>
-                <Typography sx={{ fontSize: compact ? { xs: 17, sm: 17 } : { xs: 14, sm: 18, md: 22 }, lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
+                <Typography sx={{ fontSize: compact ? { xs: 15, sm: 17 } : { xs: 14, sm: 18, md: 22 }, lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
                   {item.value.toFixed(1)} g
                 </Typography>
-                <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: compact ? { xs: 12, sm: 12 } : { xs: 10, sm: 12, md: 14 } }}>
+                <Typography color="text.secondary" sx={{ fontWeight: 700, fontSize: compact ? { xs: 11, sm: 12 } : { xs: 10, sm: 12, md: 14 } }}>
                   {item.label}
                 </Typography>
               </Stack>
@@ -163,7 +163,7 @@ function MacroCalorieRing({
   compact?: boolean;
 }) {
   const theme = useTheme();
-  const size = compact ? 94 : 92;
+  const size = compact ? 84 : 92;
   const strokeWidth = compact ? 5 : 6;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -210,10 +210,10 @@ function MacroCalorieRing({
       </svg>
 
       <Stack spacing={0.15} alignItems="center" sx={{ position: "absolute", inset: 0, justifyContent: "center" }}>
-        <Typography sx={{ fontSize: compact ? { xs: 30, sm: 28 } : { xs: 24, md: 34 }, lineHeight: 1, fontWeight: 800 }}>
+        <Typography sx={{ fontSize: compact ? { xs: 26, sm: 28 } : { xs: 24, md: 34 }, lineHeight: 1, fontWeight: 800 }}>
           {calories}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: compact ? { xs: 13, sm: 13 } : { xs: 12, md: 14 } }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: compact ? { xs: 12, sm: 13 } : { xs: 12, md: 14 } }}>
           kcal
         </Typography>
       </Stack>
