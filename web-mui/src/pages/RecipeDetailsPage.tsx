@@ -1,11 +1,12 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import FormatListNumberedRoundedIcon from "@mui/icons-material/FormatListNumberedRounded";
+import SoupKitchenRoundedIcon from "@mui/icons-material/SoupKitchenRounded";
 import { Alert, Box, Button, CircularProgress, Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { deleteRecipe, getRecipe } from "../features/recipes/api/recipesApi";
-import { getRecipeCategoryLabel } from "../features/recipes/model/recipeCategories";
 import type { RecipeDetail } from "../features/recipes/model/recipeTypes";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { addShoppingCategory, addShoppingItem, getShoppingList } from "../features/shopping/api/shoppingApi";
@@ -179,17 +180,27 @@ export function RecipeDetailsPage() {
           {t("recipe.back")}
         </Button>
       </Stack>
-      <RecipeHero
-        recipe={recipe}
-        onEdit={recipe.isPublic ? undefined : () => navigate(`/recipes/${recipe.id}/edit`)}
-        onDelete={recipe.isPublic ? undefined : () => setDeleteOpen(true)}
-      />
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={3} alignItems="stretch">
+        <Box sx={{ flex: 1.35, minWidth: 0 }}>
+          <RecipeHero
+            recipe={recipe}
+            onEdit={recipe.isPublic ? undefined : () => navigate(`/recipes/${recipe.id}/edit`)}
+            onDelete={recipe.isPublic ? undefined : () => setDeleteOpen(true)}
+          />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: { lg: 420 }, display: "flex", width: "100%" }}>
+          <RecipeNutritionCard recipe={recipe} />
+        </Box>
+      </Stack>
 
-      <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
-        <Stack spacing={3} sx={{ flex: 1.3, minWidth: 0 }}>
+      <Stack spacing={3}>
+        <Stack spacing={3} sx={{ minWidth: 0 }}>
           <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
             <Stack spacing={2.5}>
-              <Typography variant="h5" fontWeight={800}>{t("recipe.ingredients")}</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <SoupKitchenRoundedIcon sx={{ color: "primary.main" }} />
+                <Typography variant="h5" fontWeight={800}>{t("recipe.ingredients")}</Typography>
+              </Stack>
               <List disablePadding>
                 {recipe.ingredients.map((ingredient, index) => (
                   <Box key={ingredient.id}>
@@ -222,7 +233,10 @@ export function RecipeDetailsPage() {
 
           <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
             <Stack spacing={2.5}>
-              <Typography variant="h5" fontWeight={800}>{t("recipe.steps")}</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <FormatListNumberedRoundedIcon sx={{ color: "primary.main" }} />
+                <Typography variant="h5" fontWeight={800}>{t("recipe.steps")}</Typography>
+              </Stack>
               <Stack spacing={1.75}>
                 {recipe.steps.map((step, index) => (
                   <Stack key={`step-${index}`} direction="row" spacing={1.5} alignItems="flex-start">
@@ -233,19 +247,6 @@ export function RecipeDetailsPage() {
                   </Stack>
                 ))}
               </Stack>
-            </Stack>
-          </Paper>
-        </Stack>
-
-        <Stack spacing={3} sx={{ flex: 0.9, minWidth: { xl: 340 } }}>
-          <RecipeNutritionCard totals={recipe.nutritionPerServing} />
-          <Paper sx={{ p: 3, borderRadius: 1.25, border: "1px solid", borderColor: "divider" }}>
-            <Stack spacing={1.5}>
-              <Typography variant="h5" fontWeight={800}>{t("recipe.summary")}</Typography>
-              <SummaryRow label={t("recipe.servingsLabel")} value={String(recipe.servings)} />
-              <SummaryRow label={t("recipe.categoryLabel")} value={getRecipeCategoryLabel(recipe.category, t)} />
-              {recipe.cookTimeMinutes ? <SummaryRow label={t("recipe.cookingTime")} value={t("recipes.minutes", { value: recipe.cookTimeMinutes })} /> : null}
-              <SummaryRow label={t("recipe.totalCalories")} value={`${Math.round(recipe.nutritionTotal.caloriesKcal)} kcal`} />
             </Stack>
           </Paper>
         </Stack>
@@ -268,15 +269,6 @@ export function RecipeDetailsPage() {
         onRecipeChanged={setRecipe}
         onClose={() => setAssistantOpen(false)}
       />
-    </Stack>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <Stack direction="row" justifyContent="space-between" spacing={2}>
-      <Typography color="text.secondary">{label}</Typography>
-      <Typography fontWeight={700} textAlign="right">{value}</Typography>
     </Stack>
   );
 }

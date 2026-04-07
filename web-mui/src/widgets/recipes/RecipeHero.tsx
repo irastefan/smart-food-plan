@@ -1,6 +1,5 @@
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import { Avatar, Box, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import type { RecipeDetail } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
@@ -124,8 +123,6 @@ export function RecipeHero({ recipe, onEdit, onDelete }: RecipeHeroProps) {
             {recipe.description || t("recipe.noDescription")}
           </Typography>
           <Stack direction="row" spacing={1.25} flexWrap="wrap" useFlexGap alignItems="center">
-            <MetricBadge value={`${Math.round(recipe.nutritionPerServing.caloriesKcal)}`} label="kcal" icon={<LocalFireDepartmentRoundedIcon sx={{ color: "#f59e0b" }} />} darkSurface={hasDarkSurface} />
-            <MetricBadge value={`${recipe.servings}`} label={t("recipe.servingsLabel")} darkSurface={hasDarkSurface} />
             {recipe.cookTimeMinutes ? <MetricBadge value={`${recipe.cookTimeMinutes}`} label={t("recipe.minutesShort")} darkSurface={hasDarkSurface} /> : null}
           </Stack>
         </Stack>
