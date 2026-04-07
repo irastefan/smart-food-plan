@@ -33,22 +33,26 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
     >
       <Box
         sx={{
-          height: recipe.photoUrl ? 220 : { xs: 132, sm: 168, md: 220 },
+          minHeight: recipe.photoUrl ? 220 : { xs: "auto", sm: 200, md: 220 },
           position: "relative",
           background: (theme) =>
             recipe.photoUrl
-              ? `linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.72)), url(${recipe.photoUrl})`
+              ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
               : theme.palette.mode === "dark"
-                ? "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(14,165,233,0.08) 35%, rgba(15,23,42,0.86) 100%)"
+                ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
                 : "linear-gradient(180deg, rgba(241,245,249,0.98), rgba(232,240,248,0.96) 46%, rgba(221,232,243,0.94) 100%)",
           backgroundSize: recipe.photoUrl ? "cover" : undefined,
-          backgroundPosition: recipe.photoUrl ? "center" : undefined
+          backgroundPosition: recipe.photoUrl ? "center" : undefined,
+          p: 2.25,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between"
         }}
       >
         <Stack
           direction="row"
           spacing={1}
-          sx={{ position: "absolute", top: 16, insetInlineStart: 16, insetInlineEnd: 16, justifyContent: "space-between" }}
+          sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
         >
           <Chip
             label={getRecipeCategoryLabel(recipe.category, t)}
@@ -73,34 +77,32 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
             }}
           />
         </Stack>
+
+        <Box sx={{ pt: { xs: 3.25, sm: 4.5 } }}>
+          <Typography
+            component={RouterLink}
+            to={`/recipes/${recipe.id}`}
+            sx={{
+              display: "inline-block",
+              textDecoration: "none",
+              color: hasDarkSurface ? "common.white" : "text.primary",
+              fontSize: { xs: "1.45rem", sm: "1.62rem" },
+              fontWeight: 800,
+              lineHeight: 1.08,
+              letterSpacing: "-0.04em",
+              mb: 1,
+              "&:hover": {
+                color: hasDarkSurface ? "rgba(255,255,255,0.9)" : "primary.main"
+              }
+            }}
+          >
+            {recipe.title}
+          </Typography>
+        </Box>
       </Box>
 
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.75}>
-          <Box>
-            <Typography
-              component={RouterLink}
-              to={`/recipes/${recipe.id}`}
-              variant="h5"
-              fontWeight={800}
-              sx={{
-                mb: 0.75,
-                display: "inline-block",
-                textDecoration: "none",
-                color: "text.primary",
-                fontSize: { xs: "1.5rem", sm: "1.62rem" },
-                "&:hover": {
-                  color: "primary.main"
-                }
-              }}
-            >
-              {recipe.title}
-            </Typography>
-            <Typography color="text.secondary" sx={{ minHeight: 44 }}>
-              {recipe.description || t("recipes.noDescription")}
-            </Typography>
-          </Box>
-
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Chip icon={<RestaurantRoundedIcon />} label={t("recipes.servings", { count: recipe.servings })} variant="outlined" />
             {recipe.cookTimeMinutes ? <Chip icon={<AccessTimeRoundedIcon />} label={t("recipes.minutes", { value: recipe.cookTimeMinutes })} variant="outlined" /> : null}
