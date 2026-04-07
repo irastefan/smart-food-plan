@@ -153,6 +153,27 @@ function inferManualNutritionPer100(item?: MealPlanItem | null) {
   };
 }
 
+function getAddIconButtonSx(isDarkMode: boolean) {
+  return {
+    width: 40,
+    height: 40,
+    marginInlineStart: 0.75,
+    bgcolor: isDarkMode ? "rgba(18, 24, 38, 0.92)" : "rgba(16, 185, 129, 0.10)",
+    color: isDarkMode ? "#34d399" : "#059669",
+    boxShadow: "none",
+    border: "1px solid",
+    borderColor: isDarkMode ? "rgba(52, 211, 153, 0.10)" : "rgba(16, 185, 129, 0.12)",
+    "&.Mui-disabled": {
+      bgcolor: isDarkMode ? "rgba(18, 24, 38, 0.92)" : "rgba(16, 185, 129, 0.10)",
+      color: isDarkMode ? "#34d399" : "#059669",
+      opacity: 0.52
+    },
+    "&:hover": {
+      bgcolor: isDarkMode ? "rgba(22, 30, 46, 0.98)" : "rgba(16, 185, 129, 0.16)"
+    }
+  } as const;
+}
+
 export function MealPlanItemDialog({
   open,
   mode,
@@ -173,6 +194,7 @@ export function MealPlanItemDialog({
 }: MealPlanItemDialogProps) {
   const { t, language } = useLanguage();
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isRtl = isRtlLanguage(language);
   const agentSettings = getAiAgentSettings();
@@ -556,24 +578,11 @@ export function MealPlanItemDialog({
                                   }}
                                   disabled={isSubmitting}
                                   sx={{
-                                    width: 40,
-                                    height: 40,
-                                    marginInlineStart: 0.75,
-                                    bgcolor: "primary.main",
-                                    color: "primary.contrastText",
-                                    boxShadow: "none",
-                                    "&.Mui-disabled": {
-                                      bgcolor: "primary.main",
-                                      color: "primary.contrastText",
-                                      opacity: 0.58
-                                    },
-                                    "&:hover": {
-                                      bgcolor: "primary.dark"
-                                    }
+                                    ...getAddIconButtonSx(isDarkMode)
                                   }}
                                 >
                                   {pendingActionKey === getProposalActionKey(singleProposal)
-                                    ? <CircularProgress size={16} sx={{ color: "#ffffff" }} />
+                                    ? <CircularProgress size={16} sx={{ color: "currentColor" }} />
                                     : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                                 </IconButton>
                               </Stack>
@@ -627,24 +636,11 @@ export function MealPlanItemDialog({
                                       }}
                                       disabled={isSubmitting}
                                       sx={{
-                                        width: 40,
-                                        height: 40,
-                                        marginInlineStart: 0.75,
-                                        bgcolor: "primary.main",
-                                        color: "primary.contrastText",
-                                        boxShadow: "none",
-                                        "&.Mui-disabled": {
-                                          bgcolor: "primary.main",
-                                          color: "primary.contrastText",
-                                          opacity: 0.58
-                                        },
-                                        "&:hover": {
-                                          bgcolor: "primary.dark"
-                                        }
+                                        ...getAddIconButtonSx(isDarkMode)
                                       }}
                                     >
                                       {pendingActionKey === getProposalActionKey(entry, index)
-                                        ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
+                                        ? <CircularProgress size={15} sx={{ color: "currentColor" }} />
                                         : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                                     </IconButton>
                                   </Stack>
@@ -764,24 +760,11 @@ export function MealPlanItemDialog({
                               }}
                               disabled={isSubmitting}
                               sx={{
-                                width: 40,
-                                height: 40,
-                                marginInlineStart: 0.75,
-                                bgcolor: "primary.main",
-                                color: "primary.contrastText",
-                                boxShadow: "none",
-                                "&.Mui-disabled": {
-                                  bgcolor: "primary.main",
-                                  color: "primary.contrastText",
-                                  opacity: 0.58
-                                },
-                                "&:hover": {
-                                  bgcolor: "primary.dark"
-                                }
+                                ...getAddIconButtonSx(isDarkMode)
                               }}
                             >
                               {pendingActionKey === `history-${entry.id}`
-                                ? <CircularProgress size={15} sx={{ color: "#ffffff" }} />
+                                ? <CircularProgress size={15} sx={{ color: "currentColor" }} />
                                 : <AddRoundedIcon sx={{ fontSize: 18 }} />}
                             </IconButton>
                           </Stack>
@@ -926,19 +909,7 @@ export function MealPlanItemDialog({
                                 }}
                                 disabled={isSubmitting}
                                 sx={{
-                                  width: 40,
-                                  height: 40,
-                                  bgcolor: "primary.main",
-                                  color: "primary.contrastText",
-                                  boxShadow: "none",
-                                  "&.Mui-disabled": {
-                                    bgcolor: "primary.main",
-                                    color: "primary.contrastText",
-                                    opacity: 0.58
-                                  },
-                                  "&:hover": {
-                                    bgcolor: "primary.dark"
-                                  }
+                                  ...getAddIconButtonSx(isDarkMode)
                                 }}
                               >
                                 <AddRoundedIcon sx={{ fontSize: 18 }} />
