@@ -1,24 +1,18 @@
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import { Box, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Card, CardContent, Chip, Stack, Typography, useTheme } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import type { RecipeSummary } from "../../features/recipes/model/recipeTypes";
 import { useLanguage } from "../../app/providers/LanguageProvider";
-import { getRecipeCategoryLabel } from "../../features/recipes/model/recipeCategories";
-import { getMacroColor } from "../../shared/theme/macroColors";
+import { RecipeNutritionCard } from "./RecipeNutritionCard";
 
 type RecipeCardProps = {
   recipe: RecipeSummary;
   onDelete?: (recipe: RecipeSummary) => void;
 };
 
-export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
+export function RecipeCard({ recipe }: RecipeCardProps) {
   const { t } = useLanguage();
-  const theme = useTheme();
-  const hasDarkSurface = Boolean(recipe.photoUrl) || theme.palette.mode === "dark";
+  const hasDarkSurface = Boolean(recipe.photoUrl) || useTheme().palette.mode === "dark";
 
   return (
     <Card
@@ -33,14 +27,12 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
     >
       <Box
         sx={{
-          minHeight: recipe.photoUrl ? 220 : { xs: "auto", sm: 200, md: 220 },
+          minHeight: recipe.photoUrl ? 220 : "auto",
           position: "relative",
-          background: (theme) =>
+          background:
             recipe.photoUrl
               ? `linear-gradient(180deg, rgba(4,16,12,0.10) 0%, rgba(4,16,12,0.76) 55%, rgba(4,16,12,0.92) 100%), url(${recipe.photoUrl})`
-              : theme.palette.mode === "dark"
-                ? "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(14,165,233,0.10) 28%, rgba(31,36,54,0.96) 68%, rgba(24,29,44,0.98) 100%)"
-                : "linear-gradient(180deg, rgba(241,245,249,0.98), rgba(232,240,248,0.96) 46%, rgba(221,232,243,0.94) 100%)",
+              : "transparent",
           backgroundSize: recipe.photoUrl ? "cover" : undefined,
           backgroundPosition: recipe.photoUrl ? "center" : undefined,
           p: 2.25,
@@ -49,36 +41,7 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
           justifyContent: "space-between"
         }}
       >
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
-        >
-          <Chip
-            label={getRecipeCategoryLabel(recipe.category, t)}
-            sx={{
-              backdropFilter: "blur(10px)",
-              backgroundColor: hasDarkSurface ? "rgba(255,255,255,0.14)" : "rgba(248,250,252,0.96)",
-              color: hasDarkSurface ? "common.white" : "text.primary",
-              fontWeight: 700,
-              border: "1px solid",
-              borderColor: hasDarkSurface ? "rgba(255,255,255,0.14)" : "rgba(148,163,184,0.2)",
-              boxShadow: hasDarkSurface ? "none" : "0 6px 18px rgba(15,23,42,0.08)"
-            }}
-          />
-          <Chip
-            icon={<LocalFireDepartmentRoundedIcon />}
-            label={`${Math.round(recipe.nutritionPerServing.caloriesKcal)} kcal`}
-            sx={{
-              backdropFilter: "blur(10px)",
-              backgroundColor: "rgba(15,23,42,0.7)",
-              color: "common.white",
-              ".MuiChip-icon": { color: "#fb923c" }
-            }}
-          />
-        </Stack>
-
-        <Box sx={{ pt: { xs: 3.25, sm: 4.5 } }}>
+        <Box sx={{ pt: recipe.photoUrl ? { xs: 3.25, sm: 4.5 } : 0 }}>
           <Typography
             component={RouterLink}
             to={`/recipes/${recipe.id}`}
@@ -90,7 +53,7 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
               fontWeight: 800,
               lineHeight: 1.08,
               letterSpacing: "-0.04em",
-              mb: 1,
+              mb: 0.25,
               "&:hover": {
                 color: hasDarkSurface ? "rgba(255,255,255,0.9)" : "primary.main"
               }
@@ -101,53 +64,15 @@ export function RecipeCard({ recipe, onDelete }: RecipeCardProps) {
         </Box>
       </Box>
 
-      <CardContent sx={{ p: 2.5 }}>
-        <Stack spacing={1.75}>
+      <CardContent sx={{ px: 2.5, pt: 0.75, pb: 2.25 }}>
+        <Stack spacing={1}>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Chip icon={<RestaurantRoundedIcon />} label={t("recipes.servings", { count: recipe.servings })} variant="outlined" />
             {recipe.cookTimeMinutes ? <Chip icon={<AccessTimeRoundedIcon />} label={t("recipes.minutes", { value: recipe.cookTimeMinutes })} variant="outlined" /> : null}
           </Stack>
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <MacroStat label={t("recipe.macros.protein")} value={recipe.nutritionPerServing.proteinG} color={getMacroColor("protein")} />
-            <MacroStat label={t("recipe.macros.fat")} value={recipe.nutritionPerServing.fatG} color={getMacroColor("fat")} />
-            <MacroStat label={t("recipe.macros.carbs")} value={recipe.nutritionPerServing.carbsG} color={getMacroColor("carbs")} />
-          </Stack>
-
-          {onDelete ? (
-            <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
-              <Tooltip title={t("recipe.edit")}>
-                <IconButton
-                  size="small"
-                  component={RouterLink}
-                  to={`/recipes/${recipe.id}/edit`}
-                  sx={{ color: "text.secondary" }}
-                >
-                  <EditRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t("recipe.delete")}>
-                <IconButton size="small" color="error" onClick={() => onDelete(recipe)}>
-                  <DeleteOutlineRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          ) : null}
+          <RecipeNutritionCard recipe={recipe} showTitle={false} compact />
         </Stack>
       </CardContent>
     </Card>
-  );
-}
-
-function MacroStat({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <Box sx={{ px: 1.1, py: 0.85, borderRadius: 1.1, bgcolor: "action.hover", minWidth: 84 }}>
-      <Typography variant="caption" sx={{ color, display: "block", mb: 0.2 }}>
-        {label}
-      </Typography>
-      <Typography fontWeight={800} sx={{ fontSize: { xs: "0.92rem", sm: "1rem" } }}>
-        {Math.round(value)}g
-      </Typography>
-    </Box>
   );
 }
