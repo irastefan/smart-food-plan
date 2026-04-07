@@ -3,7 +3,7 @@ import { Alert, Button, Link, MenuItem, Stack, TextField, Typography, useTheme }
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../../app/providers/LanguageProvider";
 import type { AuthUser } from "../api/authApi";
-import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../settings/api/settingsApi";
+import type { UserActivityLevel, UserGoal, UserMacroProfile, UserProfile, UserSex } from "../../settings/api/settingsApi";
 import { formatCalorieDelta, getDefaultCalorieDelta, parseCalorieDelta } from "../../settings/model/profileDefaults";
 import { AuthCard } from "./AuthCard";
 import { BrandMark } from "./BrandMark";
@@ -42,6 +42,7 @@ export function AuthForm({
     weightKg: null,
     activityLevel: "",
     goal: "",
+    macroProfile: "BALANCED",
     targetFormula: "",
     availableTargetFormulas: [],
     calorieDelta: null,
@@ -64,6 +65,12 @@ export function AuthForm({
   const subtitleLink = isLogin ? t("auth.login.link") : t("auth.register.link");
   const subtitleHref = isLogin ? "/register" : "/login";
   const submitLabel = isLogin ? t("auth.login.submit") : t("auth.register.submit");
+  const macroProfileOptions: Array<{ value: UserMacroProfile; labelKey: "settings.profile.macroProfile.balanced" | "settings.profile.macroProfile.highProtein" | "settings.profile.macroProfile.lowCarb" | "settings.profile.macroProfile.highCarb" }> = [
+    { value: "BALANCED", labelKey: "settings.profile.macroProfile.balanced" },
+    { value: "HIGH_PROTEIN", labelKey: "settings.profile.macroProfile.highProtein" },
+    { value: "LOW_CARB", labelKey: "settings.profile.macroProfile.lowCarb" },
+    { value: "HIGH_CARB", labelKey: "settings.profile.macroProfile.highCarb" }
+  ];
 
   function updateProfile<K extends keyof UserProfile>(key: K, nextValue: UserProfile[K]) {
     setProfile((current) => ({ ...current, [key]: nextValue }));
@@ -221,6 +228,21 @@ export function AuthForm({
                   <MenuItem value="GAIN">{t("settings.profile.goal.gain")}</MenuItem>
                 </TextField>
               </Stack>
+
+              <TextField
+                select
+                label={t("settings.profile.macroProfile")}
+                value={profile.macroProfile}
+                onChange={(event) => updateProfile("macroProfile", event.target.value as UserMacroProfile)}
+                helperText={t("settings.profile.macroProfileHint")}
+                fullWidth
+              >
+                {macroProfileOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {t(option.labelKey)}
+                  </MenuItem>
+                ))}
+              </TextField>
 
               <TextField
                 label={t("settings.profile.calorieDelta")}

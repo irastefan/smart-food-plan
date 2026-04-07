@@ -1,4 +1,5 @@
 import AutoGraphRoundedIcon from "@mui/icons-material/AutoGraphRounded";
+import DonutLargeRoundedIcon from "@mui/icons-material/DonutLargeRounded";
 import EggAltRoundedIcon from "@mui/icons-material/EggAltRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
 import OpacityRoundedIcon from "@mui/icons-material/OpacityRounded";
@@ -41,6 +42,11 @@ export function ProfilePreviewCard({ profile }: ProfilePreviewCardProps) {
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} flexWrap="wrap" useFlexGap>
             <MetricPill
+              icon={<DonutLargeRoundedIcon fontSize="small" />}
+              label={t("settings.profile.preview.macroProfile")}
+              value={t(`settings.profile.macroProfile.${formatMacroProfile(profile.macroProfile)}`)}
+            />
+            <MetricPill
               icon={<LocalFireDepartmentRoundedIcon fontSize="small" />}
               label={t("settings.profile.preview.targetCalories")}
               value={profile.targetCalories ? `${Math.round(profile.targetCalories)} kcal` : "—"}
@@ -65,6 +71,20 @@ export function ProfilePreviewCard({ profile }: ProfilePreviewCardProps) {
       </Paper>
     </Stack>
   );
+}
+
+function formatMacroProfile(value: UserProfile["macroProfile"]) {
+  switch (value) {
+    case "HIGH_PROTEIN":
+      return "highProtein";
+    case "LOW_CARB":
+      return "lowCarb";
+    case "HIGH_CARB":
+      return "highCarb";
+    case "BALANCED":
+    default:
+      return "balanced";
+  }
 }
 
 function MetricPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

@@ -33,6 +33,7 @@ export function SettingsPage() {
   const { t } = useLanguage();
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [savedProfile, setSavedProfile] = useState<UserProfile | null>(null);
   const [openAiApiKey, setOpenAiApiKeyState] = useState("");
   const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
   const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
@@ -67,7 +68,9 @@ export function SettingsPage() {
         setFeedback(null);
         const current = await getCurrentUserSettings();
         if (!cancelled) {
-          setProfile(mergeProfileFormulas(current.profile, null));
+          const nextProfile = mergeProfileFormulas(current.profile, null);
+          setProfile(nextProfile);
+          setSavedProfile(nextProfile);
           setOpenAiApiKeyState(getOpenAiApiKey());
           setAgentSettingsState(getAiAgentSettings());
           setAppPreferencesState(getAppPreferences());
@@ -105,7 +108,9 @@ export function SettingsPage() {
     try {
       setIsSubmitting(true);
       const saved = await saveUserProfile(profile);
-      setProfile((current) => mergeProfileFormulas(saved, current));
+      const nextProfile = mergeProfileFormulas(saved, profile);
+      setProfile(nextProfile);
+      setSavedProfile(nextProfile);
       setFeedback({ type: "success", message: t("settings.status.saved") });
     } catch (error) {
       console.error("Failed to save profile", error);
@@ -119,7 +124,9 @@ export function SettingsPage() {
     try {
       setIsSubmitting(true);
       const recalculated = await recalculateUserProfile();
-      setProfile((current) => mergeProfileFormulas(recalculated, current));
+      const nextProfile = mergeProfileFormulas(recalculated, profile);
+      setProfile(nextProfile);
+      setSavedProfile(nextProfile);
       setFeedback({ type: "success", message: t("settings.status.recalculated") });
     } catch (error) {
       console.error("Failed to recalculate profile", error);
@@ -200,7 +207,7 @@ export function SettingsPage() {
                   onSave={handleSave}
                   onRecalculate={handleRecalculate}
                 />
-                <ProfilePreviewCard profile={profile} />
+                <ProfilePreviewCard profile={savedProfile ?? profile} />
               </Stack>
             </SettingsSectionCard>
           ) : null}

@@ -1,11 +1,12 @@
 import DirectionsRunRoundedIcon from "@mui/icons-material/DirectionsRunRounded";
+import DonutLargeRoundedIcon from "@mui/icons-material/DonutLargeRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import { Alert, Avatar, Button, CircularProgress, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Button, CircularProgress, MenuItem, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { type PropsWithChildren, useEffect, useState } from "react";
-import type { UserActivityLevel, UserGoal, UserProfile, UserSex } from "../../features/settings/api/settingsApi";
+import type { UserActivityLevel, UserGoal, UserMacroProfile, UserProfile, UserSex } from "../../features/settings/api/settingsApi";
 import { formatCalorieDelta, getDefaultCalorieDelta, parseCalorieDelta } from "../../features/settings/model/profileDefaults";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 
@@ -22,6 +23,12 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
   const { t } = useLanguage();
   const [deltaInput, setDeltaInput] = useState(formatCalorieDelta(value.calorieDelta));
   const selectedFormula = value.availableTargetFormulas.find((option) => option.value === value.targetFormula);
+  const macroProfileOptions: Array<{ value: UserMacroProfile; labelKey: "settings.profile.macroProfile.balanced" | "settings.profile.macroProfile.highProtein" | "settings.profile.macroProfile.lowCarb" | "settings.profile.macroProfile.highCarb"; descriptionKey: "settings.profile.macroProfileDescription.balanced" | "settings.profile.macroProfileDescription.highProtein" | "settings.profile.macroProfileDescription.lowCarb" | "settings.profile.macroProfileDescription.highCarb" }> = [
+    { value: "BALANCED", labelKey: "settings.profile.macroProfile.balanced", descriptionKey: "settings.profile.macroProfileDescription.balanced" },
+    { value: "HIGH_PROTEIN", labelKey: "settings.profile.macroProfile.highProtein", descriptionKey: "settings.profile.macroProfileDescription.highProtein" },
+    { value: "LOW_CARB", labelKey: "settings.profile.macroProfile.lowCarb", descriptionKey: "settings.profile.macroProfileDescription.lowCarb" },
+    { value: "HIGH_CARB", labelKey: "settings.profile.macroProfile.highCarb", descriptionKey: "settings.profile.macroProfileDescription.highCarb" }
+  ];
   const isMaintainGoal = value.goal === "MAINTAIN";
   const calorieDeltaHintKey = isMaintainGoal
     ? "settings.profile.calorieDeltaHint.maintain"
@@ -32,6 +39,9 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
   useEffect(() => {
     setDeltaInput(formatCalorieDelta(value.calorieDelta));
   }, [value.calorieDelta]);
+
+  const selectedMacroProfile =
+    macroProfileOptions.find((option) => option.value === value.macroProfile) ?? macroProfileOptions[0];
 
   function update<K extends keyof UserProfile>(key: K, nextValue: UserProfile[K]) {
     onChange({ ...value, [key]: nextValue });
@@ -126,6 +136,59 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
               </MenuItem>
             ))}
           </TextField>
+
+          <Stack spacing={1}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Avatar sx={{ width: 28, height: 28, bgcolor: "background.paper", color: "primary.main" }}>
+                <DonutLargeRoundedIcon fontSize="small" />
+              </Avatar>
+              <Stack spacing={0.15}>
+                <Typography fontWeight={700}>{t("settings.profile.macroProfile")}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t("settings.profile.macroProfileHint")}
+                </Typography>
+              </Stack>
+            </Stack>
+
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              value={value.macroProfile}
+              onChange={(_, nextValue) => {
+                if (nextValue) {
+                  update("macroProfile", nextValue as UserMacroProfile);
+                }
+              }}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
+                gap: 1,
+                "& .MuiToggleButtonGroup-grouped": {
+                  m: 0,
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  textTransform: "none",
+                  px: 1.1,
+                  py: 0.9,
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start"
+                }
+              }}
+            >
+              {macroProfileOptions.map((option) => (
+                <ToggleButton key={option.value} value={option.value}>
+                  <Typography fontWeight={700} variant="body2" textAlign="start">
+                    {t(option.labelKey)}
+                  </Typography>
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+
+            <Typography variant="body2" color="text.secondary">
+              {t(selectedMacroProfile.descriptionKey)}
+            </Typography>
+          </Stack>
 
           <TextField
             label={t("settings.profile.calorieDelta")}

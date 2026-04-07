@@ -64,6 +64,7 @@ export function useAuthPage(mode: Mode): {
         profile.weightKg ||
         profile.activityLevel ||
         profile.goal ||
+        profile.macroProfile !== "BALANCED" ||
         profile.calorieDelta
     );
   }

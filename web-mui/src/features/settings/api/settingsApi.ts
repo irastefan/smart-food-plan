@@ -3,6 +3,7 @@ import { apiRequest } from "../../../shared/api/http";
 export type UserSex = "FEMALE" | "MALE" | "";
 export type UserActivityLevel = "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | "";
 export type UserGoal = "MAINTAIN" | "LOSE" | "GAIN" | "";
+export type UserMacroProfile = "BALANCED" | "HIGH_PROTEIN" | "LOW_CARB" | "HIGH_CARB";
 
 export type TargetFormulaOption = {
   value: string;
@@ -22,6 +23,7 @@ export type UserProfile = {
   weightKg: number | null;
   activityLevel: UserActivityLevel;
   goal: UserGoal;
+  macroProfile: UserMacroProfile;
   targetFormula: string;
   availableTargetFormulas: TargetFormulaOption[];
   calorieDelta: number | null;
@@ -42,6 +44,7 @@ type UserProfileResponseDto = {
   weightKg?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | null;
   goal?: "MAINTAIN" | "LOSE" | "GAIN" | null;
+  macroProfile?: "BALANCED" | "HIGH_PROTEIN" | "LOW_CARB" | "HIGH_CARB" | null;
   targetFormula?: string | null;
   availableTargetFormulas?: Array<{
     value?: string | null;
@@ -111,6 +114,7 @@ function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
     weightKg: toNumber(input?.weightKg),
     activityLevel: input?.activityLevel ?? "",
     goal: input?.goal ?? "",
+    macroProfile: input?.macroProfile ?? "BALANCED",
     targetFormula: input?.targetFormula ?? fallbackTargetFormula,
     availableTargetFormulas,
     calorieDelta: (() => {
@@ -143,6 +147,7 @@ function toProfilePayload(profile: UserProfile) {
     weightKg: profile.weightKg ?? undefined,
     activityLevel: profile.activityLevel || undefined,
     goal: profile.goal || undefined,
+    macroProfile: profile.macroProfile || undefined,
     targetFormula: profile.targetFormula || undefined,
     calorieDelta:
       profile.goal === "MAINTAIN"
