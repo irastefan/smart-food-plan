@@ -356,6 +356,16 @@ export function MealPlanItemDialog({
     });
   }, [recipeQuery, recipes]);
 
+  const isProductSubmitDisabled = isSubmitting || !selectedProduct || quantityInput.trim() === "";
+  const isManualSubmitDisabled =
+    isSubmitting ||
+    !manualName.trim() ||
+    quantityInput.trim() === "" ||
+    manualKcal100Input.trim() === "" ||
+    manualProtein100Input.trim() === "" ||
+    manualFat100Input.trim() === "" ||
+    manualCarbs100Input.trim() === "";
+
   function submitProduct() {
     if (!selectedProduct) return;
     onSubmit({ type: "product", product: selectedProduct, quantity });
@@ -857,7 +867,7 @@ export function MealPlanItemDialog({
                     }}
                   />
                 <Box>
-                  <Button onClick={submitProduct} variant="contained" disabled={isSubmitting || !selectedProduct}>
+                  <Button onClick={submitProduct} variant="contained" disabled={isProductSubmitDisabled}>
                     {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
                   </Button>
                 </Box>
@@ -975,7 +985,7 @@ export function MealPlanItemDialog({
                                   setServings(recipeServings);
                                   submitRecipeCard(recipe);
                                 }}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || recipeServingsInput.trim() === ""}
                                 sx={{
                                   ...getAddIconButtonSx(isDarkMode)
                                 }}
@@ -1078,7 +1088,7 @@ export function MealPlanItemDialog({
                   />
                 </Stack>
                 <Box>
-                  <Button onClick={() => submitManual()} variant="contained" disabled={isSubmitting || !manualName.trim()}>
+                  <Button onClick={() => submitManual()} variant="contained" disabled={isManualSubmitDisabled}>
                     {mode === "add" ? t("mealPlan.dialog.addAction") : t("mealPlan.dialog.saveAction")}
                   </Button>
                 </Box>

@@ -141,6 +141,30 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
     updateIngredient(index, { [key]: nextNumber } as Partial<RecipeFormValues["ingredients"][number]>);
   }
 
+  const hasEmptyNumericInputs =
+    servingsInput.trim() === "" ||
+    value.ingredients.some((ingredient) => {
+      const inputs = ingredientInputs[ingredient.id];
+      if (!inputs) {
+        return false;
+      }
+
+      if (inputs.amount.trim() === "") {
+        return true;
+      }
+
+      if (!ingredient.isManual) {
+        return false;
+      }
+
+      return (
+        inputs.kcal100.trim() === "" ||
+        inputs.protein100.trim() === "" ||
+        inputs.fat100.trim() === "" ||
+        inputs.carbs100.trim() === ""
+      );
+    });
+
   function addIngredient() {
     updateField("ingredients", [
       ...value.ingredients,
@@ -333,7 +357,7 @@ export function RecipeForm({ value, products, isSubmitting, status, submitLabel,
             <SummaryMetric label={t("recipe.macros.fat")} value={`${Math.round(totalNutrition.fatG)} g`} />
             <SummaryMetric label={t("recipe.macros.carbs")} value={`${Math.round(totalNutrition.carbsG)} g`} />
           </Stack>
-          <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
+          <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting || hasEmptyNumericInputs}>
             {submitLabel}
           </Button>
         </Stack>

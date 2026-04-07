@@ -50,6 +50,9 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
     update(key, Number.isFinite(parsed) ? Math.max(0, parsed) : 0);
   }
 
+  const isNumericValid = inputs.calories.trim() !== "" && inputs.protein.trim() !== "" && inputs.fat.trim() !== "" && inputs.carbs.trim() !== "";
+  const canSubmit = value.title.trim().length > 0 && isNumericValid;
+
   return (
     <Stack spacing={3}>
       {status ? <Alert severity={status.type}>{status.message}</Alert> : null}
@@ -86,7 +89,7 @@ export function ProductForm({ value, isSubmitting, status, submitLabel, onChange
             <Metric label={t("product.macros.fat")} value={`${Math.round(value.fat)} g`} />
             <Metric label={t("product.macros.carbs")} value={`${Math.round(value.carbs)} g`} />
           </Stack>
-          <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting}>
+          <Button onClick={onSubmit} variant="contained" startIcon={<SaveRoundedIcon />} disabled={isSubmitting || !canSubmit}>
             {submitLabel}
           </Button>
         </Stack>
