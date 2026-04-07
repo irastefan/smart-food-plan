@@ -3,7 +3,6 @@ import DonutLargeRoundedIcon from "@mui/icons-material/DonutLargeRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import { Alert, Avatar, Button, CircularProgress, MenuItem, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import type { UserActivityLevel, UserGoal, UserMacroProfile, UserProfile, UserSex } from "../../features/settings/api/settingsApi";
@@ -16,10 +15,9 @@ type UserProfileFormProps = {
   status?: { type: "error" | "success" | "info"; message: string } | null;
   onChange: (value: UserProfile) => void;
   onSave: () => void;
-  onRecalculate: () => void;
 };
 
-export function UserProfileForm({ value, isSubmitting, status, onChange, onSave, onRecalculate }: UserProfileFormProps) {
+export function UserProfileForm({ value, isSubmitting, status, onChange, onSave }: UserProfileFormProps) {
   const { t } = useLanguage();
   const [deltaInput, setDeltaInput] = useState(formatCalorieDelta(value.calorieDelta));
   const selectedFormula = value.availableTargetFormulas.find((option) => option.value === value.targetFormula);
@@ -210,15 +208,6 @@ export function UserProfileForm({ value, isSubmitting, status, onChange, onSave,
         alignItems={{ xs: "stretch", md: "center" }}
         sx={{ alignSelf: { md: "flex-end" } }}
       >
-        <Button
-          onClick={onRecalculate}
-          variant="outlined"
-          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <RestartAltRoundedIcon />}
-          disabled={isSubmitting}
-          sx={{ width: { xs: "100%", md: "auto" } }}
-        >
-          {t("settings.recalculate")}
-        </Button>
         <Button
           onClick={onSave}
           variant="contained"

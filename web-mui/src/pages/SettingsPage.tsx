@@ -4,7 +4,6 @@ import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import {
   getCurrentUserSettings,
-  recalculateUserProfile,
   saveUserProfile,
   type UserProfile
 } from "../features/settings/api/settingsApi";
@@ -120,22 +119,6 @@ export function SettingsPage() {
     }
   }
 
-  async function handleRecalculate() {
-    try {
-      setIsSubmitting(true);
-      const recalculated = await recalculateUserProfile();
-      const nextProfile = mergeProfileFormulas(recalculated, profile);
-      setProfile(nextProfile);
-      setSavedProfile(nextProfile);
-      setFeedback({ type: "success", message: t("settings.status.recalculated") });
-    } catch (error) {
-      console.error("Failed to recalculate profile", error);
-      setFeedback({ type: "error", message: t("settings.status.recalculateError") });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   async function handleSaveOpenAiApiKey(value: string) {
     try {
       setIsSubmitting(true);
@@ -205,7 +188,6 @@ export function SettingsPage() {
                   status={null}
                   onChange={setProfile}
                   onSave={handleSave}
-                  onRecalculate={handleRecalculate}
                 />
                 <ProfilePreviewCard profile={savedProfile ?? profile} />
               </Stack>
