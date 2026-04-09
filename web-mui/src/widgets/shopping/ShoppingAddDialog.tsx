@@ -1,4 +1,5 @@
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import {
   Autocomplete,
   Button,
@@ -14,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { ProductSummary } from "../../features/products/api/productsApi";
+import type { ShoppingItem } from "../../features/shopping/api/shoppingApi";
 import { getUnitOptions, normalizeUnitValue } from "../../shared/lib/units";
 import { ShoppingCategorySelector } from "./ShoppingCategorySelector";
 
@@ -22,6 +24,7 @@ type ShoppingAddDialogProps = {
   products: ProductSummary[];
   categories: string[];
   isSubmitting: boolean;
+  editingItem?: ShoppingItem | null;
   onClose: () => void;
   onCreateCategory: (name: string) => Promise<void> | void;
   onSubmit: (payload: {
@@ -40,6 +43,7 @@ export function ShoppingAddDialog({
   products,
   categories,
   isSubmitting,
+  editingItem = null,
   onClose,
   onCreateCategory,
   onSubmit
@@ -63,6 +67,25 @@ export function ShoppingAddDialog({
     () => products.find((product) => product.title.toLowerCase() === inputValue.trim().toLowerCase()),
     [inputValue, products]
   );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (editingItem) {
+      setInputValue(editingItem.title);
+      setAmount(editingItem.amount == null ? "" : String(editingItem.amount));
+      setUnit(normalizeUnitValue(editingItem.unit) ?? "pcs");
+      setSelectedCategory(editingItem.categoryName ?? "");
+      setNote(editingItem.note ?? "");
+      setIsCreatingCategory(false);
+      setNewCategoryName("");
+      return;
+    }
+
+    reset();
+  }, [editingItem, open]);
 
   useEffect(() => {
     setSelectedCategory((current) => {
@@ -113,7 +136,7 @@ export function ShoppingAddDialog({
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>{t("shopping.dialog.title")}</DialogTitle>
+      <DialogTitle>{editingItem ? t("shopping.dialog.editTitle") : t("shopping.dialog.title")}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <Autocomplete
@@ -179,10 +202,12 @@ export function ShoppingAddDialog({
         <Button
           onClick={() => void handleSubmit()}
           variant="contained"
-          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <AddShoppingCartRoundedIcon />}
+          startIcon={
+            isSubmitting ? <CircularProgress size={16} color="inherit" /> : editingItem ? <CheckRoundedIcon /> : <AddShoppingCartRoundedIcon />
+          }
           disabled={isSubmitting || inputValue.trim().length === 0 || (!selectedCategory && newCategoryName.trim().length === 0)}
         >
-          {t("shopping.dialog.add")}
+          {editingItem ? t("shopping.dialog.save") : t("shopping.dialog.add")}
         </Button>
       </DialogActions>
     </Dialog>

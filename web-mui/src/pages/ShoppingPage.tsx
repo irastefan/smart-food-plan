@@ -12,6 +12,7 @@ import {
   removeShoppingCategory,
   removeShoppingItem,
   setShoppingItemState,
+  updateShoppingItem,
   type ShoppingItem,
   type ShoppingList
 } from "../features/shopping/api/shoppingApi";
@@ -52,6 +53,7 @@ export function ShoppingPage() {
   const [isMutating, setIsMutating] = useState(false);
   const [pendingItemStateId, setPendingItemStateId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(null);
@@ -206,6 +208,43 @@ export function ShoppingPage() {
     }
   }
 
+  async function handleEdit(payload: {
+    mode: "product" | "custom";
+    product?: ProductSummary;
+    customName?: string;
+    amount?: number;
+    unit?: string;
+    categoryName?: string;
+    note?: string;
+  }) {
+    if (!editingItem) {
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      const nextList = await updateShoppingItem(editingItem.id, {
+        productId: payload.mode === "product" ? payload.product?.id : undefined,
+        customName: payload.mode === "custom" ? payload.customName : undefined,
+        amount: payload.amount,
+        unit: payload.unit,
+        categoryName: payload.categoryName,
+        note: payload.note,
+        isDone: editingItem.isDone
+      });
+      setShoppingList(nextList);
+      setDialogOpen(false);
+      setEditingItem(null);
+      setFeedback({ type: "success", message: t("shopping.status.updated") });
+    } catch (error) {
+      console.error("Failed to update shopping item", error);
+      setFeedback({ type: "error", message: t("shopping.status.updateError") });
+      throw error;
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   async function handleAddCategory(name: string) {
     try {
       setIsMutating(true);
@@ -314,6 +353,10 @@ export function ShoppingPage() {
                     : undefined
                 }
                 onToggleDone={handleToggleDone}
+                onEdit={(item) => {
+                  setEditingItem(item);
+                  setDialogOpen(true);
+                }}
                 onDelete={(item) => setPendingDelete({ type: "item", item })}
                 pendingItemId={pendingItemStateId}
               />
@@ -327,9 +370,13 @@ export function ShoppingPage() {
         products={products}
         categories={categoryNames}
         isSubmitting={isMutating}
-        onClose={() => setDialogOpen(false)}
+        editingItem={editingItem}
+        onClose={() => {
+          setDialogOpen(false);
+          setEditingItem(null);
+        }}
         onCreateCategory={handleCreateCategorySilently}
-        onSubmit={handleAdd}
+        onSubmit={editingItem ? handleEdit : handleAdd}
       />
       <ShoppingCategoryDialog
         open={categoryDialogOpen}

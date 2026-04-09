@@ -68,6 +68,10 @@ export type AddShoppingItemInput = {
   categoryName?: string;
 };
 
+export type UpdateShoppingItemInput = AddShoppingItemInput & {
+  isDone?: boolean;
+};
+
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -171,6 +175,17 @@ export async function removeShoppingItem(itemId: string): Promise<ShoppingList> 
     method: "DELETE"
   });
   return mapList(response);
+}
+
+export async function updateShoppingItem(itemId: string, input: UpdateShoppingItemInput): Promise<ShoppingList> {
+  let nextList = await addShoppingItem(input);
+  const createdItem = nextList.items[nextList.items.length - 1] ?? null;
+
+  if (createdItem && input.isDone && !createdItem.isDone) {
+    nextList = await setShoppingItemState(createdItem.id, true);
+  }
+
+  return removeShoppingItem(itemId);
 }
 
 export async function addProductToShoppingList(

@@ -1,4 +1,5 @@
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { Checkbox, CircularProgress, Chip, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { getLocalizedUnitLabel } from "../../shared/lib/units";
@@ -9,6 +10,7 @@ type ShoppingCategorySectionProps = {
   items: ShoppingItem[];
   onDeleteCategory?: () => void;
   onToggleDone: (item: ShoppingItem) => void;
+  onEdit: (item: ShoppingItem) => void;
   onDelete: (item: ShoppingItem) => void;
   pendingItemId?: string | null;
 };
@@ -25,6 +27,7 @@ export function ShoppingCategorySection({
   items,
   onDeleteCategory,
   onToggleDone,
+  onEdit,
   onDelete,
   pendingItemId = null
 }: ShoppingCategorySectionProps) {
@@ -104,6 +107,9 @@ export function ShoppingCategorySection({
               </Stack>
 
               <Stack direction="row" spacing={0.25} alignItems="center" sx={{ pt: 0.05, flexShrink: 0 }}>
+                <IconButton size="small" onClick={() => onEdit(item)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
                 <IconButton size="small" onClick={() => onDelete(item)}>
                   <DeleteOutlineRoundedIcon fontSize="small" />
                 </IconButton>
