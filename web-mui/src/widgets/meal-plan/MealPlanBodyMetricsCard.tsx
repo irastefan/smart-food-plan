@@ -1,6 +1,5 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import MonitorWeightRoundedIcon from "@mui/icons-material/MonitorWeightRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import StraightenRoundedIcon from "@mui/icons-material/StraightenRounded";
@@ -10,7 +9,6 @@ import {
   Card,
   CardContent,
   Checkbox,
-  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -283,7 +281,7 @@ export function MealPlanBodyMetricsCard({
   const { t, language } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isEntriesOpen, setIsEntriesOpen] = useState(false);
+  const [isEntriesDialogOpen, setIsEntriesDialogOpen] = useState(false);
 
   const allFields = fieldConfig((key) => t(key as never));
   const fields = allFields.filter((field) => visibleFields.includes(field.key));
@@ -342,6 +340,12 @@ export function MealPlanBodyMetricsCard({
 
               <Stack direction="row" spacing={0.5}>
                 <IconButton
+                  onClick={() => setIsEntriesDialogOpen(true)}
+                  sx={{ width: 36, height: 36, color: "text.secondary" }}
+                >
+                  <HistoryRoundedIcon fontSize="small" />
+                </IconButton>
+                <IconButton
                   onClick={() => setIsSettingsOpen(true)}
                   sx={{ width: 36, height: 36, color: "text.secondary" }}
                 >
@@ -373,49 +377,6 @@ export function MealPlanBodyMetricsCard({
                 metricKey={selectedMetric}
               />
             </Box>
-
-            <Divider />
-
-            <Stack spacing={1}>
-              <Button
-                onClick={() => setIsEntriesOpen((current) => !current)}
-                endIcon={isEntriesOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
-                sx={{
-                  justifyContent: "space-between",
-                  px: 1,
-                  color: "text.primary",
-                  textTransform: "none",
-                  fontSize: 18,
-                  fontWeight: 700
-                }}
-              >
-                {t("bodyMetrics.entries" as never)}
-              </Button>
-
-              <Collapse in={isEntriesOpen}>
-                <Stack spacing={0} sx={{ px: 1 }}>
-                  {entries.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ py: 1 }}>
-                      {t("bodyMetrics.emptyHistory")}
-                    </Typography>
-                  ) : (
-                    entries.map((entry, index) => (
-                      <Box key={`${entry.date}-${index}`}>
-                        <Stack spacing={0.35} sx={{ py: 1.4 }}>
-                          <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 16 } }}>
-                            {formatEntryDate(language, entry.date)}
-                          </Typography>
-                          <Typography color="text.secondary">
-                            {`${formatMetricValue(entry.value, selectedMetric, "exact")} ${valueUnit}`}
-                          </Typography>
-                        </Stack>
-                        {index < entries.length - 1 ? <Divider /> : null}
-                      </Box>
-                    ))
-                  )}
-                </Stack>
-              </Collapse>
-            </Stack>
           </Stack>
         </CardContent>
       </Card>
@@ -527,6 +488,36 @@ export function MealPlanBodyMetricsCard({
           >
             {t("common.save")}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isEntriesDialogOpen} onClose={() => setIsEntriesDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{t("bodyMetrics.entries" as never)}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={0} sx={{ pt: 1 }}>
+            {entries.length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 1 }}>
+                {t("bodyMetrics.emptyHistory")}
+              </Typography>
+            ) : (
+              entries.map((entry, index) => (
+                <Box key={`${entry.date}-${index}`}>
+                  <Stack spacing={0.35} sx={{ py: 1.4 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 16 } }}>
+                      {formatEntryDate(language, entry.date)}
+                    </Typography>
+                    <Typography color="text.secondary">
+                      {`${formatMetricValue(entry.value, selectedMetric, "exact")} ${valueUnit}`}
+                    </Typography>
+                  </Stack>
+                  {index < entries.length - 1 ? <Divider /> : null}
+                </Box>
+              ))
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setIsEntriesDialogOpen(false)}>{t("common.cancel")}</Button>
         </DialogActions>
       </Dialog>
     </>
