@@ -224,18 +224,31 @@ export async function runMealPlanAssistant(input: {
   });
 
   const rawText = result.assistantMessage.text;
-  const parsed = JSON.parse(extractJson(rawText)) as {
-    message?: unknown;
-    needsConfirmation?: unknown;
-    proposal?: unknown;
-    items?: unknown;
-  };
+  let parsed:
+    | {
+        message?: unknown;
+        needsConfirmation?: unknown;
+        proposal?: unknown;
+        items?: unknown;
+      }
+    | null = null;
 
-  const messageBase = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
-  const proposal = normalizeProposalFromMessage(sanitizeProposal(parsed.proposal), messageBase);
-  const items = proposal ? [] : sanitizeProposalList(parsed.items);
+  try {
+    parsed = JSON.parse(extractJson(rawText)) as {
+      message?: unknown;
+      needsConfirmation?: unknown;
+      proposal?: unknown;
+      items?: unknown;
+    };
+  } catch {
+    parsed = null;
+  }
+
+  const messageBase = parsed && typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : rawText || "No response generated.";
+  const proposal = normalizeProposalFromMessage(sanitizeProposal(parsed?.proposal), messageBase);
+  const items = proposal ? [] : sanitizeProposalList(parsed?.items);
   const message = enrichMessageWithNutrition(messageBase, proposal);
-  const needsConfirmation = typeof parsed.needsConfirmation === "boolean"
+  const needsConfirmation = typeof parsed?.needsConfirmation === "boolean"
     ? parsed.needsConfirmation
     : true;
 

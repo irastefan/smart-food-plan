@@ -126,16 +126,29 @@ export async function runRecipeAssistant(input: {
   });
 
   const rawText = result.assistantMessage.text;
-  const parsed = JSON.parse(extractJson(rawText)) as {
-    message?: unknown;
-    needsConfirmation?: unknown;
-    intent?: unknown;
-    draft?: unknown;
-  };
+  let parsed:
+    | {
+        message?: unknown;
+        needsConfirmation?: unknown;
+        intent?: unknown;
+        draft?: unknown;
+      }
+    | null = null;
 
-  const draft = sanitizeDraft(parsed.draft);
+  try {
+    parsed = JSON.parse(extractJson(rawText)) as {
+      message?: unknown;
+      needsConfirmation?: unknown;
+      intent?: unknown;
+      draft?: unknown;
+    };
+  } catch {
+    parsed = null;
+  }
+
+  const draft = sanitizeDraft(parsed?.draft);
   const message =
-    typeof parsed.message === "string" && parsed.message.trim()
+    parsed && typeof parsed.message === "string" && parsed.message.trim()
       ? parsed.message.trim()
       : rawText || "No response generated.";
 
@@ -145,7 +158,7 @@ export async function runRecipeAssistant(input: {
       text: message
     },
     draft,
-    needsConfirmation: typeof parsed.needsConfirmation === "boolean" ? parsed.needsConfirmation : true,
-    intent: parsed.intent === "update" ? "update" : "create"
+    needsConfirmation: typeof parsed?.needsConfirmation === "boolean" ? parsed.needsConfirmation : true,
+    intent: parsed?.intent === "update" ? "update" : "create"
   };
 }
