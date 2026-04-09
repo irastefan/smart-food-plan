@@ -141,7 +141,7 @@ export function LandingPage() {
                 component={RouterLink}
                 to={isAuthenticated ? "/meal-plan" : "/login"}
                 variant="text"
-                sx={{ fontWeight: 800, whiteSpace: "nowrap" }}
+                sx={{ fontWeight: 800, whiteSpace: "nowrap", display: { xs: "none", sm: "inline-flex" } }}
               >
                 {isAuthenticated ? t("landing.actions.openApp") : t("landing.actions.signIn")}
               </Button>
@@ -258,7 +258,7 @@ export function LandingPage() {
               <Paper
                 sx={{
                   p: { xs: 0.8, md: 1.1 },
-                  borderRadius: 5,
+                  borderRadius: 3,
                   border: "1px solid",
                   borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)",
                   background: isDark
@@ -276,7 +276,7 @@ export function LandingPage() {
                   sx={{
                     display: "block",
                     width: "100%",
-                    borderRadius: 4
+                    borderRadius: 2.5
                   }}
                 />
               </Paper>
@@ -286,7 +286,7 @@ export function LandingPage() {
           <Paper
             sx={{
               p: { xs: 2.5, md: 3.5 },
-              borderRadius: 4,
+              borderRadius: 2.5,
               border: "1px solid",
               borderColor: "divider",
               background: isDark
