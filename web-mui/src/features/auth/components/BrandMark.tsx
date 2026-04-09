@@ -16,7 +16,7 @@ export function BrandMark({ showText = true }: BrandMarkProps) {
         gap: 1
       }}
     >
-      <WellinLogoMark size={26} />
+      <WellinLogoMark size={34} />
 
       {showText ? (
         <Typography
@@ -24,7 +24,7 @@ export function BrandMark({ showText = true }: BrandMarkProps) {
             fontWeight: 900,
             letterSpacing: "-0.04em",
             lineHeight: 1,
-            fontSize: 20,
+            fontSize: 24,
             color: "inherit"
           }}
         >
