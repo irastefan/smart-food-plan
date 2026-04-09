@@ -26,36 +26,9 @@ import { useLanguage } from "../app/providers/LanguageProvider";
 import { useThemeMode } from "../app/providers/ThemeModeProvider";
 import { getAccessToken } from "../shared/api/http";
 import { getLanguageDisplayLabel, supportedLanguages } from "../shared/i18n/languages";
+import { WellinLogoMark } from "../shared/ui/WellinLogoMark";
 
-const featureIcons = [
-  RestaurantMenuRoundedIcon,
-  SpaRoundedIcon,
-  MonitorHeartRoundedIcon
-] as const;
-
-function WellinMark() {
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        borderRadius: "50%",
-        position: "relative",
-        background: "conic-gradient(from 215deg, #04624f 0deg, #0c8e74 120deg, #26b96d 220deg, #8fe24d 290deg, #04624f 360deg)",
-        boxShadow: "inset 0 2px 18px rgba(255,255,255,0.08)"
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          inset: "17%",
-          borderRadius: "50%",
-          background: "#111827"
-        }}
-      />
-    </Box>
-  );
-}
+const featureIcons = [RestaurantMenuRoundedIcon, SpaRoundedIcon, MonitorHeartRoundedIcon] as const;
 
 export function LandingPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -104,11 +77,11 @@ export function LandingPage() {
                   width: { xs: 52, md: 82 },
                   height: { xs: 52, md: 82 },
                   borderRadius: "50%",
-                  overflow: "hidden",
-                  boxShadow: isDark ? "0 20px 50px rgba(16,185,129,0.18)" : "0 18px 38px rgba(15,118,110,0.12)"
+                  display: "grid",
+                  placeItems: "center"
                 }}
               >
-                <WellinMark />
+                <WellinLogoMark size="100%" />
               </Box>
               <Typography
                 variant="h4"
