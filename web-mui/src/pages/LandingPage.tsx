@@ -24,6 +24,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
 import { useThemeMode } from "../app/providers/ThemeModeProvider";
+import wellinMobilePreview from "../assets/wellin-mobile-preview.jpg";
 import { getAccessToken } from "../shared/api/http";
 import { getLanguageDisplayLabel, supportedLanguages } from "../shared/i18n/languages";
 import { WellinLogoMark } from "../shared/ui/WellinLogoMark";
@@ -147,8 +148,8 @@ export function LandingPage() {
             </Stack>
           </Stack>
 
-          <Stack direction={{ xs: "column", lg: "row" }} spacing={{ xs: 5, lg: 6 }} alignItems="center">
-            <Stack spacing={3} sx={{ flex: 1.05, maxWidth: 700 }}>
+          <Stack direction={{ xs: "column", lg: "row" }} spacing={{ xs: 4, lg: 6 }} alignItems="center">
+            <Stack spacing={3} sx={{ flex: 1.05, maxWidth: 700, order: { xs: 1, lg: 1 } }}>
               <Typography
                 sx={{
                   fontSize: { xs: "2.65rem", md: "4.8rem" },
@@ -205,7 +206,7 @@ export function LandingPage() {
                 </Button>
               </Stack>
 
-              <List disablePadding sx={{ pt: 1 }}>
+              <List disablePadding sx={{ pt: 1, order: { xs: 3, lg: 3 } }}>
                 {featureKeys.map((key, index) => {
                   const Icon = featureIcons[index];
                   return (
@@ -243,7 +244,17 @@ export function LandingPage() {
               </List>
             </Stack>
 
-            <Box sx={{ flex: 0.95, width: "100%", maxWidth: 620, display: "grid", placeItems: "center" }}>
+            <Box
+              sx={{
+                flex: 0.95,
+                width: "100%",
+                maxWidth: 620,
+                display: "grid",
+                placeItems: "center",
+                order: { xs: 2, lg: 2 },
+                mt: { xs: -0.5, lg: 0 }
+              }}
+            >
               <Paper
                 sx={{
                   p: { xs: 0.8, md: 1.1 },
@@ -255,12 +266,12 @@ export function LandingPage() {
                     : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,250,251,0.96))",
                   boxShadow: isDark ? "0 40px 100px rgba(3,10,22,0.55)" : "0 28px 64px rgba(15,23,42,0.12)",
                   transform: "none",
-                  width: { xs: 250, sm: 300, md: 330 }
+                  width: { xs: 260, sm: 300, md: 330 }
                 }}
               >
                 <Box
                   component="img"
-                  src="/assets/wellin-mobile-preview.jpg"
+                  src={wellinMobilePreview}
                   alt="Wellin mobile preview"
                   sx={{
                     display: "block",
