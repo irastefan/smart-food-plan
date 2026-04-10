@@ -1,11 +1,12 @@
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
+import CameraswitchRoundedIcon from "@mui/icons-material/CameraswitchRounded";
 import MicRoundedIcon from "@mui/icons-material/MicRounded";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import StopRoundedIcon from "@mui/icons-material/StopRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { Avatar, IconButton, InputBase, Menu, MenuItem, Paper, Stack, Tooltip } from "@mui/material";
+import { Avatar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputBase, Menu, MenuItem, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import type { Language } from "../../shared/i18n/messages";
@@ -64,7 +65,11 @@ export function AiAgentComposer({
   const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [attachAnchor, setAttachAnchor] = useState<HTMLElement | null>(null);
+  const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const SpeechRecognitionApi = useMemo(
     () => (typeof window !== "undefined" ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null : null),
     []
@@ -85,9 +90,21 @@ export function AiAgentComposer({
     return () => {
       recognitionRef.current?.stop();
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
       recognitionRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!cameraDialogOpen || !videoRef.current || !cameraStreamRef.current) {
+      return;
+    }
+
+    videoRef.current.srcObject = cameraStreamRef.current;
+    void videoRef.current.play().catch(() => {
+      // ignore autoplay failures; user can still interact manually
+    });
+  }, [cameraDialogOpen]);
 
   async function toDataUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -114,6 +131,16 @@ export function AiAgentComposer({
     setImages((current) => [...current, ...nextImages]);
   }
 
+  function appendCapturedFile(file: File) {
+    const nextImage = {
+      id: crypto.randomUUID(),
+      file,
+      previewUrl: URL.createObjectURL(file)
+    };
+
+    setImages((current) => [...current, nextImage]);
+  }
+
   function removeImage(imageId: string) {
     setImages((current) => {
       const target = current.find((image) => image.id === imageId);
@@ -122,6 +149,82 @@ export function AiAgentComposer({
       }
       return current.filter((image) => image.id !== imageId);
     });
+  }
+
+  function stopCameraStream() {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }
+
+  async function openCameraDialog() {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    try {
+      setCameraError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" }
+        },
+        audio: false
+      });
+      stopCameraStream();
+      cameraStreamRef.current = stream;
+      setCameraDialogOpen(true);
+    } catch (primaryError) {
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+        stopCameraStream();
+        cameraStreamRef.current = fallbackStream;
+        setCameraDialogOpen(true);
+      } catch {
+        console.error("Failed to open camera", primaryError);
+        setCameraError(t("aiAgent.image.cameraError"));
+        cameraInputRef.current?.click();
+      }
+    }
+  }
+
+  function handleCloseCameraDialog() {
+    setCameraDialogOpen(false);
+    setCameraError(null);
+    stopCameraStream();
+  }
+
+  async function handleCapturePhoto() {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((result) => resolve(result), "image/jpeg", 0.92);
+    });
+
+    if (!blob) {
+      return;
+    }
+
+    appendCapturedFile(new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" }));
+    handleCloseCameraDialog();
   }
 
   async function handleSubmit() {
@@ -295,7 +398,6 @@ export function AiAgentComposer({
           type="file"
           accept="image/*"
           capture="environment"
-          multiple
           hidden
           onChange={(event) => {
             appendFiles(event.target.files);
@@ -438,7 +540,7 @@ export function AiAgentComposer({
           <MenuItem
             onClick={() => {
               setAttachAnchor(null);
-              cameraInputRef.current?.click();
+              void openCameraDialog();
             }}
           >
             <Stack direction={isRtl ? "row-reverse" : "row"} spacing={1} alignItems="center">
@@ -447,6 +549,66 @@ export function AiAgentComposer({
             </Stack>
           </MenuItem>
         </Menu>
+
+        <Dialog
+          open={cameraDialogOpen}
+          onClose={handleCloseCameraDialog}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>{t("aiAgent.image.camera")}</DialogTitle>
+          <DialogContent>
+            <Stack spacing={1.5} sx={{ pt: 1 }}>
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "#000",
+                  aspectRatio: "3 / 4",
+                  display: "grid",
+                  placeItems: "center"
+                }}
+              >
+                <Box
+                  component="video"
+                  ref={videoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                  }}
+                />
+              </Box>
+              {cameraError ? (
+                <Typography variant="body2" color="error">
+                  {cameraError}
+                </Typography>
+              ) : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "space-between" }}>
+            <Button onClick={handleCloseCameraDialog}>{t("common.cancel")}</Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                onClick={() => {
+                  handleCloseCameraDialog();
+                  void openCameraDialog();
+                }}
+                startIcon={<CameraswitchRoundedIcon />}
+              >
+                {t("aiAgent.image.retryCamera")}
+              </Button>
+              <Button variant="contained" startIcon={<PhotoCameraRoundedIcon />} onClick={() => void handleCapturePhoto()}>
+                {t("aiAgent.image.capture")}
+              </Button>
+            </Stack>
+          </DialogActions>
+        </Dialog>
       </Stack>
     </Paper>
   );
