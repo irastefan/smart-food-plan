@@ -37,7 +37,6 @@ function serializeSection(section: MealPlanSection) {
 }
 
 export async function runMealPlanNutritionAnalysis(input: {
-  apiKey: string;
   model: string;
   scope: "day" | "section";
   label: string;
@@ -67,8 +66,6 @@ export async function runMealPlanNutritionAnalysis(input: {
         };
 
   const result = await runAgentTurn({
-    apiKey: input.apiKey,
-    tools: [],
     history: [],
     userText: `Analyze this nutrition context and give a soft dietitian-style review:\n${JSON.stringify(context, null, 2)}`,
     model: input.model,

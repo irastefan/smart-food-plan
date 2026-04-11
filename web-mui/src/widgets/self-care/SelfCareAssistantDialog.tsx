@@ -102,15 +102,9 @@ export function SelfCareAssistantDialog({
       showToolOutput={agentSettings.showToolOutput}
       placeholder={t("contextAgent.selfCare.placeholder")}
       submitLabel={t("aiAgent.send")}
-      missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-      missingApiKeyActionLabel={t("aiAgent.openSettings")}
-      onMissingApiKeyAction={() => {
-        window.location.href = "/settings";
-      }}
-      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
+      onRun={async ({ payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const result = await runAgentTurn({
-          apiKey,
           tools,
           history: messages,
           userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),

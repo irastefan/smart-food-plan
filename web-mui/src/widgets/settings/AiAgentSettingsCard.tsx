@@ -4,17 +4,20 @@ import { Button, CircularProgress, FormControlLabel, MenuItem, Stack, Switch, Te
 import { useEffect, useState } from "react";
 import type { AiAgentSettings } from "../../shared/config/aiAgent";
 import { useLanguage } from "../../app/providers/LanguageProvider";
+import type { AiUsageState } from "../../features/ai/api/aiUsageApi";
 import { supportedLanguages } from "../../shared/i18n/languages";
+import { AiUsageSummary } from "../ai/AiUsageSummary";
 
 type AiAgentSettingsCardProps = {
   value: AiAgentSettings;
+  usage?: AiUsageState | null;
   isSubmitting: boolean;
   onSave: (value: AiAgentSettings) => void;
 };
 
 const MODEL_OPTIONS = ["gpt-5-mini", "gpt-5", "gpt-4.1-mini"];
 const SPEECH_LANGUAGE_OPTIONS: Array<AiAgentSettings["speechLanguage"]> = ["interface", ...supportedLanguages];
-export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSettingsCardProps) {
+export function AiAgentSettingsCard({ value, usage = null, isSubmitting, onSave }: AiAgentSettingsCardProps) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState<AiAgentSettings>(value);
 
@@ -31,6 +34,8 @@ export function AiAgentSettingsCard({ value, isSubmitting, onSave }: AiAgentSett
           <Typography color="text.secondary">{t("settings.agent.subtitle")}</Typography>
         </div>
       </Stack>
+
+      {usage ? <AiUsageSummary usage={usage} /> : null}
 
       <TextField
         select

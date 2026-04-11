@@ -95,7 +95,6 @@ function sanitizeDraft(value: unknown): RecipeAssistantDraft | null {
 }
 
 export async function runRecipeAssistant(input: {
-  apiKey: string;
   model: string;
   history: AgentMessage[];
   userText: string;
@@ -108,7 +107,6 @@ export async function runRecipeAssistant(input: {
 }): Promise<RecipeAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({
-    apiKey: input.apiKey,
     tools,
     history: input.history,
     userText: input.userText.trim() || "Help me create a recipe draft.",

@@ -191,7 +191,6 @@ function enrichMessageWithNutrition(message: string, proposal: MealPlanAssistant
 }
 
 export async function runMealPlanAssistant(input: {
-  apiKey: string;
   model: string;
   history: AgentMessage[];
   sectionTitle: string;
@@ -205,7 +204,6 @@ export async function runMealPlanAssistant(input: {
 }): Promise<MealPlanAssistantResult> {
   const tools = await listMcpTools();
   const result = await runAgentTurn({
-    apiKey: input.apiKey,
     tools,
     history: input.history,
     userText: input.userText.trim() || "Suggest a suitable item for this slot.",

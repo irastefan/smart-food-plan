@@ -1,4 +1,4 @@
-import KeyRoundedIcon from "@mui/icons-material/KeyRounded";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { ButtonBase, Paper, Stack, Typography } from "@mui/material";
@@ -26,7 +26,7 @@ const items: Array<{ id: SettingsSectionId; icon: typeof PersonRoundedIcon; labe
   },
   {
     id: "openai",
-    icon: KeyRoundedIcon,
+    icon: SmartToyRoundedIcon,
     labelKey: "settings.sections.openai.title",
     descriptionKey: "settings.sections.openai.subtitle"
   }

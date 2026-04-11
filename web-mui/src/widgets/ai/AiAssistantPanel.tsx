@@ -2,7 +2,6 @@ import { Alert, Box, Button, Stack } from "@mui/material";
 import { useRef, useState, type ReactNode } from "react";
 import { useLanguage } from "../../app/providers/LanguageProvider";
 import { isRtlLanguage } from "../../shared/i18n/languages";
-import { getOpenAiApiKey } from "../../shared/config/openai";
 import type { AgentMessage, AgentToolAction } from "../../features/ai/api/openaiAgentApi";
 import type { Language } from "../../shared/i18n/messages";
 import { AiAgentComposer } from "./AiAgentComposer";
@@ -25,11 +24,10 @@ export type AiAssistantPanelProps<TExtra = void> = {
   showToolOutput: boolean;
   placeholder: string;
   submitLabel: string;
-  missingApiKeyMessage: string;
+  missingApiKeyMessage?: string;
   missingApiKeyActionLabel?: string;
   onMissingApiKeyAction?: () => void;
   onRun: (input: {
-    apiKey: string;
     payload: ComposerPayload;
     messages: AgentMessage[];
     onToolStart: (tool: { name: string; action: AgentToolAction; entity: string | null }) => void;
@@ -45,7 +43,6 @@ export function AiAssistantPanel<TExtra = void>({
   showToolOutput,
   placeholder,
   submitLabel,
-  missingApiKeyMessage,
   missingApiKeyActionLabel,
   onMissingApiKeyAction,
   onRun,
@@ -66,12 +63,6 @@ export function AiAssistantPanel<TExtra = void>({
   const visibleMessages = messages;
 
   async function handleSubmit(payload: ComposerPayload) {
-    const apiKey = getOpenAiApiKey();
-    if (!apiKey) {
-      setStatus({ type: "info", message: missingApiKeyMessage });
-      return;
-    }
-
     const normalizedText = payload.text.trim();
     if (!normalizedText && payload.images.length === 0) {
       return;
@@ -93,7 +84,6 @@ export function AiAssistantPanel<TExtra = void>({
       setCompletedToolStatuses([]);
       setStatus(null);
       const result = await onRun({
-        apiKey,
         payload,
         messages,
         onToolStart: (tool) => {

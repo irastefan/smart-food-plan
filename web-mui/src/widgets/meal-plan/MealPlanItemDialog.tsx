@@ -551,8 +551,7 @@ export function MealPlanItemDialog({
                   showToolOutput={false}
                   placeholder={t("aiAgent.placeholder")}
                   submitLabel={t("aiAgent.send")}
-                  missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-                  onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
+                  onRun={async ({ payload, messages, onToolStart, onToolEnd }) => {
                     const normalizedText = payload.text.trim();
                     const userText =
                       normalizedText.length > 0
@@ -562,7 +561,6 @@ export function MealPlanItemDialog({
                           : "";
 
                     const result = await runMealPlanAssistant({
-                      apiKey,
                       model: agentSettings.model,
                       history: messages,
                       sectionTitle,

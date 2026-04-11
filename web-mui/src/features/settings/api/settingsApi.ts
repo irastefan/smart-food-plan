@@ -1,4 +1,5 @@
 import { apiRequest } from "../../../shared/api/http";
+import { getEffectiveCalorieDelta } from "../model/profileDefaults";
 
 export type UserSex = "FEMALE" | "MALE" | "";
 export type UserActivityLevel = "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | "";
@@ -103,6 +104,8 @@ function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
     availableTargetFormulas[0]?.value ??
     "";
 
+  const goal = input?.goal ?? "";
+
   return {
     id: input?.id,
     userId: input?.userId,
@@ -113,14 +116,11 @@ function mapProfile(input?: UserProfileResponseDto | null): UserProfile {
     heightCm: toNumber(input?.heightCm),
     weightKg: toNumber(input?.weightKg),
     activityLevel: input?.activityLevel ?? "",
-    goal: input?.goal ?? "",
+    goal,
     macroProfile: input?.macroProfile ?? "BALANCED",
     targetFormula: input?.targetFormula ?? fallbackTargetFormula,
     availableTargetFormulas,
-    calorieDelta: (() => {
-      const parsed = toNumber(input?.calorieDelta);
-      return parsed == null ? null : Math.abs(parsed);
-    })(),
+    calorieDelta: getEffectiveCalorieDelta(goal, toNumber(input?.calorieDelta)),
     targetCalories: toNumber(input?.targetCalories),
     targetProteinG: toNumber(input?.targetProteinG),
     targetFatG: toNumber(input?.targetFatG),
@@ -149,12 +149,7 @@ function toProfilePayload(profile: UserProfile) {
     goal: profile.goal || undefined,
     macroProfile: profile.macroProfile || undefined,
     targetFormula: profile.targetFormula || undefined,
-    calorieDelta:
-      profile.goal === "MAINTAIN"
-        ? undefined
-        : profile.calorieDelta == null
-          ? undefined
-          : Math.abs(profile.calorieDelta)
+    calorieDelta: profile.goal === "MAINTAIN" ? undefined : getEffectiveCalorieDelta(profile.goal, profile.calorieDelta) ?? undefined
   };
 }
 

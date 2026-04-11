@@ -1,3 +1,4 @@
+import { postAiResponse } from "./aiUsageApi";
 import { callMcpTool, type McpTool } from "./mcpApi";
 import { buildAgentSystemPrompt } from "../model/agentSystemPrompt";
 import type { Language } from "../../../shared/i18n/messages";
@@ -60,6 +61,12 @@ type OpenAiFunctionTool = {
   strict: false;
 };
 
+type OpenAiFunctionCallOutput = {
+  type: "function_call_output";
+  call_id: string;
+  output: string;
+};
+
 function extractErrorMessage(response: OpenAiResponse): string | null {
   if (typeof response.error?.message === "string" && response.error.message.trim().length > 0) {
     return response.error.message.trim();
@@ -74,11 +81,6 @@ function extractErrorMessage(response: OpenAiResponse): string | null {
 
 function sanitizeToolName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
-
-function buildToolMap(tools: McpTool[]) {
-  const entries = tools.map((tool) => [sanitizeToolName(tool.name), tool] as const);
-  return new Map(entries);
 }
 
 function toOpenAiTools(tools: McpTool[]): OpenAiFunctionTool[] {
@@ -109,6 +111,26 @@ function extractAssistantText(response: OpenAiResponse): string {
   return text || "";
 }
 
+function dedupeToolMessages(toolMessages: AgentMessage[]): AgentMessage[] {
+  const seen = new Set<string>();
+
+  return toolMessages.filter((message) => {
+    const key = [
+      message.toolName ?? "",
+      message.toolAction ?? "generic",
+      message.toolEntity ?? "",
+      message.text.trim()
+    ].join("::");
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 function serializeHistoryMessage(message: AgentMessage) {
   if (message.role === "tool") {
     const action = message.toolAction ?? "generic";
@@ -126,8 +148,7 @@ function serializeHistoryMessage(message: AgentMessage) {
 }
 
 export async function runAgentTurn(input: {
-  apiKey: string;
-  tools: McpTool[];
+  tools?: McpTool[];
   history: AgentMessage[];
   userText: string;
   images?: AgentImageInput[];
@@ -138,14 +159,9 @@ export async function runAgentTurn(input: {
   onToolStart?: (tool: { name: string; action: AgentToolAction; entity: string | null }) => void;
   onToolEnd?: () => void;
 }): Promise<AgentResult> {
-  const toolMap = buildToolMap(input.tools);
-  const openAiTools = toOpenAiTools(input.tools);
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${input.apiKey}`
-  };
-
   const systemPrompt = input.systemPrompt?.trim() || buildAgentSystemPrompt(input.userInstructions, input.responseLanguage);
+  const openAiTools = input.tools ? toOpenAiTools(input.tools) : undefined;
+  const toolNameMap = new Map((input.tools ?? []).map((tool) => [sanitizeToolName(tool.name), tool.name]));
 
   const baseInput = [
     { role: "system", content: systemPrompt },
@@ -163,96 +179,103 @@ export async function runAgentTurn(input: {
     }
   ];
   const toolMessages: AgentMessage[] = [];
-  const seenToolCalls = new Set<string>();
+  const seenFunctionCalls = new Set<string>();
+  let latestPayload: OpenAiResponse | null = null;
   let previousResponseId: string | undefined;
   let currentInput: unknown = baseInput;
-  let latestPayload: OpenAiResponse | null = null;
 
-  for (let step = 0; step < 3; step += 1) {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: input.model?.trim() || "gpt-5-mini",
-        input: currentInput,
-        previous_response_id: previousResponseId,
-        tools: openAiTools,
-        reasoning: { effort: "low" }
-      })
+  for (let step = 0; step < 4; step += 1) {
+    const envelope = await postAiResponse<OpenAiResponse>({
+      model: input.model?.trim() || "gpt-5-mini",
+      input: currentInput,
+      previous_response_id: previousResponseId,
+      reasoning: { effort: "low" },
+      tools: openAiTools
     });
 
-    const payload = (await response.json()) as OpenAiResponse;
-    latestPayload = payload;
+    latestPayload = envelope.response;
 
-    if (!response.ok) {
-      throw new Error(extractErrorMessage(payload) ?? "OpenAI request failed.");
+    if (latestPayload.error) {
+      throw new Error(extractErrorMessage(latestPayload) ?? "AI request failed.");
     }
 
-    const functionCalls = (payload.output ?? []).filter((item) => item.type === "function_call" && item.name && item.call_id);
-    if (functionCalls.length === 0) {
-      break;
-    }
+    const functionCalls = (latestPayload.output ?? []).filter((item) => item.type === "function_call" && item.name);
+    const assistantText = extractAssistantText(latestPayload).trim();
+    const functionOutputs: OpenAiFunctionCallOutput[] = [];
 
-    const toolOutputs = [] as Array<{ type: "function_call_output"; call_id: string; output: string }>;
-
-    for (const call of functionCalls) {
-      const tool = toolMap.get(String(call.name));
-      if (!tool) {
+    for (const item of functionCalls) {
+      if (!item.call_id) {
         continue;
       }
 
-      const parsedArgs = call.arguments ? (JSON.parse(call.arguments) as Record<string, unknown>) : {};
-      const callSignature = JSON.stringify({ name: tool.name, args: parsedArgs });
-      const toolAction = inferToolAction(tool.name);
-      let toolEntity = inferToolEntity(parsedArgs);
-      let output: string;
+      const parsedArgs = item.arguments ? (JSON.parse(item.arguments) as Record<string, unknown>) : {};
+      const toolAction = inferToolAction(String(item.name));
+      const toolEntity = inferToolEntity(parsedArgs);
+      const resolvedToolName = toolNameMap.get(String(item.name)) ?? String(item.name);
+      const key = `${resolvedToolName}::${JSON.stringify(parsedArgs)}`;
 
-      if (seenToolCalls.has(callSignature)) {
-        output = JSON.stringify({
-          skipped: true,
-          reason: "Duplicate tool call blocked to prevent loops."
-        }, null, 2);
-      } else {
-        seenToolCalls.add(callSignature);
-        input.onToolStart?.({ name: tool.name, action: toolAction, entity: toolEntity });
-        try {
-          const result = await callMcpTool(tool.name, parsedArgs);
-          toolEntity = toolEntity ?? inferToolEntity(result);
-          output = JSON.stringify(result, null, 2);
-        } finally {
-          input.onToolEnd?.();
-        }
+      if (seenFunctionCalls.has(key)) {
+        functionOutputs.push({
+          type: "function_call_output",
+          call_id: item.call_id,
+          output: JSON.stringify({ skipped: true, reason: "duplicate_tool_call" })
+        });
+        continue;
+      }
+
+      seenFunctionCalls.add(key);
+      input.onToolStart?.({
+        name: resolvedToolName,
+        action: toolAction,
+        entity: toolEntity
+      });
+
+      try {
+        const result = await callMcpTool(resolvedToolName, parsedArgs);
+        functionOutputs.push({
+          type: "function_call_output",
+          call_id: item.call_id,
+          output: JSON.stringify(result ?? null)
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Tool execution failed.";
+        functionOutputs.push({
+          type: "function_call_output",
+          call_id: item.call_id,
+          output: JSON.stringify({ error: message })
+        });
+      } finally {
+        input.onToolEnd?.();
       }
 
       toolMessages.push({
         id: crypto.randomUUID(),
         role: "tool",
-        toolName: tool.name,
+        toolName: resolvedToolName,
         toolAction,
         toolEntity,
-        text: output
-      });
-
-      toolOutputs.push({
-        type: "function_call_output",
-        call_id: String(call.call_id),
-        output
+        text: ""
       });
     }
 
-    if (toolOutputs.every((entry) => entry.output.includes("\"skipped\": true"))) {
+    if (functionCalls.length === 0 || assistantText.length > 0) {
       break;
     }
 
-    previousResponseId = payload.id;
-    currentInput = toolOutputs;
+    if (!latestPayload.id || functionOutputs.length === 0) {
+      break;
+    }
+
+    previousResponseId = latestPayload.id;
+    currentInput = functionOutputs;
   }
 
   if (!latestPayload) {
-    throw new Error("OpenAI request failed.");
+    throw new Error("AI request failed.");
   }
 
-  const assistantText = extractAssistantText(latestPayload).trim() || buildToolOnlyFallback(toolMessages, input.responseLanguage);
+  const uniqueToolMessages = dedupeToolMessages(toolMessages);
+  const assistantText = extractAssistantText(latestPayload).trim() || buildToolOnlyFallback(uniqueToolMessages, input.responseLanguage);
 
   return {
     assistantMessage: {
@@ -260,7 +283,7 @@ export async function runAgentTurn(input: {
       role: "assistant",
       text: assistantText
     },
-    toolMessages
+    toolMessages: uniqueToolMessages
   };
 }
 

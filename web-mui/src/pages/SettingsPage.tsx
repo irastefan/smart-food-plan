@@ -2,6 +2,7 @@ import { CircularProgress, Paper, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../app/providers/LanguageProvider";
+import { getAiUsage, getCachedAiUsage, type AiUsageState } from "../features/ai/api/aiUsageApi";
 import {
   getCurrentUserSettings,
   saveUserProfile,
@@ -9,13 +10,11 @@ import {
 } from "../features/settings/api/settingsApi";
 import { getAiAgentSettings, setAiAgentSettings, type AiAgentSettings } from "../shared/config/aiAgent";
 import { getAppPreferences, setAppPreferences, type AppPreferences } from "../shared/config/appPreferences";
-import { getOpenAiApiKey, setOpenAiApiKey } from "../shared/config/openai";
 import { AppFeedbackToast } from "../shared/ui/AppFeedbackToast";
 import { PageTitle } from "../shared/ui/PageTitle";
 import { DashboardTopbar } from "../widgets/dashboard/DashboardTopbar";
 import { AiAgentSettingsCard } from "../widgets/settings/AiAgentSettingsCard";
 import { AppPreferencesCard } from "../widgets/settings/AppPreferencesCard";
-import { OpenAiApiKeyCard } from "../widgets/settings/OpenAiApiKeyCard";
 import { ProfilePreviewCard } from "../widgets/settings/ProfilePreviewCard";
 import { SettingsSectionCard } from "../widgets/settings/SettingsSectionCard";
 import { isSettingsSectionId } from "../widgets/settings/settingsSections";
@@ -33,8 +32,8 @@ export function SettingsPage() {
   const { openSidebar, registerPageLoading, clearPageLoading } = useOutletContext<LayoutContext>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [savedProfile, setSavedProfile] = useState<UserProfile | null>(null);
-  const [openAiApiKey, setOpenAiApiKeyState] = useState("");
   const [agentSettings, setAgentSettingsState] = useState<AiAgentSettings>(getAiAgentSettings());
+  const [aiUsage, setAiUsage] = useState<AiUsageState | null>(getCachedAiUsage());
   const [appPreferences, setAppPreferencesState] = useState<AppPreferences>(getAppPreferences());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,9 +69,16 @@ export function SettingsPage() {
           const nextProfile = mergeProfileFormulas(current.profile, null);
           setProfile(nextProfile);
           setSavedProfile(nextProfile);
-          setOpenAiApiKeyState(getOpenAiApiKey());
           setAgentSettingsState(getAiAgentSettings());
           setAppPreferencesState(getAppPreferences());
+        }
+        try {
+          const nextUsage = await getAiUsage();
+          if (!cancelled) {
+            setAiUsage(nextUsage);
+          }
+        } catch (error) {
+          console.error("Failed to load AI usage", error);
         }
       } catch (error) {
         console.error("Failed to load settings", error);
@@ -113,21 +119,6 @@ export function SettingsPage() {
       setFeedback({ type: "success", message: t("settings.status.saved") });
     } catch (error) {
       console.error("Failed to save profile", error);
-      setFeedback({ type: "error", message: t("settings.status.saveError") });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleSaveOpenAiApiKey(value: string) {
-    try {
-      setIsSubmitting(true);
-      setOpenAiApiKey(value);
-      await new Promise((resolve) => window.setTimeout(resolve, 280));
-      setOpenAiApiKeyState(value.trim());
-      setFeedback({ type: "success", message: t("settings.openai.saved") });
-    } catch (error) {
-      console.error("Failed to save OpenAI API key", error);
       setFeedback({ type: "error", message: t("settings.status.saveError") });
     } finally {
       setIsSubmitting(false);
@@ -202,10 +193,7 @@ export function SettingsPage() {
 
           {activeSection === "openai" ? (
             <SettingsSectionCard title={t("settings.sections.openai.title")} subtitle={t("settings.sections.openai.subtitle")}>
-              <Stack spacing={4}>
-                <OpenAiApiKeyCard value={openAiApiKey} isSubmitting={isSubmitting} onSave={handleSaveOpenAiApiKey} />
-                <AiAgentSettingsCard value={agentSettings} isSubmitting={isSubmitting} onSave={handleSaveAgentSettings} />
-              </Stack>
+              <AiAgentSettingsCard value={agentSettings} usage={aiUsage} isSubmitting={isSubmitting} onSave={handleSaveAgentSettings} />
             </SettingsSectionCard>
           ) : null}
         </Stack>

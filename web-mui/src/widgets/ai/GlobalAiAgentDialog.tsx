@@ -74,11 +74,6 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
       showToolOutput={agentSettings.showToolOutput}
       placeholder={t("aiAgent.placeholder")}
       submitLabel={t("aiAgent.send")}
-      missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
-      missingApiKeyActionLabel={t("aiAgent.openSettings")}
-      onMissingApiKeyAction={() => {
-        window.location.href = "/settings";
-      }}
       outerHeader={
         <Accordion
           disableGutters
@@ -119,10 +114,9 @@ export function GlobalAiAgentDialog({ open, onClose }: GlobalAiAgentDialogProps)
           </AccordionDetails>
         </Accordion>
       }
-      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
+      onRun={async ({ payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const result = await runAgentTurn({
-          apiKey,
           tools,
           history: messages,
           userText: normalizedText.length > 0 ? normalizedText : t("aiAgent.imageOnlyPrompt"),

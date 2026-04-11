@@ -23,6 +23,26 @@ export function AiAgentConversation({
 }: AiAgentConversationProps) {
   const { t, language } = useLanguage();
   const isRtl = isRtlLanguage(language);
+  const renderedToolMessageCounts = new Map<string, number>();
+
+  messages.forEach((message) => {
+    if (message.role !== "tool") {
+      return;
+    }
+
+    const key = `${message.toolAction ?? "generic"}::${message.toolEntity ?? ""}`;
+    renderedToolMessageCounts.set(key, (renderedToolMessageCounts.get(key) ?? 0) + 1);
+  });
+
+  const transientCompletedToolStatuses = completedToolStatuses.filter(Boolean).filter((status) => {
+    const key = `${status.action}::${status.entity ?? ""}`;
+    const existingCount = renderedToolMessageCounts.get(key) ?? 0;
+    if (existingCount > 0) {
+      renderedToolMessageCounts.set(key, existingCount - 1);
+      return false;
+    }
+    return true;
+  });
 
   if (messages.length === 0 && !isSubmitting) {
     return null;
@@ -255,7 +275,7 @@ export function AiAgentConversation({
         </Stack>
       ) : null}
 
-      {completedToolStatuses.filter(Boolean).map((status, index) => (
+      {transientCompletedToolStatuses.map((status, index) => (
         <Stack
           key={`completed-tool-${index}-${status.action}-${status.entity ?? "none"}`}
           direction={isRtl ? "row-reverse" : "row"}

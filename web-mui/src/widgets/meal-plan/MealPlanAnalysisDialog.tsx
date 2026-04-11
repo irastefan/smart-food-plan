@@ -20,7 +20,6 @@ import { useLanguage } from "../../app/providers/LanguageProvider";
 import { runMealPlanNutritionAnalysis } from "../../features/ai/api/mealPlanAnalysisApi";
 import type { MealPlanDay, MealPlanSection } from "../../features/meal-plan/api/mealPlanApi";
 import { getAiAgentSettings, resolveAiResponseLanguage } from "../../shared/config/aiAgent";
-import { getOpenAiApiKey } from "../../shared/config/openai";
 import { isRtlLanguage } from "../../shared/i18n/languages";
 
 type MealPlanAnalysisDialogProps = {
@@ -56,20 +55,12 @@ export function MealPlanAnalysisDialog({
   const [error, setError] = useState<string | null>(null);
 
   async function loadAnalysis() {
-    const apiKey = getOpenAiApiKey();
-    if (!apiKey) {
-      setError(t("aiAgent.status.missingApiKey"));
-      setAnalysis("");
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
       const settings = getAiAgentSettings();
       const responseLanguage = resolveAiResponseLanguage(settings.speechLanguage, language);
       const text = await runMealPlanNutritionAnalysis({
-        apiKey,
         model: settings.model,
         scope,
         label,

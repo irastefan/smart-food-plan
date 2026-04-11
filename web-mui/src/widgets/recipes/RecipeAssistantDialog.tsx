@@ -100,7 +100,6 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
       showToolOutput={false}
       placeholder={t("recipe.ai.placeholder")}
       submitLabel={t("aiAgent.send")}
-      missingApiKeyMessage={t("aiAgent.status.missingApiKey")}
       quickPrompts={
         recipe
           ? [
@@ -115,7 +114,7 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
             ]
       }
       outerHeader={status ? <Alert severity={status.type}>{status.message}</Alert> : null}
-      onRun={async ({ apiKey, payload, messages, onToolStart, onToolEnd }) => {
+      onRun={async ({ payload, messages, onToolStart, onToolEnd }) => {
         const normalizedText = payload.text.trim();
         const userText =
           normalizedText.length > 0
@@ -125,7 +124,6 @@ export function RecipeAssistantDialog({ open, onClose, recipe = null, onRecipeCh
               : "";
 
         const result = await runRecipeAssistant({
-          apiKey,
           model: agentSettings.model,
           history: messages,
           userText,
