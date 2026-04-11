@@ -31,6 +31,14 @@ type AiResponseEnvelope<TResponse> = {
   aiUsage: AiUsageState;
 };
 
+export type UploadedAiImage = {
+  objectKey: string;
+  imageUrl: string;
+  expiresAt: string;
+  contentType: string;
+  size: number;
+};
+
 export function getCachedAiUsage(): AiUsageState | null {
   if (typeof window === "undefined") {
     return null;
@@ -80,4 +88,14 @@ export async function postAiResponse<TResponse>(payload: {
   });
   setCachedAiUsage(response.aiUsage);
   return response;
+}
+
+export async function uploadAiImage(file: File): Promise<UploadedAiImage> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiRequest<UploadedAiImage>("/v1/ai/uploads/image", {
+    method: "POST",
+    body: formData
+  });
 }

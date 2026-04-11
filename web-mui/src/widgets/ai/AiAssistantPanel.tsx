@@ -7,7 +7,7 @@ import type { Language } from "../../shared/i18n/messages";
 import { AiAgentComposer } from "./AiAgentComposer";
 import { AiAgentConversation } from "./AiAgentConversation";
 
-export type ComposerPayload = { text: string; images: Array<{ name: string; dataUrl: string }> };
+export type ComposerPayload = { text: string; images: Array<{ name: string; file: File; previewUrl: string }> };
 
 export type AiAssistantPanelRenderProps = {
   draft: string;

@@ -178,7 +178,7 @@ export function AiAgentConversation({
                     <Box
                       key={`${message.id}-${image.name}`}
                       component="img"
-                      src={image.dataUrl}
+                      src={image.previewUrl}
                       alt={image.name}
                       sx={{
                         width: 72,

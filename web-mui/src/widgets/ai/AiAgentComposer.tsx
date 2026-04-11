@@ -36,7 +36,7 @@ type AiAgentComposerProps = {
   value: string;
   speechLanguage: "interface" | Language;
   onValueChange: (value: string) => void;
-  onSubmit: (payload: { text: string; images: Array<{ name: string; dataUrl: string }> }) => Promise<void>;
+  onSubmit: (payload: { text: string; images: Array<{ name: string; file: File; previewUrl: string }> }) => Promise<void>;
 };
 
 type ComposerImage = {
@@ -89,15 +89,6 @@ export function AiAgentComposer({
     };
   }, []);
 
-  async function toDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result ?? ""));
-      reader.onerror = () => reject(new Error("Failed to read image."));
-      reader.readAsDataURL(file);
-    });
-  }
-
   function appendFiles(fileList: FileList | null) {
     if (!fileList) {
       return;
@@ -131,18 +122,16 @@ export function AiAgentComposer({
     }
 
     const currentImages = [...images];
-    const payloadImages = await Promise.all(
-      currentImages.map(async (image) => ({
-        name: image.file.name,
-        dataUrl: await toDataUrl(image.file)
-      }))
-    );
+    const payloadImages = currentImages.map((image) => ({
+      name: image.file.name,
+      file: image.file,
+      previewUrl: image.previewUrl
+    }));
 
     onValueChange("");
     setImages([]);
 
     await onSubmit({ text, images: payloadImages });
-    currentImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
   }
 
   function handleComposerKeyDown(event: React.KeyboardEvent<HTMLElement>) {

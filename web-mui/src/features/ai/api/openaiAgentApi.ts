@@ -1,4 +1,4 @@
-import { postAiResponse } from "./aiUsageApi";
+import { postAiResponse, uploadAiImage } from "./aiUsageApi";
 import { callMcpTool, type McpTool } from "./mcpApi";
 import { buildAgentSystemPrompt } from "../model/agentSystemPrompt";
 import type { Language } from "../../../shared/i18n/messages";
@@ -25,7 +25,8 @@ export type AgentToolAction =
 
 export type AgentImageInput = {
   name: string;
-  dataUrl: string;
+  file: File;
+  previewUrl: string;
 };
 
 type OpenAiResponse = {
@@ -162,6 +163,12 @@ export async function runAgentTurn(input: {
   const systemPrompt = input.systemPrompt?.trim() || buildAgentSystemPrompt(input.userInstructions, input.responseLanguage);
   const openAiTools = input.tools ? toOpenAiTools(input.tools) : undefined;
   const toolNameMap = new Map((input.tools ?? []).map((tool) => [sanitizeToolName(tool.name), tool.name]));
+  const uploadedImages = await Promise.all(
+    (input.images ?? []).map(async (image) => ({
+      name: image.name,
+      imageUrl: (await uploadAiImage(image.file)).imageUrl
+    }))
+  );
 
   const baseInput = [
     { role: "system", content: systemPrompt },
@@ -170,9 +177,9 @@ export async function runAgentTurn(input: {
       role: "user",
       content: [
         { type: "input_text", text: input.userText },
-        ...(input.images ?? []).map((image) => ({
+        ...uploadedImages.map((image) => ({
           type: "input_image" as const,
-          image_url: image.dataUrl,
+          image_url: image.imageUrl,
           detail: "auto" as const
         }))
       ]
